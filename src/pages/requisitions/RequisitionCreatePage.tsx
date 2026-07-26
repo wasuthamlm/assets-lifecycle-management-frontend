@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { useCreateRequisitionMutation } from '@/hooks/useRequisitions'
+import { useCreateRequisitionMutation, useNextRequisitionNo } from '@/hooks/useRequisitions'
 import { RequisitionForm } from '@/components/requisitions/RequisitionForm'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/stores/auth.store'
@@ -14,6 +14,7 @@ export function RequisitionCreatePage() {
   const navigate = useNavigate()
   const create = useCreateRequisitionMutation()
   const currentUser = useAuthStore((s) => s.user)
+  const nextDocNo = useNextRequisitionNo()
 
   function handleSubmit(dto: CreateRequisitionDto) {
     create.mutate(dto, {
@@ -35,6 +36,7 @@ export function RequisitionCreatePage() {
     <Card className="max-w-3xl">
       <RequisitionForm
         defaultRequestedBy={currentUser?.employeeId ?? undefined}
+        defaultDocNo={nextDocNo}
         onSubmit={handleSubmit}
         isSubmitting={create.isPending}
       />

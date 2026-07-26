@@ -5,7 +5,7 @@ export function usePermission() {
 
   function hasPermission(code: string): boolean {
     if (!user) return false
-    return user.permissions.includes(code)
+    return user.permissions.includes('*') || user.permissions.includes(code)
   }
 
   function hasAnyPermission(codes: string[]): boolean {

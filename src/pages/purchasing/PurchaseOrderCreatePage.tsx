@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { useCreatePurchaseOrderMutation } from '@/hooks/usePurchaseOrders'
+import { useCreatePurchaseOrderMutation, useNextPoNo } from '@/hooks/usePurchaseOrders'
 import { PurchaseOrderForm } from '@/components/purchasing/PurchaseOrderForm'
 import { Card } from '@/components/ui/Card'
 import { useAuthStore } from '@/stores/auth.store'
@@ -14,6 +14,7 @@ export function PurchaseOrderCreatePage() {
   const navigate = useNavigate()
   const create = useCreatePurchaseOrderMutation()
   const currentUser = useAuthStore((s) => s.user)
+  const nextDocNo = useNextPoNo()
 
   function handleSubmit(dto: CreatePurchaseOrderDto) {
     create.mutate(dto, {
@@ -35,6 +36,7 @@ export function PurchaseOrderCreatePage() {
     <Card className="max-w-3xl">
       <PurchaseOrderForm
         defaultRequestedBy={currentUser?.employeeId ?? undefined}
+        defaultDocNo={nextDocNo}
         onSubmit={handleSubmit}
         isSubmitting={create.isPending}
       />

@@ -31,7 +31,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       }`}
     >
       <div
-        className={`w-full max-w-md rounded-xl bg-white p-5 shadow-2xl dark:bg-slate-900 ${
+        className={`w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 ${
           open ? 'animate-scale-in' : 'animate-scale-out'
         }`}
       >

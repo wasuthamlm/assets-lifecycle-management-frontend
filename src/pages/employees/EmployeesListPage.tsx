@@ -28,12 +28,14 @@ export function EmployeesListPage() {
 
   return (
     <div className="space-y-4">
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="ค้นหารหัสพนักงานหรือชื่อ..."
-        className="max-w-xs"
-      />
+      <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ค้นหารหัสพนักงานหรือชื่อ..."
+          className="max-w-xs"
+        />
+      </div>
       <Card className="p-0">
         <div className="p-4">
           <DataTable columns={columns} rows={filtered} rowKey={(e) => e.employeeId} isLoading={isLoading} />

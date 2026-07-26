@@ -32,7 +32,7 @@ export function AssetsListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <Input
           value={search}
           onChange={(e) => {
@@ -58,7 +58,7 @@ export function AssetsListPage() {
           />
         </div>
         {data && data.total > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500 dark:border-slate-800">
+          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500 dark:border-slate-800/80">
             <span>
               ทั้งหมด {data.total} รายการ · หน้า {page}/{totalPages}
             </span>

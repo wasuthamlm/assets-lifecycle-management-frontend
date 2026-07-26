@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requisitionsService } from '@/api/services/requisitions.service'
+import { generateNextDocNo } from '@/lib/docNo'
 import type { ApproveRequisitionDto, CreateRequisitionDto } from '@/api/types/requisition.types'
 
 export function useRequisitionsQuery() {
@@ -7,6 +8,11 @@ export function useRequisitionsQuery() {
     queryKey: ['requisitions'],
     queryFn: () => requisitionsService.list(),
   })
+}
+
+export function useNextRequisitionNo() {
+  const { data = [] } = useRequisitionsQuery()
+  return generateNextDocNo(data.map((r) => r.requisitionNo), 'REQ')
 }
 
 export function useRequisitionQuery(id: number) {

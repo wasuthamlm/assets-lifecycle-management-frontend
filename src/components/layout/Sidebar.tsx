@@ -24,8 +24,8 @@ export function Sidebar() {
         collapsed ? 'w-[76px]' : 'w-64',
       )}
     >
-      <div className="flex items-center gap-3 px-4 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white">
+      <div className="flex items-center gap-3 px-4 py-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white shadow-sm">
           <FileText size={18} />
         </div>
         {!collapsed && (

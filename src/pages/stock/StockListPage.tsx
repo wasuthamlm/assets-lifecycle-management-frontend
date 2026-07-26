@@ -46,16 +46,16 @@ export function StockListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 rounded-xl border border-slate-100 bg-white p-1.5 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200',
+              'rounded-lg px-4 py-1.5 text-sm font-medium transition-all duration-200',
               tab === t.key
-                ? 'bg-brand-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
             )}
           >
             {t.label}
@@ -65,7 +65,7 @@ export function StockListPage() {
 
       {tab === 'items' && (
         <>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -87,7 +87,7 @@ export function StockListPage() {
       {tab === 'levels' && (
         <>
           <Card>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เลือกสถานที่</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">เลือกสถานที่</label>
             <Select
               className="max-w-xs"
               value={locationId ?? ''}

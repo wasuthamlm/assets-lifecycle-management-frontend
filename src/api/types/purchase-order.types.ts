@@ -35,7 +35,6 @@ export interface CreatePurchaseOrderItemDto {
 }
 
 export interface CreatePurchaseOrderDto {
-  poNo: string
   vendorId: number
   orderDate?: string
   expectedDeliveryDate?: string

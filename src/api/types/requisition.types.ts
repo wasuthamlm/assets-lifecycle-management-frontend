@@ -42,7 +42,6 @@ export interface RequisitionItemInput {
 }
 
 export interface CreateRequisitionDto {
-  requisitionNo: string
   requestedBy: number
   requestType: RequestType
   dueDate?: string

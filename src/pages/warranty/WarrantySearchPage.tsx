@@ -83,7 +83,7 @@ export function WarrantySearchPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-sm flex-1">
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เลือกทรัพย์สินเพื่อดูประวัติประกัน</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">เลือกทรัพย์สินเพื่อดูประวัติประกัน</label>
             <Select value={assetId ?? ''} onChange={(e) => setAssetId(e.target.value ? Number(e.target.value) : undefined)}>
               <option value="">เลือกทรัพย์สิน</option>
               {assets.map((a) => (

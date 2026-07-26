@@ -18,7 +18,6 @@ const itemSchema = z.object({
 })
 
 const formSchema = z.object({
-  requisitionNo: z.string().min(1, 'กรุณากรอกเลขที่เอกสาร'),
   requestedBy: z.coerce.number().int().positive('กรุณาเลือกผู้ขอเบิก'),
   requestType: z.nativeEnum(RequestType),
   dueDate: z.string().optional(),
@@ -34,11 +33,12 @@ type RequisitionFormInput = z.input<typeof formSchema>
 
 interface RequisitionFormProps {
   defaultRequestedBy?: number
+  defaultDocNo?: string
   onSubmit: (dto: CreateRequisitionDto) => void
   isSubmitting?: boolean
 }
 
-export function RequisitionForm({ defaultRequestedBy, onSubmit, isSubmitting }: RequisitionFormProps) {
+export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, isSubmitting }: RequisitionFormProps) {
   const { data: employees = [] } = useEmployeesQuery()
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = assetsPage?.data ?? []
@@ -52,7 +52,6 @@ export function RequisitionForm({ defaultRequestedBy, onSubmit, isSubmitting }: 
   } = useForm<RequisitionFormInput, unknown, RequisitionFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      requisitionNo: '',
       requestedBy: defaultRequestedBy,
       requestType: RequestType.WITHDRAW,
       items: [{}],
@@ -66,7 +65,6 @@ export function RequisitionForm({ defaultRequestedBy, onSubmit, isSubmitting }: 
 
   function submit(values: RequisitionFormValues) {
     onSubmit({
-      requisitionNo: values.requisitionNo,
       requestedBy: values.requestedBy,
       requestType: values.requestType,
       dueDate: values.requestType === RequestType.BORROW ? values.dueDate : undefined,
@@ -81,8 +79,12 @@ export function RequisitionForm({ defaultRequestedBy, onSubmit, isSubmitting }: 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เลขที่เอกสาร</label>
-          <Input {...register('requisitionNo')} placeholder="REQ-2026-0001" />
-          {errors.requisitionNo && <p className="mt-1 text-xs text-red-600">{errors.requisitionNo.message}</p>}
+          <div className="flex h-10 items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 dark:border-slate-700 dark:bg-slate-800/60">
+            <span className="font-mono text-sm font-semibold tracking-wide text-brand-600 dark:text-brand-400">
+              {defaultDocNo ?? '—'}
+            </span>
+            <span className="text-xs text-slate-400">ระบบสร้างให้อัตโนมัติ</span>
+          </div>
         </div>
 
         <div>

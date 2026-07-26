@@ -17,7 +17,6 @@ const itemSchema = z.object({
 })
 
 const formSchema = z.object({
-  poNo: z.string().min(1, 'กรุณากรอกเลขที่ใบสั่งซื้อ'),
   vendorId: z.coerce.number().int().positive('กรุณาเลือกผู้ขาย'),
   orderDate: z.string().optional(),
   expectedDeliveryDate: z.string().optional(),
@@ -30,11 +29,12 @@ type PurchaseOrderFormInput = z.input<typeof formSchema>
 
 interface PurchaseOrderFormProps {
   defaultRequestedBy?: number
+  defaultDocNo?: string
   onSubmit: (dto: CreatePurchaseOrderDto) => void
   isSubmitting?: boolean
 }
 
-export function PurchaseOrderForm({ defaultRequestedBy, onSubmit, isSubmitting }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({ defaultRequestedBy, defaultDocNo, onSubmit, isSubmitting }: PurchaseOrderFormProps) {
   const { data: employees = [] } = useEmployeesQuery()
   const { data: vendors = [] } = useVendorsQuery()
   const { data: categories = [] } = useAssetCategoriesQuery()
@@ -47,7 +47,6 @@ export function PurchaseOrderForm({ defaultRequestedBy, onSubmit, isSubmitting }
   } = useForm<PurchaseOrderFormInput, unknown, PurchaseOrderFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      poNo: '',
       requestedBy: defaultRequestedBy,
       items: [{ itemDescription: '', quantity: 1 }],
     },
@@ -57,7 +56,6 @@ export function PurchaseOrderForm({ defaultRequestedBy, onSubmit, isSubmitting }
 
   function submit(values: PurchaseOrderFormValues) {
     onSubmit({
-      poNo: values.poNo,
       vendorId: values.vendorId,
       orderDate: values.orderDate || undefined,
       expectedDeliveryDate: values.expectedDeliveryDate || undefined,
@@ -76,8 +74,12 @@ export function PurchaseOrderForm({ defaultRequestedBy, onSubmit, isSubmitting }
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เลขที่ใบสั่งซื้อ</label>
-          <Input {...register('poNo')} placeholder="PO-2026-0001" />
-          {errors.poNo && <p className="mt-1 text-xs text-red-600">{errors.poNo.message}</p>}
+          <div className="flex h-10 items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 dark:border-slate-700 dark:bg-slate-800/60">
+            <span className="font-mono text-sm font-semibold tracking-wide text-brand-600 dark:text-brand-400">
+              {defaultDocNo ?? '—'}
+            </span>
+            <span className="text-xs text-slate-400">ระบบสร้างให้อัตโนมัติ</span>
+          </div>
         </div>
 
         <div>

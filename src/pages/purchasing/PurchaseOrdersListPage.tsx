@@ -37,7 +37,7 @@ export function PurchaseOrdersListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}

@@ -37,7 +37,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 transition-colors duration-200 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800',
+          'flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-200 dark:hover:bg-slate-800',
         )}
       >
         <Calendar size={16} className="text-slate-400" />
@@ -48,7 +48,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div
-            className={`absolute right-0 z-20 mt-2 w-64 rounded-xl border border-slate-100 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 ${
+            className={`absolute right-0 z-20 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-4 shadow-card-hover dark:border-slate-800 dark:bg-slate-900 ${
               open ? 'animate-slide-down' : 'animate-slide-up'
             }`}
           >
@@ -57,14 +57,14 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
               type="date"
               value={toInputValue(value.from)}
               onChange={(e) => onChange({ ...value, from: new Date(e.target.value) })}
-              className="mb-3 h-9 w-full rounded-lg border border-slate-200 px-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="mb-3 h-9 w-full rounded-xl border border-slate-200 px-2 text-sm transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
             <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">ถึงวันที่</label>
             <input
               type="date"
               value={toInputValue(value.to)}
               onChange={(e) => onChange({ ...value, to: new Date(e.target.value) })}
-              className="h-9 w-full rounded-lg border border-slate-200 px-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="h-9 w-full rounded-xl border border-slate-200 px-2 text-sm transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
         </>

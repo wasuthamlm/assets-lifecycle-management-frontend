@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { purchaseOrdersService } from '@/api/services/purchase-orders.service'
+import { generateNextDocNo } from '@/lib/docNo'
 import type { CreatePurchaseOrderDto, UpdatePurchaseOrderStatusDto } from '@/api/types/purchase-order.types'
 
 export function usePurchaseOrdersQuery() {
@@ -7,6 +8,11 @@ export function usePurchaseOrdersQuery() {
     queryKey: ['purchase-orders'],
     queryFn: () => purchaseOrdersService.list(),
   })
+}
+
+export function useNextPoNo() {
+  const { data = [] } = usePurchaseOrdersQuery()
+  return generateNextDocNo(data.map((po) => po.poNo), 'PO')
 }
 
 export function usePurchaseOrderQuery(id: number) {

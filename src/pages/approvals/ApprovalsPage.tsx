@@ -39,9 +39,12 @@ export function ApprovalsPage() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        รายการที่รอการอนุมัติจากคุณ ({pendingForMe.length} รายการ)
-      </p>
+      <div className="rounded-xl border border-slate-100 bg-white px-4 py-2.5 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          รายการที่รอการอนุมัติจากคุณ{' '}
+          <span className="font-semibold text-slate-700 dark:text-slate-200">({pendingForMe.length} รายการ)</span>
+        </p>
+      </div>
 
       <Card className="p-0">
         <div className="p-4">
