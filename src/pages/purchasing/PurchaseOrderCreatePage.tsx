@@ -5,7 +5,6 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreatePurchaseOrderMutation, useNextPoNo } from '@/hooks/usePurchaseOrders'
 import { PurchaseOrderForm } from '@/components/purchasing/PurchaseOrderForm'
 import { Card } from '@/components/ui/Card'
-import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import type { CreatePurchaseOrderDto } from '@/api/types/purchase-order.types'
 
@@ -13,7 +12,6 @@ export function PurchaseOrderCreatePage() {
   usePageTitle('สร้างใบสั่งซื้อ')
   const navigate = useNavigate()
   const create = useCreatePurchaseOrderMutation()
-  const currentUser = useAuthStore((s) => s.user)
   const nextDocNo = useNextPoNo()
 
   function handleSubmit(dto: CreatePurchaseOrderDto) {
@@ -33,13 +31,8 @@ export function PurchaseOrderCreatePage() {
   }
 
   return (
-    <Card className="max-w-3xl">
-      <PurchaseOrderForm
-        defaultRequestedBy={currentUser?.employeeId ?? undefined}
-        defaultDocNo={nextDocNo}
-        onSubmit={handleSubmit}
-        isSubmitting={create.isPending}
-      />
+    <Card>
+      <PurchaseOrderForm defaultDocNo={nextDocNo} onSubmit={handleSubmit} isSubmitting={create.isPending} />
     </Card>
   )
 }

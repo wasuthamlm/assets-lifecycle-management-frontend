@@ -42,7 +42,6 @@ export interface RequisitionItemInput {
 }
 
 export interface CreateRequisitionDto {
-  requestedBy: number
   requestType: RequestType
   dueDate?: string
   reason?: string
@@ -51,7 +50,6 @@ export interface CreateRequisitionDto {
 }
 
 export interface ApproveRequisitionDto {
-  approverId: number
   status: ApprovalStatus
   comment?: string
 }

@@ -8,13 +8,13 @@ import { useApproveRequisitionMutation } from '@/hooks/useRequisitions'
 import { ApprovalStatus } from '@/api/types/common.types'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
-export function ApprovalActionPanel({ requisitionId, approverId }: { requisitionId: number; approverId: number }) {
+export function ApprovalActionPanel({ requisitionId }: { requisitionId: number }) {
   const [comment, setComment] = useState('')
   const approve = useApproveRequisitionMutation(requisitionId)
 
   function act(status: ApprovalStatus.APPROVED | ApprovalStatus.REJECTED) {
     approve.mutate(
-      { approverId, status, comment: comment || undefined },
+      { status, comment: comment || undefined },
       {
         onSuccess: () => toast.success(status === ApprovalStatus.APPROVED ? 'อนุมัติเรียบร้อยแล้ว' : 'ปฏิเสธคำขอแล้ว'),
         onError: (error) => {

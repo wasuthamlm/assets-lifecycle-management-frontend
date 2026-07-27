@@ -10,6 +10,13 @@ export function useAssignmentsByAssetQuery(assetId: number | undefined) {
   })
 }
 
+export function usePendingReturnsQuery() {
+  return useQuery({
+    queryKey: ['assignments', 'pending-returns'],
+    queryFn: () => assignmentsService.listPendingReturns(),
+  })
+}
+
 export function useAssignmentQuery(id: number) {
   return useQuery({
     queryKey: ['assignments', id],
@@ -24,6 +31,7 @@ export function useIssueAssetMutation() {
     mutationFn: (dto: IssueAssetDto) => assignmentsService.issue(dto),
     onSuccess: (assignment) => {
       queryClient.invalidateQueries({ queryKey: ['assignments', 'asset', assignment.assetId] })
+      queryClient.invalidateQueries({ queryKey: ['assignments', 'pending-returns'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
     },
   })
@@ -36,6 +44,7 @@ export function useReturnAssetMutation(id: number) {
     onSuccess: (assignment) => {
       queryClient.invalidateQueries({ queryKey: ['assignments', 'asset', assignment.assetId] })
       queryClient.invalidateQueries({ queryKey: ['assignments', id] })
+      queryClient.invalidateQueries({ queryKey: ['assignments', 'pending-returns'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
     },
   })

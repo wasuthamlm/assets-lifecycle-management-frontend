@@ -61,7 +61,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
       const handle = (e: MouseEvent) => {
         if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
           setOpen(false)
-          onBlur?.({} as React.FocusEvent<HTMLSelectElement>)
+          if (internalRef.current) {
+            onBlur?.({ target: internalRef.current, currentTarget: internalRef.current } as unknown as React.FocusEvent<HTMLSelectElement>)
+          }
         }
       }
       document.addEventListener('mousedown', handle)
@@ -71,15 +73,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     function handleSelect(optValue: string) {
       if (!isControlled) {
         setUncontrolledValue(optValue)
-        if (internalRef.current) {
-          internalRef.current.value = optValue
-        }
+      }
+      if (internalRef.current) {
+        internalRef.current.value = optValue
       }
       setOpen(false)
-      onChange?.({
-        target: { value: optValue, name: props.name ?? '' },
-      } as React.ChangeEvent<HTMLSelectElement>)
-      onBlur?.({} as React.FocusEvent<HTMLSelectElement>)
+      const target = internalRef.current
+      if (target) {
+        onChange?.({ target, currentTarget: target } as unknown as React.ChangeEvent<HTMLSelectElement>)
+        onBlur?.({ target, currentTarget: target } as unknown as React.FocusEvent<HTMLSelectElement>)
+      }
     }
 
     const isEmpty = !selectedOption || selectedOption.value === ''

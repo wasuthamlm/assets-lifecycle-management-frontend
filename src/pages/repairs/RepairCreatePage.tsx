@@ -7,20 +7,18 @@ import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateRepairMutation } from '@/hooks/useRepairs'
 import { useAssetsQuery } from '@/hooks/useAssets'
-import { useEmployeesQuery } from '@/hooks/useEmployees'
 import { useVendorsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
-import { useAuthStore } from '@/stores/auth.store'
+import { optionalPositiveInt } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
 const formSchema = z.object({
   assetId: z.coerce.number().int().positive('กรุณาเลือกทรัพย์สิน'),
-  reportedBy: z.coerce.number().int().positive('กรุณาเลือกผู้แจ้งซ่อม'),
   problemDescription: z.string().optional(),
-  vendorId: z.coerce.number().int().positive().optional(),
+  vendorId: optionalPositiveInt(),
 })
 
 type FormValues = z.output<typeof formSchema>
@@ -30,10 +28,8 @@ export function RepairCreatePage() {
   usePageTitle('แจ้งซ่อม')
   const navigate = useNavigate()
   const create = useCreateRepairMutation()
-  const currentUser = useAuthStore((s) => s.user)
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = assetsPage?.data ?? []
-  const { data: employees = [] } = useEmployeesQuery()
   const { data: vendors = [] } = useVendorsQuery()
 
   const {
@@ -42,7 +38,6 @@ export function RepairCreatePage() {
     formState: { errors },
   } = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { reportedBy: currentUser?.employeeId ?? undefined },
   })
 
   function onSubmit(values: FormValues) {
@@ -62,7 +57,7 @@ export function RepairCreatePage() {
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -76,19 +71,6 @@ export function RepairCreatePage() {
               ))}
             </Select>
             {errors.assetId && <p className="mt-1 text-xs text-red-600">{errors.assetId.message}</p>}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้แจ้งซ่อม</label>
-            <Select {...register('reportedBy')}>
-              <option value="">เลือกพนักงาน</option>
-              {employees.map((e) => (
-                <option key={e.employeeId} value={e.employeeId}>
-                  {e.fullName}
-                </option>
-              ))}
-            </Select>
-            {errors.reportedBy && <p className="mt-1 text-xs text-red-600">{errors.reportedBy.message}</p>}
           </div>
 
           <div>

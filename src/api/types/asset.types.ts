@@ -22,6 +22,7 @@ export interface Asset {
   notes: string | null
   createdAt: string
   updatedAt: string | null
+  availableCount?: number
 }
 
 export interface CreateAssetDto {

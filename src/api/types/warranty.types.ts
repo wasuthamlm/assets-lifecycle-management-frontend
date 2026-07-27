@@ -22,5 +22,4 @@ export interface CreateWarrantyDto {
 
 export interface RenewWarrantyDto {
   newEndDate: string
-  performedBy: number
 }

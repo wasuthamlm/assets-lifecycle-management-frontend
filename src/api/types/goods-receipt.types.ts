@@ -48,7 +48,6 @@ export interface CreateGoodsReceiptDto {
   receiptNo: string
   poId?: number
   receiptDate?: string
-  receivedBy: number
   locationId: number
   notes?: string
   items: CreateGoodsReceiptItemDto[]

@@ -18,6 +18,5 @@ export interface CreateDisposalDto {
   disposalMethod: DisposalMethod
   disposalDate: string
   saleAmount?: number
-  approvedBy: number
   reason?: string
 }

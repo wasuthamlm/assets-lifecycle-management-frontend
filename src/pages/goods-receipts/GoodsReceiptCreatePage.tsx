@@ -5,7 +5,6 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateGoodsReceiptMutation } from '@/hooks/useGoodsReceipts'
 import { GoodsReceiptForm } from '@/components/goods-receipts/GoodsReceiptForm'
 import { Card } from '@/components/ui/Card'
-import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
@@ -13,7 +12,6 @@ export function GoodsReceiptCreatePage() {
   usePageTitle('บันทึกรับของ')
   const navigate = useNavigate()
   const create = useCreateGoodsReceiptMutation()
-  const currentUser = useAuthStore((s) => s.user)
 
   function handleSubmit(dto: CreateGoodsReceiptDto) {
     create.mutate(dto, {
@@ -32,12 +30,8 @@ export function GoodsReceiptCreatePage() {
   }
 
   return (
-    <Card className="max-w-3xl">
-      <GoodsReceiptForm
-        defaultReceivedBy={currentUser?.employeeId ?? undefined}
-        onSubmit={handleSubmit}
-        isSubmitting={create.isPending}
-      />
+    <Card>
+      <GoodsReceiptForm onSubmit={handleSubmit} isSubmitting={create.isPending} />
     </Card>
   )
 }

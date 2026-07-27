@@ -6,28 +6,27 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
-import { useEmployeesQuery } from '@/hooks/useEmployees'
 import { useAssetCategoriesQuery, useLocationsQuery } from '@/hooks/useMasterData'
 import { usePurchaseOrdersQuery } from '@/hooks/usePurchaseOrders'
+import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
 const itemSchema = z.object({
-  poItemId: z.coerce.number().int().positive().optional(),
+  poItemId: optionalPositiveInt(),
   assetNo: z.string().min(1, 'กรุณากรอกเลขทรัพย์สิน'),
   categoryId: z.coerce.number().int().positive('กรุณาเลือกหมวดหมู่'),
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
   serialNumber: z.string().optional(),
   brandModel: z.string().optional(),
-  purchaseCost: z.coerce.number().nonnegative().optional(),
-  warrantyExpireDate: z.string().optional(),
+  purchaseCost: optionalNonNegativeNumber(),
+  warrantyExpireDate: optionalDateString(),
   conditionOnReceipt: z.string().optional(),
 })
 
 const formSchema = z.object({
   receiptNo: z.string().min(1, 'กรุณากรอกเลขที่ใบรับของ'),
-  poId: z.coerce.number().int().positive().optional(),
-  receiptDate: z.string().optional(),
-  receivedBy: z.coerce.number().int().positive('กรุณาเลือกผู้รับของ'),
+  poId: optionalPositiveInt(),
+  receiptDate: optionalDateString(),
   locationId: z.coerce.number().int().positive('กรุณาเลือกสถานที่'),
   notes: z.string().optional(),
   items: z.array(itemSchema).min(1, 'กรุณาเพิ่มอย่างน้อย 1 รายการ'),
@@ -37,13 +36,11 @@ export type GoodsReceiptFormValues = z.output<typeof formSchema>
 type GoodsReceiptFormInput = z.input<typeof formSchema>
 
 interface GoodsReceiptFormProps {
-  defaultReceivedBy?: number
   onSubmit: (dto: CreateGoodsReceiptDto) => void
   isSubmitting?: boolean
 }
 
-export function GoodsReceiptForm({ defaultReceivedBy, onSubmit, isSubmitting }: GoodsReceiptFormProps) {
-  const { data: employees = [] } = useEmployeesQuery()
+export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormProps) {
   const { data: locations = [] } = useLocationsQuery()
   const { data: categories = [] } = useAssetCategoriesQuery()
   const { data: purchaseOrders = [] } = usePurchaseOrdersQuery()
@@ -58,7 +55,6 @@ export function GoodsReceiptForm({ defaultReceivedBy, onSubmit, isSubmitting }: 
     resolver: zodResolver(formSchema),
     defaultValues: {
       receiptNo: '',
-      receivedBy: defaultReceivedBy,
       items: [{ assetNo: '', assetName: '' }],
     },
   })
@@ -73,7 +69,6 @@ export function GoodsReceiptForm({ defaultReceivedBy, onSubmit, isSubmitting }: 
       receiptNo: values.receiptNo,
       poId: values.poId,
       receiptDate: values.receiptDate || undefined,
-      receivedBy: values.receivedBy,
       locationId: values.locationId,
       notes: values.notes,
       items: values.items.map((i) => ({
@@ -113,19 +108,6 @@ export function GoodsReceiptForm({ defaultReceivedBy, onSubmit, isSubmitting }: 
               </option>
             ))}
           </Select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้รับของ</label>
-          <Select {...register('receivedBy')}>
-            <option value="">เลือกพนักงาน</option>
-            {employees.map((e) => (
-              <option key={e.employeeId} value={e.employeeId}>
-                {e.fullName}
-              </option>
-            ))}
-          </Select>
-          {errors.receivedBy && <p className="mt-1 text-xs text-red-600">{errors.receivedBy.message}</p>}
         </div>
 
         <div>

@@ -3,12 +3,14 @@ import type { AssignmentType, HolderType, ReturnCondition } from './common.types
 export interface Assignment {
   assignmentId: number
   assetId: number
+  asset?: { assetId: number; assetNo: string; assetName: string } | null
   requisitionId: number | null
   assignmentType: AssignmentType
   holderType: HolderType
   holderId: number
   issuedDate: string
   issuedBy: number
+  issuedByEmployee?: { employeeId: number; fullName: string } | null
   dueDate: string | null
   returnedDate: string | null
   receivedBy: number | null
@@ -23,13 +25,11 @@ export interface IssueAssetDto {
   assignmentType: AssignmentType
   holderType: HolderType
   holderId: number
-  issuedBy: number
   dueDate?: string
   notes?: string
 }
 
 export interface ReturnAssetDto {
-  receivedBy: number
   returnCondition: ReturnCondition
   notes?: string
 }

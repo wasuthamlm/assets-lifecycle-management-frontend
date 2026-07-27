@@ -1,12 +1,12 @@
 import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
-import { useLogout } from '@/hooks/useAuth'
+import { useLogoutFlow } from '@/hooks/useLogoutFlow'
 
 export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
   const user = useAuthStore((s) => s.user)
   const toggleSidebar = useUiStore((s) => s.toggleSidebar)
-  const logout = useLogout()
+  const { handleLogout, modal } = useLogoutFlow()
 
   const displayName = user?.employee?.fullName ?? user?.username ?? '...'
   const initial = displayName.charAt(0).toUpperCase()
@@ -31,12 +31,13 @@ export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
       </button>
 
       <button
-        onClick={() => logout.mutate()}
+        onClick={handleLogout}
         className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white"
       >
         <LogOut size={16} />
         {!collapsed && <span>ออกจากระบบ</span>}
       </button>
+      {modal}
     </div>
   )
 }

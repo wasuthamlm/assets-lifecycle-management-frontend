@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom'
 import { useDisposalQuery } from '@/hooks/useDisposal'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { Card } from '@/components/ui/Card'
+import { DetailSheet } from '@/components/ui/Section'
+import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
@@ -21,8 +22,10 @@ export function DisposalDetailPage() {
   }
 
   return (
-    <Card className="max-w-2xl">
-      <div className="mb-4">
+    <div>
+      <BackLink />
+      <DetailSheet>
+      <div>
         <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
           {disposal.asset ? `${disposal.asset.assetNo} — ${disposal.asset.assetName}` : `ทรัพย์สิน #${disposal.assetId}`}
         </p>
@@ -55,6 +58,7 @@ export function DisposalDetailPage() {
           </div>
         )}
       </dl>
-    </Card>
+      </DetailSheet>
+    </div>
   )
 }

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
 const formSchema = z.object({
@@ -20,11 +21,11 @@ const formSchema = z.object({
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
   serialNumber: z.string().optional(),
   brandModel: z.string().optional(),
-  vendorId: z.coerce.number().int().positive().optional(),
-  purchaseDate: z.string().optional(),
-  purchaseCost: z.coerce.number().nonnegative().optional(),
-  warrantyExpireDate: z.string().optional(),
-  currentLocationId: z.coerce.number().int().positive().optional(),
+  vendorId: optionalPositiveInt(),
+  purchaseDate: optionalDateString(),
+  purchaseCost: optionalNonNegativeNumber(),
+  warrantyExpireDate: optionalDateString(),
+  currentLocationId: optionalPositiveInt(),
   notes: z.string().optional(),
 })
 
@@ -62,7 +63,7 @@ export function AssetCreatePage() {
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

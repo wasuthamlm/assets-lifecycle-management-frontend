@@ -7,13 +7,13 @@ import { toast } from 'sonner'
 import { AxiosError } from 'axios'
 import { useWarrantyQuery, useRenewWarrantyMutation } from '@/hooks/useWarranty'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { Card } from '@/components/ui/Card'
+import { DetailSheet } from '@/components/ui/Section'
+import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { WarrantyStatusPill } from '@/components/ui/StatusPill'
-import { useAuthStore } from '@/stores/auth.store'
 import { WarrantyStatus, type ApiErrorShape } from '@/api/types/common.types'
 import { formatThaiDate } from '@/lib/formatters'
 
@@ -30,7 +30,6 @@ export function WarrantyDetailPage() {
   usePageTitle(`ข้อมูลประกัน #${id}`)
   const { data: warranty, isLoading } = useWarrantyQuery(warrantyId)
   const renew = useRenewWarrantyMutation(warrantyId)
-  const currentUser = useAuthStore((s) => s.user)
   const [modalOpen, setModalOpen] = useState(false)
 
   const {
@@ -41,9 +40,8 @@ export function WarrantyDetailPage() {
   } = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(formSchema) })
 
   function onSubmit(values: FormValues) {
-    if (!currentUser?.employeeId) return
     renew.mutate(
-      { newEndDate: values.newEndDate, performedBy: currentUser.employeeId },
+      { newEndDate: values.newEndDate },
       {
         onSuccess: () => {
           toast.success('ต่ออายุประกันเรียบร้อยแล้ว')
@@ -70,9 +68,10 @@ export function WarrantyDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <Card>
-        <div className="mb-4 flex items-start justify-between">
+    <div>
+      <BackLink />
+      <DetailSheet>
+        <div className="flex items-start justify-between">
           <div>
             <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
               {warranty.asset ? `${warranty.asset.assetNo} — ${warranty.asset.assetName}` : `ทรัพย์สิน #${warranty.assetId}`}
@@ -82,7 +81,7 @@ export function WarrantyDetailPage() {
           <WarrantyStatusPill status={warranty.status} />
         </div>
 
-        <dl className="grid grid-cols-2 gap-4 text-sm">
+        <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
           <div>
             <dt className="text-slate-400">วันที่เริ่มคุ้มครอง</dt>
             <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(warranty.startDate)}</dd>
@@ -106,7 +105,7 @@ export function WarrantyDetailPage() {
             </Button>
           </div>
         )}
-      </Card>
+      </DetailSheet>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="ต่ออายุประกัน">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">

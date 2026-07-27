@@ -5,22 +5,21 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import { useEmployeesQuery } from '@/hooks/useEmployees'
 import { useAssetCategoriesQuery, useVendorsQuery } from '@/hooks/useMasterData'
+import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { CreatePurchaseOrderDto } from '@/api/types/purchase-order.types'
 
 const itemSchema = z.object({
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryId: optionalPositiveInt(),
   itemDescription: z.string().min(1, 'กรุณากรอกรายละเอียดสินค้า'),
   quantity: z.coerce.number().int().positive('จำนวนต้องมากกว่า 0'),
-  unitPrice: z.coerce.number().nonnegative().optional(),
+  unitPrice: optionalNonNegativeNumber(),
 })
 
 const formSchema = z.object({
   vendorId: z.coerce.number().int().positive('กรุณาเลือกผู้ขาย'),
-  orderDate: z.string().optional(),
-  expectedDeliveryDate: z.string().optional(),
-  requestedBy: z.coerce.number().int().positive('กรุณาเลือกผู้ขอซื้อ'),
+  orderDate: optionalDateString(),
+  expectedDeliveryDate: optionalDateString(),
   items: z.array(itemSchema).min(1, 'กรุณาเพิ่มอย่างน้อย 1 รายการ'),
 })
 
@@ -28,14 +27,12 @@ export type PurchaseOrderFormValues = z.output<typeof formSchema>
 type PurchaseOrderFormInput = z.input<typeof formSchema>
 
 interface PurchaseOrderFormProps {
-  defaultRequestedBy?: number
   defaultDocNo?: string
   onSubmit: (dto: CreatePurchaseOrderDto) => void
   isSubmitting?: boolean
 }
 
-export function PurchaseOrderForm({ defaultRequestedBy, defaultDocNo, onSubmit, isSubmitting }: PurchaseOrderFormProps) {
-  const { data: employees = [] } = useEmployeesQuery()
+export function PurchaseOrderForm({ defaultDocNo, onSubmit, isSubmitting }: PurchaseOrderFormProps) {
   const { data: vendors = [] } = useVendorsQuery()
   const { data: categories = [] } = useAssetCategoriesQuery()
 
@@ -47,7 +44,6 @@ export function PurchaseOrderForm({ defaultRequestedBy, defaultDocNo, onSubmit, 
   } = useForm<PurchaseOrderFormInput, unknown, PurchaseOrderFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      requestedBy: defaultRequestedBy,
       items: [{ itemDescription: '', quantity: 1 }],
     },
   })
@@ -59,7 +55,6 @@ export function PurchaseOrderForm({ defaultRequestedBy, defaultDocNo, onSubmit, 
       vendorId: values.vendorId,
       orderDate: values.orderDate || undefined,
       expectedDeliveryDate: values.expectedDeliveryDate || undefined,
-      requestedBy: values.requestedBy,
       items: values.items.map((i) => ({
         categoryId: i.categoryId,
         itemDescription: i.itemDescription,
@@ -93,19 +88,6 @@ export function PurchaseOrderForm({ defaultRequestedBy, defaultDocNo, onSubmit, 
             ))}
           </Select>
           {errors.vendorId && <p className="mt-1 text-xs text-red-600">{errors.vendorId.message}</p>}
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้ขอซื้อ</label>
-          <Select {...register('requestedBy')}>
-            <option value="">เลือกพนักงาน</option>
-            {employees.map((e) => (
-              <option key={e.employeeId} value={e.employeeId}>
-                {e.fullName}
-              </option>
-            ))}
-          </Select>
-          {errors.requestedBy && <p className="mt-1 text-xs text-red-600">{errors.requestedBy.message}</p>}
         </div>
 
         <div>

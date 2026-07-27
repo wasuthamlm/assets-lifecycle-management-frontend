@@ -7,23 +7,21 @@ import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateDisposalMutation } from '@/hooks/useDisposal'
 import { useAssetsQuery } from '@/hooks/useAssets'
-import { useEmployeesQuery } from '@/hooks/useEmployees'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
-import { useAuthStore } from '@/stores/auth.store'
 import { DisposalMethod } from '@/api/types/common.types'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
+import { optionalNonNegativeNumber } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
 const formSchema = z.object({
   assetId: z.coerce.number().int().positive('กรุณาเลือกทรัพย์สิน'),
   disposalMethod: z.nativeEnum(DisposalMethod),
   disposalDate: z.string().min(1, 'กรุณาเลือกวันที่จำหน่าย'),
-  saleAmount: z.coerce.number().nonnegative().optional(),
-  approvedBy: z.coerce.number().int().positive('กรุณาเลือกผู้อนุมัติ'),
+  saleAmount: optionalNonNegativeNumber(),
   reason: z.string().optional(),
 })
 
@@ -36,8 +34,6 @@ export function DisposalCreatePage() {
   const create = useCreateDisposalMutation()
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = assetsPage?.data ?? []
-  const { data: employees = [] } = useEmployeesQuery()
-  const currentUser = useAuthStore((s) => s.user)
 
   const {
     register,
@@ -47,7 +43,6 @@ export function DisposalCreatePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       disposalMethod: DisposalMethod.SOLD,
-      approvedBy: currentUser?.employeeId,
     },
   })
 
@@ -68,7 +63,7 @@ export function DisposalCreatePage() {
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -101,18 +96,6 @@ export function DisposalCreatePage() {
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">มูลค่าที่ขายได้ (บาท)</label>
             <Input type="number" step="0.01" {...register('saleAmount')} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้อนุมัติ</label>
-            <Select {...register('approvedBy')}>
-              <option value="">เลือกผู้อนุมัติ</option>
-              {employees.map((e) => (
-                <option key={e.employeeId} value={e.employeeId}>
-                  {e.fullName}
-                </option>
-              ))}
-            </Select>
-            {errors.approvedBy && <p className="mt-1 text-xs text-red-600">{errors.approvedBy.message}</p>}
           </div>
         </div>
 

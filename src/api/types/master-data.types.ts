@@ -5,6 +5,14 @@ export interface AssetCategory {
   parentCategoryId: number | null
 }
 
+export interface CreateAssetCategoryDto {
+  categoryName: string
+  assetType?: string
+  parentCategoryId?: number
+}
+
+export type UpdateAssetCategoryDto = Partial<CreateAssetCategoryDto>
+
 export interface Vendor {
   vendorId: number
   vendorName: string
@@ -24,3 +32,20 @@ export interface Company {
   companyId: number
   companyName: string
 }
+
+export interface AllowedDomain {
+  allowedDomainId: number
+  domain: string
+  companyId: number | null
+  company?: Company | null
+  isEnabled: boolean
+  createdAt: string
+}
+
+export interface CreateAllowedDomainDto {
+  domain: string
+  companyId?: number
+  isEnabled?: boolean
+}
+
+export type UpdateAllowedDomainDto = Partial<CreateAllowedDomainDto>

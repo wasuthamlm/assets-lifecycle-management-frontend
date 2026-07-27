@@ -9,14 +9,14 @@ import { useEmployeesQuery } from '@/hooks/useEmployees'
 import { useDepartmentsQuery, useLocationsQuery, useVendorsQuery } from '@/hooks/useMasterData'
 import { AssignmentType, HolderType } from '@/api/types/common.types'
 import { ASSIGNMENT_TYPE_LABEL, HOLDER_TYPE_LABEL } from '@/lib/constants'
+import { optionalDateString } from '@/lib/zodHelpers'
 import type { IssueAssetDto } from '@/api/types/assignment.types'
 
 const formSchema = z.object({
   assignmentType: z.nativeEnum(AssignmentType),
   holderType: z.nativeEnum(HolderType),
   holderId: z.coerce.number().int().positive('กรุณาเลือกผู้รับ'),
-  issuedBy: z.coerce.number().int().positive('กรุณาเลือกผู้เบิกจ่าย'),
-  dueDate: z.string().optional(),
+  dueDate: optionalDateString(),
   notes: z.string().optional(),
 })
 
@@ -25,12 +25,11 @@ type FormInput = z.input<typeof formSchema>
 
 interface IssueAssetFormProps {
   assetId: number
-  defaultIssuedBy?: number
   onSubmit: (dto: IssueAssetDto) => void
   isSubmitting?: boolean
 }
 
-export function IssueAssetForm({ assetId, defaultIssuedBy, onSubmit, isSubmitting }: IssueAssetFormProps) {
+export function IssueAssetForm({ assetId, onSubmit, isSubmitting }: IssueAssetFormProps) {
   const { data: employees = [] } = useEmployeesQuery()
   const { data: departments = [] } = useDepartmentsQuery()
   const { data: locations = [] } = useLocationsQuery()
@@ -46,7 +45,6 @@ export function IssueAssetForm({ assetId, defaultIssuedBy, onSubmit, isSubmittin
     defaultValues: {
       assignmentType: AssignmentType.PERMANENT,
       holderType: HolderType.EMPLOYEE,
-      issuedBy: defaultIssuedBy,
     },
   })
 
@@ -59,7 +57,6 @@ export function IssueAssetForm({ assetId, defaultIssuedBy, onSubmit, isSubmittin
       assignmentType: values.assignmentType,
       holderType: values.holderType,
       holderId: values.holderId,
-      issuedBy: values.issuedBy,
       dueDate: values.dueDate || undefined,
       notes: values.notes,
     })
@@ -132,19 +129,6 @@ export function IssueAssetForm({ assetId, defaultIssuedBy, onSubmit, isSubmittin
           </Select>
         )}
         {errors.holderId && <p className="mt-1 text-xs text-red-600">{errors.holderId.message}</p>}
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้ดำเนินการเบิกจ่าย</label>
-        <Select {...register('issuedBy')}>
-          <option value="">เลือกพนักงาน</option>
-          {employees.map((e) => (
-            <option key={e.employeeId} value={e.employeeId}>
-              {e.fullName}
-            </option>
-          ))}
-        </Select>
-        {errors.issuedBy && <p className="mt-1 text-xs text-red-600">{errors.issuedBy.message}</p>}
       </div>
 
       {assignmentType !== AssignmentType.PERMANENT && (

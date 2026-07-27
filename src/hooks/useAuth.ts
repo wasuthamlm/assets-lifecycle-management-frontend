@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
@@ -33,17 +33,11 @@ export function useLogin() {
   })
 }
 
+// หมายเหตุ: ไม่ clear token/navigate ทันทีตอน logout สำเร็จ — ปล่อยให้ผู้เรียกใช้ (useLogoutFlow)
+// เป็นคนสั่ง clear/navigate เอง หลังจากผู้ใช้ปิด modal ยืนยันแล้ว ไม่งั้น ProtectedRoute จะ redirect
+// ไป /login ทันทีที่ accessToken หายไป ก่อนที่ modal จะทันได้แสดงผล
 export function useLogout() {
-  const clear = useAuthStore((s) => s.clear)
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: () => authService.logout(),
-    onSettled: () => {
-      clear()
-      queryClient.clear()
-      navigate('/login')
-    },
   })
 }

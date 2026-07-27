@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Trash2, Eye } from 'lucide-react'
@@ -13,17 +13,17 @@ import { useAssetsQuery } from '@/hooks/useAssets'
 import { RequestType } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
+import { optionalDateString, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { CreateRequisitionDto } from '@/api/types/requisition.types'
 
 const itemSchema = z.object({
-  assetId: z.coerce.number().int().positive().optional(),
-  quantity: z.coerce.number().int().positive().optional(),
+  assetId: optionalPositiveInt(),
+  quantity: optionalPositiveInt(),
 })
 
 const formSchema = z.object({
-  requestedBy: z.coerce.number().int().positive('กรุณาเลือกผู้ขอเบิก'),
   requestType: z.nativeEnum(RequestType),
-  dueDate: z.string().optional(),
+  dueDate: optionalDateString(),
   reason: z.string().optional(),
   items: z.array(itemSchema).min(1, 'กรุณาเพิ่มอย่างน้อย 1 รายการ'),
   approverIds: z
@@ -35,15 +35,15 @@ export type RequisitionFormValues = z.output<typeof formSchema>
 type RequisitionFormInput = z.input<typeof formSchema>
 
 interface RequisitionFormProps {
-  defaultRequestedBy?: number
+  requestedByName?: string
   defaultDocNo?: string
+  defaultAssetId?: number
   onSubmit: (dto: CreateRequisitionDto) => void
   isSubmitting?: boolean
 }
 
 function toDto(values: RequisitionFormValues): CreateRequisitionDto {
   return {
-    requestedBy: values.requestedBy,
     requestType: values.requestType,
     dueDate: values.requestType === RequestType.BORROW ? values.dueDate : undefined,
     reason: values.reason,
@@ -52,10 +52,18 @@ function toDto(values: RequisitionFormValues): CreateRequisitionDto {
   }
 }
 
-export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, isSubmitting }: RequisitionFormProps) {
+export function RequisitionForm({
+  requestedByName,
+  defaultDocNo,
+  defaultAssetId,
+  onSubmit,
+  isSubmitting,
+}: RequisitionFormProps) {
   const { data: employees = [] } = useEmployeeDirectoryQuery()
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = assetsPage?.data ?? []
+  // ซ่อนทรัพย์สินที่ไม่เหลือของว่างให้เบิก/ยืม ออกจาก dropdown เลือกรายการ (เผื่อ defaultAssetId ที่เลือกไว้แล้วเสมอ)
+  const selectableAssets = assets.filter((a) => (a.availableCount ?? 0) > 0 || a.assetId === defaultAssetId)
   const [previewValues, setPreviewValues] = useState<RequisitionFormValues | null>(null)
 
   const {
@@ -67,9 +75,8 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
   } = useForm<RequisitionFormInput, unknown, RequisitionFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      requestedBy: defaultRequestedBy,
       requestType: RequestType.WITHDRAW,
-      items: [{}],
+      items: [defaultAssetId ? { assetId: defaultAssetId, quantity: 1 } : {}],
       approverIds: [{ employeeId: undefined as unknown as number }],
     },
   })
@@ -99,15 +106,9 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้ขอเบิก</label>
-          <Select {...register('requestedBy')}>
-            <option value="">เลือกพนักงาน</option>
-            {employees.map((e) => (
-              <option key={e.employeeId} value={e.employeeId}>
-                {e.fullName}
-              </option>
-            ))}
-          </Select>
-          {errors.requestedBy && <p className="mt-1 text-xs text-red-600">{errors.requestedBy.message}</p>}
+          <div className="flex h-10 items-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
+            {requestedByName ?? 'บัญชีของคุณ'}
+          </div>
         </div>
 
         <div>
@@ -144,14 +145,26 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
         <div className="space-y-2">
           {itemsArray.fields.map((field, idx) => (
             <div key={field.id} className="flex items-center gap-2">
-              <Select {...register(`items.${idx}.assetId` as const)} className="flex-1">
-                <option value="">เลือกทรัพย์สิน</option>
-                {assets.map((a) => (
-                  <option key={a.assetId} value={a.assetId}>
-                    {a.assetNo} — {a.assetName}
-                  </option>
-                ))}
-              </Select>
+              <Controller
+                control={control}
+                name={`items.${idx}.assetId` as const}
+                render={({ field: assetField }) => (
+                  <Select
+                    value={assetField.value ?? ''}
+                    onChange={(e) => assetField.onChange(e.target.value)}
+                    onBlur={assetField.onBlur}
+                    name={assetField.name}
+                    className="flex-1"
+                  >
+                    <option value="">เลือกทรัพย์สิน</option>
+                    {selectableAssets.map((a) => (
+                      <option key={a.assetId} value={a.assetId}>
+                        {a.assetNo} — {a.assetName}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
               <Input
                 type="number"
                 min={1}
@@ -228,7 +241,7 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-xs text-slate-400">ผู้ขอเบิก</p>
-                <p className="font-medium text-slate-800 dark:text-slate-100">{employeeName(previewValues.requestedBy)}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-100">{requestedByName ?? 'บัญชีของคุณ'}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-400">ประเภทคำขอ</p>

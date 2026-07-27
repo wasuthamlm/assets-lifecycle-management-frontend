@@ -15,6 +15,10 @@ export const assignmentsService = {
     const { data } = await apiClient.get<Assignment[]>(ENDPOINTS.assignments.byAsset(assetId))
     return data
   },
+  async listPendingReturns(): Promise<Assignment[]> {
+    const { data } = await apiClient.get<Assignment[]>(ENDPOINTS.assignments.base)
+    return data
+  },
   async get(id: number): Promise<Assignment> {
     const { data } = await apiClient.get<Assignment>(ENDPOINTS.assignments.byId(id))
     return data

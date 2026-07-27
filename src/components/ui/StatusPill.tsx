@@ -61,6 +61,14 @@ export function AssetStatusPill({ status }: { status: AssetStatus }) {
   return <Pill className={ASSET_COLORS[status]}>{ASSET_STATUS_LABEL[status]}</Pill>
 }
 
+export function AvailabilityPill({ available }: { available: boolean }) {
+  return available ? (
+    <Pill className="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">ทำรายการได้</Pill>
+  ) : (
+    <Pill className="bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400">ไม่สามารถทำรายการได้</Pill>
+  )
+}
+
 export function PoStatusPill({ status }: { status: PoStatus }) {
   return <Pill className={PO_COLORS[status]}>{PO_STATUS_LABEL[status]}</Pill>
 }

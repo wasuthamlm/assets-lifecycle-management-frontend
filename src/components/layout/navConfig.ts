@@ -15,7 +15,6 @@ import {
   CheckSquare,
   BarChart3,
   Users,
-  Building2,
   KeyRound,
   Settings,
   type LucideIcon,
@@ -57,7 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'ทรัพย์สิน', href: '/assets', icon: Boxes, permission: 'asset.view' },
       { label: 'ใบขอเบิก/ยืม', href: '/requisitions', icon: ClipboardList, permission: 'requisition.view_all' },
-      { label: 'การเบิก-จ่าย/รับคืน', href: '/assignments', icon: ArrowLeftRight, permission: 'assignment.view' },
+      { label: 'การเบิก-จ่าย/รับคืน', href: '/assignments', icon: ArrowLeftRight, permission: 'assignment.return' },
       { label: 'ใบสั่งซื้อ', href: '/purchasing', icon: ShoppingCart, permission: 'po.view' },
       { label: 'รับเข้าสินค้า', href: '/goods-receipts', icon: PackageCheck, permission: 'goods_receipt.view' },
       { label: 'คลังพัสดุสิ้นเปลือง', href: '/stock', icon: Warehouse, permission: 'stock.view' },
@@ -80,7 +79,6 @@ export const NAV_GROUPS: NavGroup[] = [
     adminOnly: true,
     items: [
       { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: 'employee.view_all' },
-      { label: 'ข้อมูลหลัก', href: '/master-data', icon: Building2, permission: 'master.manage' },
       { label: 'สิทธิ์การใช้งาน', href: '/roles-permissions', icon: KeyRound, permission: 'rbac.manage' },
       { label: 'ตั้งค่า', href: '/settings', icon: Settings },
     ],

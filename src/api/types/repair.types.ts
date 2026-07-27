@@ -19,7 +19,6 @@ export interface Repair {
 
 export interface CreateRepairDto {
   assetId: number
-  reportedBy: number
   problemDescription?: string
   vendorId?: number
 }

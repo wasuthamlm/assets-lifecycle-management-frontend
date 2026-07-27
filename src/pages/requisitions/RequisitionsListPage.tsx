@@ -10,6 +10,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
+import { RequestType } from '@/api/types/common.types'
 import type { Requisition } from '@/api/types/requisition.types'
 
 export function RequisitionsListPage() {
@@ -28,6 +29,11 @@ export function RequisitionsListPage() {
     { key: 'no', header: 'เลขที่เอกสาร', render: (r) => <span className="font-medium">{r.requisitionNo}</span> },
     { key: 'requester', header: 'ผู้ขอเบิก', render: (r) => r.requestedByEmployee?.fullName ?? '-' },
     { key: 'type', header: 'ประเภท', render: (r) => REQUEST_TYPE_LABEL[r.requestType] },
+    {
+      key: 'dueDate',
+      header: 'วันคืน',
+      render: (r) => (r.requestType === RequestType.BORROW && r.dueDate ? formatThaiDate(r.dueDate) : '-'),
+    },
     { key: 'status', header: 'สถานะ', render: (r) => <ApprovalStatusPill status={r.overallStatus} /> },
     { key: 'date', header: 'วันที่สร้าง', render: (r) => formatThaiDate(r.createdAt) },
   ]

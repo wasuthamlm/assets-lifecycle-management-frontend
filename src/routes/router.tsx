@@ -30,7 +30,6 @@ import { DisposalDetailPage } from '@/pages/disposal/DisposalDetailPage'
 import { StockListPage } from '@/pages/stock/StockListPage'
 import { StockCreatePage } from '@/pages/stock/StockCreatePage'
 import { MovementsListPage } from '@/pages/movements/MovementsListPage'
-import { MasterDataPage } from '@/pages/master-data/MasterDataPage'
 import { EmployeesListPage } from '@/pages/employees/EmployeesListPage'
 import { UsersListPage } from '@/pages/users/UsersListPage'
 import { RolesPermissionsPage } from '@/pages/roles-permissions/RolesPermissionsPage'
@@ -86,8 +85,13 @@ export const router = createBrowserRouter([
             children: [{ path: '/assets/new', element: <AssetCreatePage /> }],
           },
 
-          { path: '/assignments', element: <AssignmentsListPage /> },
-          { path: '/assignments/:id', element: <AssignmentDetailPage /> },
+          {
+            element: <PermissionRoute permission="assignment.return" />,
+            children: [
+              { path: '/assignments', element: <AssignmentsListPage /> },
+              { path: '/assignments/:id', element: <AssignmentDetailPage /> },
+            ],
+          },
 
           {
             element: <PermissionRoute permission="po.view" />,
@@ -157,10 +161,6 @@ export const router = createBrowserRouter([
           {
             element: <PermissionRoute permission="employee.view_all" />,
             children: [{ path: '/employees', element: <EmployeesListPage /> }],
-          },
-          {
-            element: <PermissionRoute permission="master.manage" />,
-            children: [{ path: '/master-data', element: <MasterDataPage /> }],
           },
           {
             element: <PermissionRoute permission="rbac.manage" />,

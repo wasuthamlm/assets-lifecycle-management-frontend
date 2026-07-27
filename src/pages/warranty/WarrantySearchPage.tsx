@@ -19,11 +19,12 @@ import { Modal } from '@/components/ui/Modal'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { WarrantyStatusPill } from '@/components/ui/StatusPill'
 import { formatThaiDate } from '@/lib/formatters'
+import { optionalPositiveInt } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import type { Warranty } from '@/api/types/warranty.types'
 
 const formSchema = z.object({
-  vendorId: z.coerce.number().int().positive().optional(),
+  vendorId: optionalPositiveInt(),
   startDate: z.string().min(1, 'กรุณาเลือกวันที่เริ่มคุ้มครอง'),
   endDate: z.string().min(1, 'กรุณาเลือกวันที่สิ้นสุด'),
   coverageDetail: z.string().optional(),

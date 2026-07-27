@@ -38,11 +38,9 @@ export interface CreatePurchaseOrderDto {
   vendorId: number
   orderDate?: string
   expectedDeliveryDate?: string
-  requestedBy: number
   items: CreatePurchaseOrderItemDto[]
 }
 
 export interface UpdatePurchaseOrderStatusDto {
   status: PoStatus
-  approvedBy?: number
 }

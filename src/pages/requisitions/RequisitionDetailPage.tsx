@@ -1,9 +1,11 @@
 import { useParams } from 'react-router-dom'
 import { useRequisitionQuery } from '@/hooks/useRequisitions'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { Card } from '@/components/ui/Card'
+import { DetailSheet, Section } from '@/components/ui/Section'
+import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
+import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { ApprovalActionPanel } from '@/components/requisitions/ApprovalActionPanel'
 import { useAuthStore } from '@/stores/auth.store'
 import { ApprovalStatus } from '@/api/types/common.types'
@@ -29,71 +31,78 @@ export function RequisitionDetailPage() {
   const pendingApproval = sortedApprovals.find((a) => a.status === ApprovalStatus.PENDING)
   const isMyTurn = !!currentUser?.employeeId && pendingApproval?.approverId === currentUser.employeeId
 
+  const approvalSteps: TimelineStep[] = sortedApprovals.map((approval) => ({
+    label: `ลำดับ ${approval.approvalLevel} · ${approval.approver?.fullName ?? '-'}`,
+    timestamp: approval.actionedAt ? formatThaiDate(approval.actionedAt) : undefined,
+    description: approval.comment ?? undefined,
+    status:
+      approval.status === ApprovalStatus.APPROVED
+        ? 'done'
+        : approval.status === ApprovalStatus.REJECTED
+          ? 'rejected'
+          : approval.approvalId === pendingApproval?.approvalId
+            ? 'current'
+            : 'pending',
+  }))
+
   return (
-    <div className="max-w-3xl space-y-6">
-      <Card>
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">{requisition.requisitionNo}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {REQUEST_TYPE_LABEL[requisition.requestType]} · โดย {requisition.requestedByEmployee?.fullName ?? '-'}
-            </p>
-          </div>
-          <ApprovalStatusPill status={requisition.overallStatus} />
-        </div>
-
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt className="text-slate-400">วันที่สร้าง</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(requisition.createdAt)}</dd>
-          </div>
-          {requisition.dueDate && (
+    <div>
+      <BackLink />
+      <DetailSheet>
+        <Section>
+          <div className="flex items-start justify-between">
             <div>
-              <dt className="text-slate-400">กำหนดคืน</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(requisition.dueDate)}</dd>
+              <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">{requisition.requisitionNo}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {REQUEST_TYPE_LABEL[requisition.requestType]} · โดย {requisition.requestedByEmployee?.fullName ?? '-'}
+              </p>
             </div>
-          )}
-          {requisition.reason && (
-            <div className="col-span-2">
-              <dt className="text-slate-400">เหตุผล</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{requisition.reason}</dd>
-            </div>
-          )}
-        </dl>
-      </Card>
+            <ApprovalStatusPill status={requisition.overallStatus} />
+          </div>
 
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">รายการทรัพย์สิน</h3>
-        <div className="divide-y divide-slate-50 dark:divide-slate-800/60">
-          {requisition.items.map((item) => (
-            <div key={item.requisitionItemId} className="flex items-center justify-between py-2 text-sm">
-              <span className="text-slate-700 dark:text-slate-200">
-                {item.asset ? `${item.asset.assetNo} — ${item.asset.assetName}` : `Stock item #${item.stockItemId}`}
-              </span>
-              {item.quantity && <span className="text-slate-400">x{item.quantity}</span>}
+          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-slate-400">วันที่สร้าง</dt>
+              <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(requisition.createdAt)}</dd>
             </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">ลำดับการอนุมัติ</h3>
-        <div className="space-y-3">
-          {sortedApprovals.map((approval) => (
-            <div key={approval.approvalId} className="flex items-center justify-between text-sm">
+            {requisition.dueDate && (
               <div>
-                <span className="text-slate-400">ลำดับ {approval.approvalLevel} · </span>
-                <span className="text-slate-700 dark:text-slate-200">{approval.approver?.fullName ?? '-'}</span>
+                <dt className="text-slate-400">กำหนดคืน</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(requisition.dueDate)}</dd>
               </div>
-              <ApprovalStatusPill status={approval.status} />
-            </div>
-          ))}
-        </div>
-      </Card>
+            )}
+            {requisition.reason && (
+              <div className="col-span-2">
+                <dt className="text-slate-400">เหตุผล</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{requisition.reason}</dd>
+              </div>
+            )}
+          </dl>
+        </Section>
 
-      {isMyTurn && pendingApproval && (
-        <ApprovalActionPanel requisitionId={requisition.requisitionId} approverId={pendingApproval.approverId} />
-      )}
+        <Section title="รายการทรัพย์สิน">
+          <div className="divide-y divide-slate-50 dark:divide-slate-800/60">
+            {requisition.items.map((item) => (
+              <div key={item.requisitionItemId} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-slate-700 dark:text-slate-200">
+                  {item.asset ? `${item.asset.assetNo} — ${item.asset.assetName}` : `Stock item #${item.stockItemId}`}
+                </span>
+                {item.quantity && <span className="text-slate-400">x{item.quantity}</span>}
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="ลำดับการอนุมัติ">
+          <Timeline steps={approvalSteps} />
+        </Section>
+
+        {isMyTurn && pendingApproval && (
+          <Section>
+            <ApprovalActionPanel requisitionId={requisition.requisitionId} />
+          </Section>
+        )}
+      </DetailSheet>
     </div>
   )
 }

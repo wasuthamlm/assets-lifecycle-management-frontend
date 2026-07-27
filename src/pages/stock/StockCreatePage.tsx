@@ -53,7 +53,7 @@ export function StockCreatePage() {
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

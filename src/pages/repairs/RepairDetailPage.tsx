@@ -5,13 +5,15 @@ import { AxiosError } from 'axios'
 import { useRepairQuery, useUpdateRepairStatusMutation } from '@/hooks/useRepairs'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
-import { Card } from '@/components/ui/Card'
+import { DetailSheet, Section } from '@/components/ui/Section'
+import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { RepairStatusPill } from '@/components/ui/StatusPill'
+import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { RepairResult, RepairStatus } from '@/api/types/common.types'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import { REPAIR_RESULT_LABEL, REPAIR_STATUS_LABEL } from '@/lib/constants'
@@ -66,66 +68,77 @@ export function RepairDetailPage() {
     )
   }
 
+  const rank: Record<RepairStatus, number> = {
+    [RepairStatus.REPORTED]: 0,
+    [RepairStatus.REPAIRING]: 1,
+    [RepairStatus.SENT_TO_VENDOR]: 1,
+    [RepairStatus.REPAIRED]: 2,
+    [RepairStatus.CLOSED]: 3,
+  }
+  const currentRank = rank[repair.status]
+  const steps: TimelineStep[] = [
+    { label: 'แจ้งซ่อม', timestamp: formatThaiDate(repair.createdAt), status: 'done' },
+    {
+      label: 'ดำเนินการซ่อม',
+      timestamp: repair.sentToVendorDate ? formatThaiDate(repair.sentToVendorDate) : undefined,
+      description: repair.vendor ? `ส่งซ่อม: ${repair.vendor.vendorName}` : 'ซ่อมภายใน',
+      status: currentRank > 1 ? 'done' : currentRank === 1 ? 'current' : 'pending',
+    },
+    {
+      label: 'ซ่อมเสร็จ',
+      timestamp: repair.repairedDate ? formatThaiDate(repair.repairedDate) : undefined,
+      description: repair.result ? REPAIR_RESULT_LABEL[repair.result] : undefined,
+      status: currentRank > 2 ? 'done' : currentRank === 2 ? 'current' : 'pending',
+    },
+    {
+      label: 'ปิดงาน',
+      status: currentRank === 3 ? 'done' : 'pending',
+    },
+  ]
+
   return (
-    <div className="max-w-2xl space-y-6">
-      <Card>
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {repair.asset ? `${repair.asset.assetNo} — ${repair.asset.assetName}` : `ทรัพย์สิน #${repair.assetId}`}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">ผู้รับซ่อม: {repair.vendor?.vendorName ?? 'ซ่อมภายใน'}</p>
+    <div>
+      <BackLink />
+      <DetailSheet>
+        <Section>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                {repair.asset ? `${repair.asset.assetNo} — ${repair.asset.assetName}` : `ทรัพย์สิน #${repair.assetId}`}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">ผู้รับซ่อม: {repair.vendor?.vendorName ?? 'ซ่อมภายใน'}</p>
+            </div>
+            <RepairStatusPill status={repair.status} />
           </div>
-          <RepairStatusPill status={repair.status} />
-        </div>
 
-        <dl className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt className="text-slate-400">วันที่แจ้งซ่อม</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(repair.createdAt)}</dd>
-          </div>
-          {repair.sentToVendorDate && (
-            <div>
-              <dt className="text-slate-400">วันที่ส่งซ่อม</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(repair.sentToVendorDate)}</dd>
-            </div>
-          )}
-          {repair.repairedDate && (
-            <div>
-              <dt className="text-slate-400">วันที่ซ่อมเสร็จ</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(repair.repairedDate)}</dd>
-            </div>
-          )}
-          {repair.result && (
-            <div>
-              <dt className="text-slate-400">ผลการซ่อม</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{REPAIR_RESULT_LABEL[repair.result]}</dd>
-            </div>
-          )}
-          {repair.repairCost != null && (
-            <div>
-              <dt className="text-slate-400">ค่าใช้จ่าย</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{formatCurrency(repair.repairCost)} บาท</dd>
-            </div>
-          )}
-          {repair.problemDescription && (
-            <div className="col-span-2">
-              <dt className="text-slate-400">รายละเอียดปัญหา</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{repair.problemDescription}</dd>
-            </div>
-          )}
-          {repair.notes && (
-            <div className="col-span-2">
-              <dt className="text-slate-400">หมายเหตุ</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{repair.notes}</dd>
-            </div>
-          )}
-        </dl>
-      </Card>
+          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+            {repair.repairCost != null && (
+              <div>
+                <dt className="text-slate-400">ค่าใช้จ่าย</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{formatCurrency(repair.repairCost)} บาท</dd>
+              </div>
+            )}
+            {repair.problemDescription && (
+              <div className="col-span-2">
+                <dt className="text-slate-400">รายละเอียดปัญหา</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{repair.problemDescription}</dd>
+              </div>
+            )}
+            {repair.notes && (
+              <div className="col-span-2">
+                <dt className="text-slate-400">หมายเหตุ</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{repair.notes}</dd>
+              </div>
+            )}
+          </dl>
+        </Section>
 
-      {hasPermission('repair.update') && repair.status !== RepairStatus.CLOSED && (
-        <Card className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">อัปเดตสถานะงานซ่อม</h3>
+        <Section title="ความคืบหน้า">
+          <Timeline steps={steps} />
+        </Section>
+
+        {hasPermission('repair.update') && repair.status !== RepairStatus.CLOSED && (
+        <Section title="อัปเดตสถานะงานซ่อม" className="space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">สถานะใหม่</label>
             <Select value={status} onChange={(e) => setStatus(e.target.value as RepairStatus)} className="max-w-xs">
@@ -172,8 +185,9 @@ export function RepairDetailPage() {
           <Button onClick={handleUpdate} disabled={!status || updateStatus.isPending}>
             {updateStatus.isPending ? 'กำลังบันทึก...' : 'บันทึกสถานะ'}
           </Button>
-        </Card>
-      )}
+        </Section>
+        )}
+      </DetailSheet>
     </div>
   )
 }

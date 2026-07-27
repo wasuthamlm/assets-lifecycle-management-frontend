@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, ClipboardList } from 'lucide-react'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { usePermission } from '@/hooks/usePermission'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { AssetStatusPill } from '@/components/ui/StatusPill'
-import { formatCurrency } from '@/lib/formatters'
+import { AvailabilityPill } from '@/components/ui/StatusPill'
 import type { Asset } from '@/api/types/asset.types'
 
 const PAGE_SIZE = 20
@@ -16,6 +16,7 @@ const PAGE_SIZE = 20
 export function AssetsListPage() {
   usePageTitle('ทรัพย์สิน')
   const navigate = useNavigate()
+  const { hasPermission } = usePermission()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const { data, isLoading } = useAssetsQuery({ search: search || undefined, page, limit: PAGE_SIZE })
@@ -24,8 +25,25 @@ export function AssetsListPage() {
     { key: 'no', header: 'เลขทรัพย์สิน', render: (a) => <span className="font-medium">{a.assetNo}</span> },
     { key: 'name', header: 'ชื่อทรัพย์สิน', render: (a) => a.assetName },
     { key: 'category', header: 'หมวดหมู่', render: (a) => a.category?.categoryName ?? '-' },
-    { key: 'status', header: 'สถานะ', render: (a) => (a.currentStatus ? <AssetStatusPill status={a.currentStatus} /> : '-') },
-    { key: 'cost', header: 'มูลค่า', render: (a) => (a.purchaseCost != null ? `${formatCurrency(a.purchaseCost)} บาท` : '-') },
+    { key: 'status', header: 'สถานะ', render: (a) => <AvailabilityPill available={(a.availableCount ?? 0) > 0} /> },
+    { key: 'available', header: 'จำนวนชิ้นที่เหลืออยู่', render: (a) => a.availableCount ?? 0 },
+    {
+      key: 'action',
+      header: '',
+      render: (a) => (
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={(a.availableCount ?? 0) === 0}
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate(`/requisitions/new?assetId=${a.assetId}`)
+          }}
+        >
+          <ClipboardList size={14} /> ทำรายการ เบิก/ยืม
+        </Button>
+      ),
+    },
   ]
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
@@ -42,9 +60,11 @@ export function AssetsListPage() {
           placeholder="ค้นหาเลขทรัพย์สิน, ชื่อ, S/N..."
           className="max-w-xs"
         />
-        <Button onClick={() => navigate('/assets/new')}>
-          <Plus size={16} /> ลงทะเบียนทรัพย์สินใหม่
-        </Button>
+        {hasPermission('asset.create') && (
+          <Button onClick={() => navigate('/assets/new')}>
+            <Plus size={16} /> ลงทะเบียนทรัพย์สินใหม่
+          </Button>
+        )}
       </div>
 
       <Card className="p-0">

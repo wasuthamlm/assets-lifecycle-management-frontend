@@ -28,6 +28,7 @@ export const ENDPOINTS = {
   },
   assetCategories: {
     base: '/asset-categories',
+    byId: (id: number) => `/asset-categories/${id}`,
   },
   purchaseOrders: {
     base: '/purchase-orders',
@@ -78,6 +79,10 @@ export const ENDPOINTS = {
   },
   companies: {
     base: '/companies',
+  },
+  allowedDomains: {
+    base: '/allowed-domains',
+    byId: (id: number) => `/allowed-domains/${id}`,
   },
   users: {
     base: '/users',

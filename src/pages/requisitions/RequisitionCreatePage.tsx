@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -12,9 +12,12 @@ import type { CreateRequisitionDto } from '@/api/types/requisition.types'
 export function RequisitionCreatePage() {
   usePageTitle('สร้างใบขอเบิก/ยืม')
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const create = useCreateRequisitionMutation()
   const currentUser = useAuthStore((s) => s.user)
   const nextDocNo = useNextRequisitionNo()
+  const assetIdParam = searchParams.get('assetId')
+  const defaultAssetId = assetIdParam ? Number(assetIdParam) : undefined
 
   function handleSubmit(dto: CreateRequisitionDto) {
     create.mutate(dto, {
@@ -33,10 +36,11 @@ export function RequisitionCreatePage() {
   }
 
   return (
-    <Card className="max-w-3xl">
+    <Card>
       <RequisitionForm
-        defaultRequestedBy={currentUser?.employeeId ?? undefined}
+        requestedByName={currentUser?.employee?.fullName ?? currentUser?.username}
         defaultDocNo={nextDocNo}
+        defaultAssetId={defaultAssetId}
         onSubmit={handleSubmit}
         isSubmitting={create.isPending}
       />
