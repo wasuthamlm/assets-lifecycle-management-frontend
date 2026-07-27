@@ -16,3 +16,10 @@ export interface Employee {
   email: string | null
   phone: string | null
 }
+
+export interface EmployeeDirectoryEntry {
+  employeeId: number
+  fullName: string
+  departmentId: number | null
+  position: string | null
+}

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requisitionsService } from '@/api/services/requisitions.service'
-import { generateNextDocNo } from '@/lib/docNo'
 import type { ApproveRequisitionDto, CreateRequisitionDto } from '@/api/types/requisition.types'
 
 export function useRequisitionsQuery() {
@@ -10,9 +9,14 @@ export function useRequisitionsQuery() {
   })
 }
 
+// เลขที่เอกสารเป็นแค่ preview ฝั่ง client — ตัวจริง server คำนวณอีกครั้งตอนบันทึก (กัน race condition)
+// เรียก endpoint เบา ๆ ที่ใช้สิทธิ์ requisition.create เท่านั้น ไม่ต้องมี view_all
 export function useNextRequisitionNo() {
-  const { data = [] } = useRequisitionsQuery()
-  return generateNextDocNo(data.map((r) => r.requisitionNo), 'REQ')
+  const { data } = useQuery({
+    queryKey: ['requisitions', 'next-no'],
+    queryFn: () => requisitionsService.nextNo(),
+  })
+  return data
 }
 
 export function useRequisitionQuery(id: number) {

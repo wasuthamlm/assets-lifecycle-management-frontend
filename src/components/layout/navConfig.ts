@@ -38,6 +38,7 @@ export const NAV_TOP: NavItem = {
   label: 'แดชบอร์ด',
   href: '/dashboard',
   icon: LayoutDashboard,
+  permission: 'dashboard.view',
 }
 
 export const NAV_CREATE_GROUP = {
@@ -68,17 +69,17 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: '',
     items: [
-      { label: 'ประวัติการเคลื่อนไหว', href: '/movements', icon: History, permission: 'movement.view' },
+      { label: 'ประวัติการเคลื่อนไหว', href: '/movements', icon: History, permission: 'asset.view' },
       { label: 'รายการของฉัน', href: '/my-items', icon: User },
       { label: 'รออนุมัติ', href: '/approvals', icon: CheckSquare, permission: 'requisition.approve' },
-      { label: 'รายงาน', href: '/reports', icon: BarChart3 },
+      { label: 'รายงาน', href: '/reports', icon: BarChart3, permission: 'dashboard.view' },
     ],
   },
   {
     label: '',
     adminOnly: true,
     items: [
-      { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: 'employee.view' },
+      { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: 'employee.view_all' },
       { label: 'ข้อมูลหลัก', href: '/master-data', icon: Building2, permission: 'master.manage' },
       { label: 'สิทธิ์การใช้งาน', href: '/roles-permissions', icon: KeyRound, permission: 'rbac.manage' },
       { label: 'ตั้งค่า', href: '/settings', icon: Settings },

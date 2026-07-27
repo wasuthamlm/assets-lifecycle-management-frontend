@@ -8,3 +8,11 @@ export function useEmployeesQuery() {
     staleTime: 5 * 60 * 1000,
   })
 }
+
+export function useEmployeeDirectoryQuery() {
+  return useQuery({
+    queryKey: ['employees', 'directory'],
+    queryFn: () => employeesService.directory(),
+    staleTime: 5 * 60 * 1000,
+  })
+}

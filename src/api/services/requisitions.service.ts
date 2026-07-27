@@ -19,4 +19,8 @@ export const requisitionsService = {
     const { data } = await apiClient.post<Requisition>(ENDPOINTS.requisitions.approve(id), dto)
     return data
   },
+  async nextNo(): Promise<string> {
+    const { data } = await apiClient.get<{ requisitionNo: string }>(ENDPOINTS.requisitions.nextNo)
+    return data.requisitionNo
+  },
 }

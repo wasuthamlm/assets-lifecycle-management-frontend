@@ -37,7 +37,9 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-2">
-        <SidebarNavItem item={NAV_TOP} collapsed={collapsed} />
+        {(!NAV_TOP.permission || hasPermission(NAV_TOP.permission)) && (
+          <SidebarNavItem item={NAV_TOP} collapsed={collapsed} />
+        )}
 
         {createItems.length > 0 && (
           <div>

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { ProtectedRoute } from './ProtectedRoute'
+import { PermissionRoute } from './PermissionRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { RequisitionsListPage } from '@/pages/requisitions/RequisitionsListPage'
@@ -51,49 +52,124 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/', element: <Navigate to="/dashboard" replace /> },
-          { path: '/dashboard', element: <DashboardPage /> },
+          {
+            element: <PermissionRoute permission="dashboard.view" />,
+            children: [
+              { path: '/dashboard', element: <DashboardPage /> },
+              { path: '/reports', element: <ReportsPage /> },
+            ],
+          },
 
-          { path: '/requisitions', element: <RequisitionsListPage /> },
-          { path: '/requisitions/new', element: <RequisitionCreatePage /> },
-          { path: '/requisitions/:id', element: <RequisitionDetailPage /> },
+          {
+            element: <PermissionRoute permission="requisition.view_all" />,
+            children: [{ path: '/requisitions', element: <RequisitionsListPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="requisition.create" />,
+            children: [{ path: '/requisitions/new', element: <RequisitionCreatePage /> }],
+          },
+          {
+            element: <PermissionRoute permission="requisition.view_own" />,
+            children: [{ path: '/requisitions/:id', element: <RequisitionDetailPage /> }],
+          },
 
-          { path: '/assets', element: <AssetsListPage /> },
-          { path: '/assets/new', element: <AssetCreatePage /> },
-          { path: '/assets/:id', element: <AssetDetailPage /> },
+          {
+            element: <PermissionRoute permission="asset.view" />,
+            children: [
+              { path: '/assets', element: <AssetsListPage /> },
+              { path: '/assets/:id', element: <AssetDetailPage /> },
+              { path: '/movements', element: <MovementsListPage /> },
+            ],
+          },
+          {
+            element: <PermissionRoute permission="asset.create" />,
+            children: [{ path: '/assets/new', element: <AssetCreatePage /> }],
+          },
 
           { path: '/assignments', element: <AssignmentsListPage /> },
           { path: '/assignments/:id', element: <AssignmentDetailPage /> },
 
-          { path: '/purchasing', element: <PurchaseOrdersListPage /> },
-          { path: '/purchasing/new', element: <PurchaseOrderCreatePage /> },
-          { path: '/purchasing/:id', element: <PurchaseOrderDetailPage /> },
+          {
+            element: <PermissionRoute permission="po.view" />,
+            children: [
+              { path: '/purchasing', element: <PurchaseOrdersListPage /> },
+              { path: '/purchasing/:id', element: <PurchaseOrderDetailPage /> },
+            ],
+          },
+          {
+            element: <PermissionRoute permission="po.create" />,
+            children: [{ path: '/purchasing/new', element: <PurchaseOrderCreatePage /> }],
+          },
 
-          { path: '/goods-receipts', element: <GoodsReceiptsListPage /> },
-          { path: '/goods-receipts/new', element: <GoodsReceiptCreatePage /> },
-          { path: '/goods-receipts/:id', element: <GoodsReceiptDetailPage /> },
+          {
+            element: <PermissionRoute permission="goods_receipt.view" />,
+            children: [
+              { path: '/goods-receipts', element: <GoodsReceiptsListPage /> },
+              { path: '/goods-receipts/:id', element: <GoodsReceiptDetailPage /> },
+            ],
+          },
+          {
+            element: <PermissionRoute permission="goods_receipt.create" />,
+            children: [{ path: '/goods-receipts/new', element: <GoodsReceiptCreatePage /> }],
+          },
 
-          { path: '/stock', element: <StockListPage /> },
-          { path: '/stock/new', element: <StockCreatePage /> },
+          {
+            element: <PermissionRoute permission="stock.view" />,
+            children: [{ path: '/stock', element: <StockListPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="stock.manage" />,
+            children: [{ path: '/stock/new', element: <StockCreatePage /> }],
+          },
 
-          { path: '/repairs', element: <RepairsListPage /> },
-          { path: '/repairs/new', element: <RepairCreatePage /> },
-          { path: '/repairs/:id', element: <RepairDetailPage /> },
+          {
+            element: <PermissionRoute permission="repair.view" />,
+            children: [
+              { path: '/repairs', element: <RepairsListPage /> },
+              { path: '/repairs/:id', element: <RepairDetailPage /> },
+            ],
+          },
+          {
+            element: <PermissionRoute permission="repair.create" />,
+            children: [{ path: '/repairs/new', element: <RepairCreatePage /> }],
+          },
 
           { path: '/warranty', element: <WarrantySearchPage /> },
           { path: '/warranty/:id', element: <WarrantyDetailPage /> },
 
-          { path: '/disposal', element: <DisposalsListPage /> },
-          { path: '/disposal/new', element: <DisposalCreatePage /> },
-          { path: '/disposal/:id', element: <DisposalDetailPage /> },
+          {
+            element: <PermissionRoute permission="disposal.view" />,
+            children: [
+              { path: '/disposal', element: <DisposalsListPage /> },
+              { path: '/disposal/:id', element: <DisposalDetailPage /> },
+            ],
+          },
+          {
+            element: <PermissionRoute permission="disposal.create" />,
+            children: [{ path: '/disposal/new', element: <DisposalCreatePage /> }],
+          },
 
-          { path: '/movements', element: <MovementsListPage /> },
           { path: '/my-items', element: <MyItemsPage /> },
-          { path: '/approvals', element: <ApprovalsPage /> },
-          { path: '/reports', element: <ReportsPage /> },
-          { path: '/employees', element: <EmployeesListPage /> },
-          { path: '/master-data', element: <MasterDataPage /> },
-          { path: '/roles-permissions', element: <RolesPermissionsPage /> },
-          { path: '/users', element: <UsersListPage /> },
+          {
+            element: <PermissionRoute permission="requisition.approve" />,
+            children: [{ path: '/approvals', element: <ApprovalsPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="employee.view_all" />,
+            children: [{ path: '/employees', element: <EmployeesListPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="master.manage" />,
+            children: [{ path: '/master-data', element: <MasterDataPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="rbac.manage" />,
+            children: [{ path: '/roles-permissions', element: <RolesPermissionsPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="user.view_all" />,
+            children: [{ path: '/users', element: <UsersListPage /> }],
+          },
           { path: '/settings', element: <SettingsPage /> },
 
           { path: '*', element: <NotFoundPage /> },

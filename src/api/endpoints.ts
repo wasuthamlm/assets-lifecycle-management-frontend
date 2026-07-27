@@ -16,10 +16,12 @@ export const ENDPOINTS = {
     base: '/requisitions',
     byId: (id: number) => `/requisitions/${id}`,
     approve: (id: number) => `/requisitions/${id}/approve`,
+    nextNo: '/requisitions/next-no',
   },
   employees: {
     base: '/employees',
     byId: (id: number) => `/employees/${id}`,
+    directory: '/employees/directory',
   },
   departments: {
     base: '/departments',

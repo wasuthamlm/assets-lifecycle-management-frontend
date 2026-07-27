@@ -1,15 +1,18 @@
+import { useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Eye } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
-import { useEmployeesQuery } from '@/hooks/useEmployees'
+import { Modal } from '@/components/ui/Modal'
+import { useEmployeeDirectoryQuery } from '@/hooks/useEmployees'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { RequestType } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
+import { formatThaiDate } from '@/lib/formatters'
 import type { CreateRequisitionDto } from '@/api/types/requisition.types'
 
 const itemSchema = z.object({
@@ -38,10 +41,22 @@ interface RequisitionFormProps {
   isSubmitting?: boolean
 }
 
+function toDto(values: RequisitionFormValues): CreateRequisitionDto {
+  return {
+    requestedBy: values.requestedBy,
+    requestType: values.requestType,
+    dueDate: values.requestType === RequestType.BORROW ? values.dueDate : undefined,
+    reason: values.reason,
+    items: values.items.map((i) => ({ assetId: i.assetId, quantity: i.quantity })),
+    approverIds: values.approverIds.map((a) => a.employeeId),
+  }
+}
+
 export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, isSubmitting }: RequisitionFormProps) {
-  const { data: employees = [] } = useEmployeesQuery()
+  const { data: employees = [] } = useEmployeeDirectoryQuery()
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = assetsPage?.data ?? []
+  const [previewValues, setPreviewValues] = useState<RequisitionFormValues | null>(null)
 
   const {
     register,
@@ -63,25 +78,20 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
   const approversArray = useFieldArray({ control, name: 'approverIds' })
   const requestType = watch('requestType')
 
-  function submit(values: RequisitionFormValues) {
-    onSubmit({
-      requestedBy: values.requestedBy,
-      requestType: values.requestType,
-      dueDate: values.requestType === RequestType.BORROW ? values.dueDate : undefined,
-      reason: values.reason,
-      items: values.items.map((i) => ({ assetId: i.assetId, quantity: i.quantity })),
-      approverIds: values.approverIds.map((a) => a.employeeId),
-    })
+  const employeeName = (id?: number) => employees.find((e) => e.employeeId === id)?.fullName ?? '-'
+  const assetLabel = (id?: number) => {
+    const asset = assets.find((a) => a.assetId === id)
+    return asset ? `${asset.assetNo} — ${asset.assetName}` : '-'
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+    <form onSubmit={handleSubmit((values) => onSubmit(toDto(values)))} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เลขที่เอกสาร</label>
           <div className="flex h-10 items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 dark:border-slate-700 dark:bg-slate-800/60">
             <span className="font-mono text-sm font-semibold tracking-wide text-brand-600 dark:text-brand-400">
-              {defaultDocNo ?? '—'}
+              {defaultDocNo ?? 'กำลังโหลด...'}
             </span>
             <span className="text-xs text-slate-400">ระบบสร้างให้อัตโนมัติ</span>
           </div>
@@ -196,9 +206,90 @@ export function RequisitionForm({ defaultRequestedBy, defaultDocNo, onSubmit, is
         {errors.approverIds && <p className="mt-1 text-xs text-red-600">{errors.approverIds.message}</p>}
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกคำขอ'}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="secondary" onClick={handleSubmit((values) => setPreviewValues(values))}>
+          <Eye size={16} /> ดูตัวอย่างเอกสาร
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกคำขอ'}
+        </Button>
+      </div>
+
+      <Modal open={!!previewValues} onClose={() => setPreviewValues(null)} title="ตัวอย่างเอกสารใบขอเบิก/ยืม">
+        {previewValues && (
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+              <span className="font-mono text-base font-semibold text-brand-600 dark:text-brand-400">
+                {defaultDocNo ?? 'กำลังโหลด...'}
+              </span>
+              <span className="text-xs text-slate-400">{formatThaiDate(new Date())}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-slate-400">ผู้ขอเบิก</p>
+                <p className="font-medium text-slate-800 dark:text-slate-100">{employeeName(previewValues.requestedBy)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">ประเภทคำขอ</p>
+                <p className="font-medium text-slate-800 dark:text-slate-100">{REQUEST_TYPE_LABEL[previewValues.requestType]}</p>
+              </div>
+              {previewValues.requestType === RequestType.BORROW && previewValues.dueDate && (
+                <div>
+                  <p className="text-xs text-slate-400">กำหนดคืน</p>
+                  <p className="font-medium text-slate-800 dark:text-slate-100">{formatThaiDate(previewValues.dueDate)}</p>
+                </div>
+              )}
+            </div>
+
+            {previewValues.reason && (
+              <div>
+                <p className="text-xs text-slate-400">เหตุผล</p>
+                <p className="text-slate-700 dark:text-slate-200">{previewValues.reason}</p>
+              </div>
+            )}
+
+            <div>
+              <p className="mb-1 text-xs text-slate-400">รายการทรัพย์สิน</p>
+              <ul className="space-y-1 rounded-lg border border-slate-100 p-2 dark:border-slate-800">
+                {previewValues.items.map((item, idx) => (
+                  <li key={idx} className="flex items-center justify-between text-slate-700 dark:text-slate-200">
+                    <span>{assetLabel(item.assetId)}</span>
+                    <span className="text-slate-400">x{item.quantity ?? 1}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="mb-1 text-xs text-slate-400">ลำดับผู้อนุมัติ</p>
+              <ol className="space-y-1 rounded-lg border border-slate-100 p-2 dark:border-slate-800">
+                {previewValues.approverIds.map((a, idx) => (
+                  <li key={idx} className="text-slate-700 dark:text-slate-200">
+                    {idx + 1}. {employeeName(a.employeeId)}
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+              <Button type="button" variant="secondary" onClick={() => setPreviewValues(null)}>
+                แก้ไข
+              </Button>
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  onSubmit(toDto(previewValues))
+                  setPreviewValues(null)
+                }}
+              >
+                {isSubmitting ? 'กำลังบันทึก...' : 'ยืนยันบันทึกคำขอ'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </form>
   )
 }
