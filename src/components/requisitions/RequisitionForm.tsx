@@ -150,7 +150,7 @@ export function RequisitionForm({
                 name={`items.${idx}.assetId` as const}
                 render={({ field: assetField }) => (
                   <Select
-                    value={assetField.value ?? ''}
+                    value={(assetField.value as string) ?? ''}
                     onChange={(e) => assetField.onChange(e.target.value)}
                     onBlur={assetField.onBlur}
                     name={assetField.name}
