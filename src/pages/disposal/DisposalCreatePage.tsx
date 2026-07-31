@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { BackLink } from '@/components/ui/BackLink'
 import { DisposalMethod } from '@/api/types/common.types'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
 import { optionalNonNegativeNumber } from '@/lib/zodHelpers'
@@ -63,7 +64,9 @@ export function DisposalCreatePage() {
   }
 
   return (
-    <Card>
+    <div>
+      <BackLink />
+      <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -108,6 +111,7 @@ export function DisposalCreatePage() {
           {create.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
       </form>
-    </Card>
+      </Card>
+    </div>
   )
 }

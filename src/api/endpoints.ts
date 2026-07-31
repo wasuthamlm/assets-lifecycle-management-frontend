@@ -76,6 +76,7 @@ export const ENDPOINTS = {
   },
   locations: {
     base: '/locations',
+    byId: (id: number) => `/locations/${id}`,
   },
   companies: {
     base: '/companies',

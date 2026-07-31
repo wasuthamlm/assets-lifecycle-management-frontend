@@ -26,10 +26,27 @@ export interface Location {
   locationType: string | null
   site: string | null
   companyId: number | null
+  parentLocationId: number | null
 }
+
+export interface CreateLocationDto {
+  locationName: string
+  locationType?: string
+  companyId?: number
+  site?: string
+  parentLocationId?: number
+}
+
+export type UpdateLocationDto = Partial<CreateLocationDto>
 
 export interface Company {
   companyId: number
+  companyCode: string
+  companyName: string
+}
+
+export interface CreateCompanyDto {
+  companyCode: string
   companyName: string
 }
 

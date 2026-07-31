@@ -112,12 +112,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
         {/* Custom trigger button */}
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          disabled={props.disabled}
+          onClick={() => !props.disabled && setOpen((v) => !v)}
           className={cn(
             'flex h-10 w-full items-center justify-between gap-2 rounded-xl border bg-white px-3.5 text-sm transition-all duration-200',
             open
               ? 'border-brand-500 ring-2 ring-brand-500/25 dark:ring-brand-500/20'
               : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
+            props.disabled && 'cursor-not-allowed opacity-50',
             'dark:bg-slate-900',
           )}
         >

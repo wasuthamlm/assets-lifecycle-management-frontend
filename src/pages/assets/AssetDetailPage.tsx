@@ -1,17 +1,22 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAssetQuery } from '@/hooks/useAssets'
+import { useWarrantiesByAssetQuery } from '@/hooks/useWarranty'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { Button } from '@/components/ui/Button'
 import { AssetStatusPill } from '@/components/ui/StatusPill'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
+import { WarrantyStatus } from '@/api/types/common.types'
 
 export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>()
   const assetId = Number(id)
   usePageTitle(`ทรัพย์สิน #${id}`)
+  const navigate = useNavigate()
   const { data: asset, isLoading } = useAssetQuery(assetId)
+  const { data: warranties = [] } = useWarrantiesByAssetQuery(assetId)
 
   if (isLoading || !asset) {
     return (
@@ -20,6 +25,8 @@ export function AssetDetailPage() {
       </div>
     )
   }
+
+  const renewableWarranty = warranties.find((w) => w.status !== WarrantyStatus.RENEWED)
 
   return (
     <div>
@@ -77,6 +84,18 @@ export function AssetDetailPage() {
             </div>
           )}
         </dl>
+
+        <div className="mt-4">
+          {renewableWarranty ? (
+            <Button variant="secondary" onClick={() => navigate(`/warranty/${renewableWarranty.warrantyId}`)}>
+              ต่ออายุประกัน
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={() => navigate(`/warranty?assetId=${asset.assetId}`)}>
+              เพิ่ม/ดูข้อมูลประกัน
+            </Button>
+          )}
+        </div>
       </DetailSheet>
     </div>
   )

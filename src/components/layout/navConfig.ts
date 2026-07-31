@@ -45,7 +45,6 @@ export const NAV_CREATE_GROUP = {
   icon: PlusCircle,
   items: [
     { label: 'ใบขอเบิก/ยืมทรัพย์สิน', href: '/requisitions/new', icon: ClipboardList, permission: 'requisition.create' },
-    { label: 'ใบสั่งซื้อใหม่', href: '/purchasing/new', icon: ShoppingCart, permission: 'po.create' },
     { label: 'ลงทะเบียนทรัพย์สินใหม่', href: '/assets/new', icon: Boxes, permission: 'asset.create' },
   ] satisfies NavItem[],
 }

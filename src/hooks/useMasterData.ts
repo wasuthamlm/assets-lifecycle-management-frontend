@@ -3,8 +3,11 @@ import { masterDataService } from '@/api/services/master-data.service'
 import type {
   CreateAllowedDomainDto,
   CreateAssetCategoryDto,
+  CreateCompanyDto,
+  CreateLocationDto,
   UpdateAllowedDomainDto,
   UpdateAssetCategoryDto,
+  UpdateLocationDto,
 } from '@/api/types/master-data.types'
 
 export function useAssetCategoriesQuery() {
@@ -43,8 +46,40 @@ export function useLocationsQuery() {
   return useQuery({ queryKey: ['locations'], queryFn: masterDataService.locations, staleTime: 5 * 60 * 1000 })
 }
 
+export function useCreateLocationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateLocationDto) => masterDataService.createLocation(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['locations'] }),
+  })
+}
+
+export function useUpdateLocationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, dto }: { id: number; dto: UpdateLocationDto }) => masterDataService.updateLocation(id, dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['locations'] }),
+  })
+}
+
+export function useDeleteLocationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => masterDataService.deleteLocation(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['locations'] }),
+  })
+}
+
 export function useCompaniesQuery() {
   return useQuery({ queryKey: ['companies'], queryFn: masterDataService.companies, staleTime: 5 * 60 * 1000 })
+}
+
+export function useCreateCompanyMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateCompanyDto) => masterDataService.createCompany(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['companies'] }),
+  })
 }
 
 export function useDepartmentsQuery() {

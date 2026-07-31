@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateRequisitionMutation, useNextRequisitionNo } from '@/hooks/useRequisitions'
 import { RequisitionForm } from '@/components/requisitions/RequisitionForm'
 import { Card } from '@/components/ui/Card'
+import { BackLink } from '@/components/ui/BackLink'
 import { useAuthStore } from '@/stores/auth.store'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import type { CreateRequisitionDto } from '@/api/types/requisition.types'
@@ -36,14 +37,17 @@ export function RequisitionCreatePage() {
   }
 
   return (
-    <Card>
-      <RequisitionForm
-        requestedByName={currentUser?.employee?.fullName ?? currentUser?.username}
-        defaultDocNo={nextDocNo}
-        defaultAssetId={defaultAssetId}
-        onSubmit={handleSubmit}
-        isSubmitting={create.isPending}
-      />
-    </Card>
+    <div>
+      <BackLink />
+      <Card>
+        <RequisitionForm
+          requestedByName={currentUser?.employee?.fullName ?? currentUser?.username}
+          defaultDocNo={nextDocNo}
+          defaultAssetId={defaultAssetId}
+          onSubmit={handleSubmit}
+          isSubmitting={create.isPending}
+        />
+      </Card>
+    </div>
   )
 }

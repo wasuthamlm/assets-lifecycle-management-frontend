@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
 import { usePurchaseOrdersQuery } from '@/hooks/usePurchaseOrders'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { PoStatusPill } from '@/components/ui/StatusPill'
@@ -37,16 +35,13 @@ export function PurchaseOrdersListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="ค้นหาเลขที่ใบสั่งซื้อหรือผู้ขาย..."
           className="max-w-xs"
         />
-        <Button onClick={() => navigate('/purchasing/new')}>
-          <Plus size={16} /> สร้างใบสั่งซื้อใหม่
-        </Button>
       </div>
 
       <Card className="p-0">

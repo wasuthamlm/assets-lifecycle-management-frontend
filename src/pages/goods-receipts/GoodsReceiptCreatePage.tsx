@@ -5,6 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateGoodsReceiptMutation } from '@/hooks/useGoodsReceipts'
 import { GoodsReceiptForm } from '@/components/goods-receipts/GoodsReceiptForm'
 import { Card } from '@/components/ui/Card'
+import { BackLink } from '@/components/ui/BackLink'
 import type { ApiErrorShape } from '@/api/types/common.types'
 import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
@@ -30,8 +31,11 @@ export function GoodsReceiptCreatePage() {
   }
 
   return (
-    <Card>
-      <GoodsReceiptForm onSubmit={handleSubmit} isSubmitting={create.isPending} />
-    </Card>
+    <div>
+      <BackLink />
+      <Card>
+        <GoodsReceiptForm onSubmit={handleSubmit} isSubmitting={create.isPending} />
+      </Card>
+    </div>
   )
 }

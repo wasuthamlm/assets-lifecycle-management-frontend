@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,7 +8,7 @@ import { AxiosError } from 'axios'
 import { Plus } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useWarrantiesByAssetQuery, useCreateWarrantyMutation } from '@/hooks/useWarranty'
-import { useAssetsQuery } from '@/hooks/useAssets'
+import { useAssetsQuery, useAssetQuery } from '@/hooks/useAssets'
 import { useVendorsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -36,10 +36,15 @@ type FormInput = z.input<typeof formSchema>
 export function WarrantySearchPage() {
   usePageTitle('ประกัน')
   const navigate = useNavigate()
-  const [assetId, setAssetId] = useState<number | undefined>(undefined)
+  const [searchParams] = useSearchParams()
+  const assetIdParam = searchParams.get('assetId')
+  const [assetId, setAssetId] = useState<number | undefined>(assetIdParam ? Number(assetIdParam) : undefined)
   const [modalOpen, setModalOpen] = useState(false)
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
-  const assets = assetsPage?.data ?? []
+  const { data: linkedAsset } = useAssetQuery(assetId ?? 0)
+  const fetchedAssets = assetsPage?.data ?? []
+  const assets =
+    linkedAsset && !fetchedAssets.some((a) => a.assetId === linkedAsset.assetId) ? [linkedAsset, ...fetchedAssets] : fetchedAssets
   const { data: vendors = [] } = useVendorsQuery()
   const { data: warranties = [], isLoading } = useWarrantiesByAssetQuery(assetId ?? 0)
   const create = useCreateWarrantyMutation()

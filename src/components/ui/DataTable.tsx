@@ -32,7 +32,10 @@ export function DataTable<T>({ columns, rows, rowKey, isLoading, emptyMessage, o
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="whitespace-nowrap bg-slate-50/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 first:rounded-tl-lg last:rounded-tr-lg dark:bg-slate-800/50 dark:text-slate-400"
+                className={
+                  'whitespace-nowrap bg-slate-50/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 first:rounded-tl-lg last:rounded-tr-lg dark:bg-slate-800/50 dark:text-slate-400 ' +
+                  (col.className ?? '')
+                }
               >
                 {col.header}
               </th>

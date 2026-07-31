@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { BackLink } from '@/components/ui/BackLink'
 import { optionalPositiveInt } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
@@ -57,7 +58,9 @@ export function RepairCreatePage() {
   }
 
   return (
-    <Card>
+    <div>
+      <BackLink />
+      <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -95,6 +98,7 @@ export function RepairCreatePage() {
           {create.isPending ? 'กำลังบันทึก...' : 'แจ้งซ่อม'}
         </Button>
       </form>
-    </Card>
+      </Card>
+    </div>
   )
 }

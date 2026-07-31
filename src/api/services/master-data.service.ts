@@ -6,9 +6,12 @@ import type {
   Company,
   CreateAllowedDomainDto,
   CreateAssetCategoryDto,
+  CreateCompanyDto,
+  CreateLocationDto,
   Location,
   UpdateAllowedDomainDto,
   UpdateAssetCategoryDto,
+  UpdateLocationDto,
   Vendor,
 } from '../types/master-data.types'
 import type { Department } from '../types/employee.types'
@@ -37,8 +40,23 @@ export const masterDataService = {
     const { data } = await apiClient.get<Location[]>(ENDPOINTS.locations.base)
     return data
   },
+  async createLocation(dto: CreateLocationDto): Promise<Location> {
+    const { data } = await apiClient.post<Location>(ENDPOINTS.locations.base, dto)
+    return data
+  },
+  async updateLocation(id: number, dto: UpdateLocationDto): Promise<Location> {
+    const { data } = await apiClient.patch<Location>(ENDPOINTS.locations.byId(id), dto)
+    return data
+  },
+  async deleteLocation(id: number): Promise<void> {
+    await apiClient.delete(ENDPOINTS.locations.byId(id))
+  },
   async companies(): Promise<Company[]> {
     const { data } = await apiClient.get<Company[]>(ENDPOINTS.companies.base)
+    return data
+  },
+  async createCompany(dto: CreateCompanyDto): Promise<Company> {
+    const { data } = await apiClient.post<Company>(ENDPOINTS.companies.base, dto)
     return data
   },
   async departments(): Promise<Department[]> {

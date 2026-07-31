@@ -4,6 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { Card } from '@/components/ui/Card'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { cn } from '@/lib/utils'
+import { translatePermissionCode } from '@/lib/permissionLabels'
 import type { Permission, Role } from '@/api/types/roles-permissions.types'
 
 type Tab = 'roles' | 'permissions'
@@ -22,6 +23,7 @@ export function RolesPermissionsPage() {
 
   const permissionColumns: DataTableColumn<Permission>[] = [
     { key: 'code', header: 'รหัสสิทธิ์', render: (p) => <span className="font-mono text-xs">{p.permissionCode}</span> },
+    { key: 'name', header: 'ชื่อสิทธิ์', render: (p) => translatePermissionCode(p.permissionCode) },
     { key: 'description', header: 'คำอธิบาย', render: (p) => p.description ?? '-' },
   ]
 

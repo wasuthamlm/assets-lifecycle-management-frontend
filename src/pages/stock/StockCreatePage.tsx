@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { BackLink } from '@/components/ui/BackLink'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
 const formSchema = z.object({
@@ -53,7 +54,9 @@ export function StockCreatePage() {
   }
 
   return (
-    <Card>
+    <div>
+      <BackLink />
+      <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -88,6 +91,7 @@ export function StockCreatePage() {
           {create.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
       </form>
-    </Card>
+      </Card>
+    </div>
   )
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,12 +13,12 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { BackLink } from '@/components/ui/BackLink'
 import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { ApiErrorShape } from '@/api/types/common.types'
 
 const formSchema = z.object({
   assetNo: z.string().min(1, 'กรุณากรอกเลขทรัพย์สิน'),
-  categoryId: z.coerce.number().int().positive('กรุณาเลือกหมวดหมู่'),
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
   serialNumber: z.string().optional(),
   brandModel: z.string().optional(),
@@ -40,6 +41,18 @@ export function AssetCreatePage() {
   const { data: vendors = [] } = useVendorsQuery()
   const { data: locations = [] } = useLocationsQuery()
 
+  const [mainCategoryId, setMainCategoryId] = useState('')
+  const [subCategoryId, setSubCategoryId] = useState('')
+  const [categoryError, setCategoryError] = useState('')
+
+  const mainCategories = categories.filter((c) => !c.parentCategoryId)
+  const subCategories = categories.filter((c) => c.parentCategoryId === Number(mainCategoryId))
+
+  function handleMainCategoryChange(value: string) {
+    setMainCategoryId(value)
+    setSubCategoryId('')
+  }
+
   const {
     register,
     handleSubmit,
@@ -47,23 +60,34 @@ export function AssetCreatePage() {
   } = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(formSchema) })
 
   function onSubmit(values: FormValues) {
-    create.mutate(values, {
-      onSuccess: (asset) => {
-        toast.success('ลงทะเบียนทรัพย์สินเรียบร้อยแล้ว')
-        navigate(`/assets/${asset.assetId}`)
+    const categoryId = subCategoryId || mainCategoryId
+    if (!categoryId) {
+      setCategoryError('กรุณาเลือกหมวดหมู่')
+      return
+    }
+    setCategoryError('')
+    create.mutate(
+      { ...values, categoryId: Number(categoryId) },
+      {
+        onSuccess: (asset) => {
+          toast.success('ลงทะเบียนทรัพย์สินเรียบร้อยแล้ว')
+          navigate(`/assets/${asset.assetId}`)
+        },
+        onError: (error) => {
+          const message =
+            error instanceof AxiosError
+              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
+              : 'บันทึกไม่สำเร็จ'
+          toast.error(Array.isArray(message) ? message.join(', ') : message)
+        },
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
-    })
+    )
   }
 
   return (
-    <Card>
+    <div>
+      <BackLink />
+      <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -77,16 +101,37 @@ export function AssetCreatePage() {
             {errors.assetName && <p className="mt-1 text-xs text-red-600">{errors.assetName.message}</p>}
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมวดหมู่</label>
-            <Select {...register('categoryId')}>
-              <option value="">เลือกหมวดหมู่</option>
-              {categories.map((c) => (
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมวดหมู่หลัก</label>
+            <Select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)}>
+              <option value="">เลือกหมวดหมู่หลัก</option>
+              {mainCategories.map((c) => (
                 <option key={c.categoryId} value={c.categoryId}>
                   {c.categoryName}
                 </option>
               ))}
             </Select>
-            {errors.categoryId && <p className="mt-1 text-xs text-red-600">{errors.categoryId.message}</p>}
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมวดหมู่ย่อย</label>
+            <Select value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)}>
+              {mainCategoryId ? (
+                subCategories.length > 0 ? (
+                  <>
+                    <option value="">ทั้งหมวดหมู่ (ไม่ระบุหมวดหมู่ย่อย)</option>
+                    {subCategories.map((c) => (
+                      <option key={c.categoryId} value={c.categoryId}>
+                        {c.categoryName}
+                      </option>
+                    ))}
+                  </>
+                ) : (
+                  <option value="">ไม่มีหมวดหมู่ย่อย</option>
+                )
+              ) : (
+                <option value="">เลือกหมวดหมู่หลักก่อน</option>
+              )}
+            </Select>
+            {categoryError && <p className="mt-1 text-xs text-red-600">{categoryError}</p>}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Serial Number</label>
@@ -141,6 +186,7 @@ export function AssetCreatePage() {
           {create.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
       </form>
-    </Card>
+      </Card>
+    </div>
   )
 }

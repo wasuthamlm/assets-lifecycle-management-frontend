@@ -12,7 +12,6 @@ import { AssetsListPage } from '@/pages/assets/AssetsListPage'
 import { AssetCreatePage } from '@/pages/assets/AssetCreatePage'
 import { AssetDetailPage } from '@/pages/assets/AssetDetailPage'
 import { PurchaseOrdersListPage } from '@/pages/purchasing/PurchaseOrdersListPage'
-import { PurchaseOrderCreatePage } from '@/pages/purchasing/PurchaseOrderCreatePage'
 import { PurchaseOrderDetailPage } from '@/pages/purchasing/PurchaseOrderDetailPage'
 import { GoodsReceiptsListPage } from '@/pages/goods-receipts/GoodsReceiptsListPage'
 import { GoodsReceiptCreatePage } from '@/pages/goods-receipts/GoodsReceiptCreatePage'
@@ -99,10 +98,6 @@ export const router = createBrowserRouter([
               { path: '/purchasing', element: <PurchaseOrdersListPage /> },
               { path: '/purchasing/:id', element: <PurchaseOrderDetailPage /> },
             ],
-          },
-          {
-            element: <PermissionRoute permission="po.create" />,
-            children: [{ path: '/purchasing/new', element: <PurchaseOrderCreatePage /> }],
           },
 
           {
