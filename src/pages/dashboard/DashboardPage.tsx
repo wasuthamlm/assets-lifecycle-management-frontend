@@ -4,18 +4,14 @@ import { StatCardsRow } from '@/components/dashboard/StatCardsRow'
 import { RequisitionByPersonCard } from '@/components/dashboard/RequisitionByPersonCard'
 import { DocumentTypeDonutChart } from '@/components/dashboard/DocumentTypeDonutChart'
 import { RecentItemsCard } from '@/components/dashboard/RecentItemsCard'
-import { Spinner } from '@/components/ui/Spinner'
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 
 export function DashboardPage() {
   usePageTitle('แดชบอร์ด')
   const { data: summary, isLoading } = useDashboardSummary()
 
   if (isLoading || !summary) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner />
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (

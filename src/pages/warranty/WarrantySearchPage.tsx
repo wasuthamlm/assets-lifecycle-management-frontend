@@ -8,14 +8,14 @@ import { AxiosError } from 'axios'
 import { Plus } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useWarrantiesByAssetQuery, useCreateWarrantyMutation } from '@/hooks/useWarranty'
-import { useAssetsQuery, useAssetQuery } from '@/hooks/useAssets'
 import { useVendorsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
+import { AssetCombobox } from '@/components/assets/AssetCombobox'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
-import { Modal } from '@/components/ui/Modal'
+import { BackLink } from '@/components/ui/BackLink'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { WarrantyStatusPill } from '@/components/ui/StatusPill'
 import { formatThaiDate } from '@/lib/formatters'
@@ -39,12 +39,7 @@ export function WarrantySearchPage() {
   const [searchParams] = useSearchParams()
   const assetIdParam = searchParams.get('assetId')
   const [assetId, setAssetId] = useState<number | undefined>(assetIdParam ? Number(assetIdParam) : undefined)
-  const [modalOpen, setModalOpen] = useState(false)
-  const { data: assetsPage } = useAssetsQuery({ limit: 100 })
-  const { data: linkedAsset } = useAssetQuery(assetId ?? 0)
-  const fetchedAssets = assetsPage?.data ?? []
-  const assets =
-    linkedAsset && !fetchedAssets.some((a) => a.assetId === linkedAsset.assetId) ? [linkedAsset, ...fetchedAssets] : fetchedAssets
+  const [addFormOpen, setAddFormOpen] = useState(false)
   const { data: vendors = [] } = useVendorsQuery()
   const { data: warranties = [], isLoading } = useWarrantiesByAssetQuery(assetId ?? 0)
   const create = useCreateWarrantyMutation()
@@ -63,7 +58,7 @@ export function WarrantySearchPage() {
       {
         onSuccess: () => {
           toast.success('เพิ่มข้อมูลประกันเรียบร้อยแล้ว')
-          setModalOpen(false)
+          setAddFormOpen(false)
           reset()
         },
         onError: (error) => {
@@ -84,26 +79,70 @@ export function WarrantySearchPage() {
     { key: 'status', header: 'สถานะ', render: (w) => <WarrantyStatusPill status={w.status} /> },
   ]
 
+  function toggleAddForm() {
+    if (addFormOpen) reset()
+    setAddFormOpen((prev) => !prev)
+  }
+
   return (
     <div className="space-y-4">
+      <BackLink />
+
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-sm flex-1">
             <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">เลือกทรัพย์สินเพื่อดูประวัติประกัน</label>
-            <Select value={assetId ?? ''} onChange={(e) => setAssetId(e.target.value ? Number(e.target.value) : undefined)}>
-              <option value="">เลือกทรัพย์สิน</option>
-              {assets.map((a) => (
-                <option key={a.assetId} value={a.assetId}>
-                  {a.assetNo} — {a.assetName}
-                </option>
-              ))}
-            </Select>
+            <AssetCombobox value={assetId} onChange={setAssetId} />
           </div>
-          <Button disabled={!assetId} onClick={() => setModalOpen(true)}>
-            <Plus size={16} /> เพิ่มข้อมูลประกัน
+          <Button disabled={!assetId} onClick={toggleAddForm} variant={addFormOpen ? 'secondary' : 'primary'}>
+            <Plus size={16} /> {addFormOpen ? 'ยกเลิกการเพิ่ม' : 'เพิ่มข้อมูลประกัน'}
           </Button>
         </div>
       </Card>
+
+      {addFormOpen && assetId && (
+        <Card>
+          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">เพิ่มข้อมูลประกันใหม่</h3>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้รับประกัน</label>
+                <Select {...register('vendorId')}>
+                  <option value="">ไม่ระบุ</option>
+                  {vendors.map((v) => (
+                    <option key={v.vendorId} value={v.vendorId}>
+                      {v.vendorName}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div />
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันที่เริ่มคุ้มครอง</label>
+                <Input type="date" {...register('startDate')} />
+                {errors.startDate && <p className="mt-1 text-xs text-red-600">{errors.startDate.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันที่สิ้นสุด</label>
+                <Input type="date" {...register('endDate')} />
+                {errors.endDate && <p className="mt-1 text-xs text-red-600">{errors.endDate.message}</p>}
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รายละเอียดความคุ้มครอง</label>
+              <Textarea rows={2} {...register('coverageDetail')} />
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+              <Button type="button" variant="secondary" onClick={toggleAddForm}>
+                ยกเลิก
+              </Button>
+              <Button type="submit" disabled={create.isPending}>
+                {create.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       {assetId ? (
         <Card className="p-0">
@@ -121,39 +160,6 @@ export function WarrantySearchPage() {
       ) : (
         <p className="text-sm text-slate-400">กรุณาเลือกทรัพย์สินเพื่อดูประวัติการรับประกัน</p>
       )}
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="เพิ่มข้อมูลประกัน">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้รับประกัน</label>
-            <Select {...register('vendorId')}>
-              <option value="">ไม่ระบุ</option>
-              {vendors.map((v) => (
-                <option key={v.vendorId} value={v.vendorId}>
-                  {v.vendorName}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันที่เริ่มคุ้มครอง</label>
-            <Input type="date" {...register('startDate')} />
-            {errors.startDate && <p className="mt-1 text-xs text-red-600">{errors.startDate.message}</p>}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันที่สิ้นสุด</label>
-            <Input type="date" {...register('endDate')} />
-            {errors.endDate && <p className="mt-1 text-xs text-red-600">{errors.endDate.message}</p>}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รายละเอียดความคุ้มครอง</label>
-            <Textarea rows={2} {...register('coverageDetail')} />
-          </div>
-          <Button type="submit" disabled={create.isPending} className="w-full">
-            {create.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
-          </Button>
-        </form>
-      </Modal>
     </div>
   )
 }

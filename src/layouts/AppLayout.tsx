@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Topbar } from '@/components/layout/Topbar'
+import { CommandPalette } from '@/components/layout/CommandPalette'
 import { PageTitleProvider } from '@/hooks/usePageTitle'
 
 export function AppLayout() {
@@ -19,6 +20,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <CommandPalette />
     </PageTitleProvider>
   )
 }

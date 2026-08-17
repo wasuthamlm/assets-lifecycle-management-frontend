@@ -5,6 +5,7 @@ import { NAV_TOP, NAV_CREATE_GROUP, NAV_GROUPS } from './navConfig'
 import { SidebarNavItem } from './SidebarNavItem'
 import { SidebarUserFooter } from './SidebarUserFooter'
 import { usePermission } from '@/hooks/usePermission'
+import { usePendingApprovals } from '@/hooks/usePendingApprovals'
 import { useUiStore } from '@/stores/ui.store'
 import { cn } from '@/lib/utils'
 
@@ -13,6 +14,7 @@ export function Sidebar() {
   const { hasPermission } = usePermission()
   const location = useLocation()
   const [createOpen, setCreateOpen] = useState(true)
+  const { pendingForMe } = usePendingApprovals()
 
   const createItems = NAV_CREATE_GROUP.items.filter((i) => !i.permission || hasPermission(i.permission))
   const isCreateActive = createItems.some((i) => location.pathname === i.href)
@@ -95,7 +97,12 @@ export function Sidebar() {
             <div key={idx} className="pt-2">
               <div className="my-2 border-t border-white/10" />
               {items.map((item) => (
-                <SidebarNavItem key={item.href} item={item} collapsed={collapsed} />
+                <SidebarNavItem
+                  key={item.href}
+                  item={item}
+                  collapsed={collapsed}
+                  badgeCount={item.href === '/approvals' ? pendingForMe.length : undefined}
+                />
               ))}
             </div>
           )

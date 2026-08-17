@@ -2,8 +2,9 @@ import { NavLink } from 'react-router-dom'
 import type { NavItem } from './navConfig'
 import { cn } from '@/lib/utils'
 
-export function SidebarNavItem({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+export function SidebarNavItem({ item, collapsed, badgeCount }: { item: NavItem; collapsed: boolean; badgeCount?: number }) {
   const Icon = item.icon
+  const showBadge = !!badgeCount && badgeCount > 0
 
   return (
     <NavLink
@@ -17,8 +18,18 @@ export function SidebarNavItem({ item, collapsed }: { item: NavItem; collapsed: 
         )
       }
     >
-      <Icon size={18} className="shrink-0" />
-      {!collapsed && <span className="truncate">{item.label}</span>}
+      <span className="relative shrink-0">
+        <Icon size={18} />
+        {showBadge && collapsed && (
+          <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-navy-900" />
+        )}
+      </span>
+      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+      {!collapsed && showBadge && (
+        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white">
+          {badgeCount}
+        </span>
+      )}
     </NavLink>
   )
 }

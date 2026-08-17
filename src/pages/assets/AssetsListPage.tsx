@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
+import { Pagination } from '@/components/ui/Pagination'
 import { AvailabilityPill } from '@/components/ui/StatusPill'
 import type { Asset } from '@/api/types/asset.types'
 
@@ -46,8 +47,6 @@ export function AssetsListPage() {
     },
   ]
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
@@ -75,23 +74,17 @@ export function AssetsListPage() {
             rowKey={(a) => a.assetId}
             isLoading={isLoading}
             onRowClick={(a) => navigate(`/assets/${a.assetId}`)}
+            emptyMessage={search ? 'ไม่พบทรัพย์สินที่ค้นหา' : 'ยังไม่มีทรัพย์สินในระบบ'}
+            emptyAction={
+              !search && hasPermission('asset.create') ? (
+                <Button size="sm" onClick={() => navigate('/assets/new')}>
+                  <Plus size={16} /> ลงทะเบียนทรัพย์สินใหม่
+                </Button>
+              ) : undefined
+            }
           />
         </div>
-        {data && data.total > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500 dark:border-slate-800/80">
-            <span>
-              ทั้งหมด {data.total} รายการ · หน้า {page}/{totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                ก่อนหน้า
-              </Button>
-              <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                ถัดไป
-              </Button>
-            </div>
-          </div>
-        )}
+        {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}
       </Card>
     </div>
   )

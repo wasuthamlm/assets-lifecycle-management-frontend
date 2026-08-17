@@ -14,14 +14,15 @@ interface DataTableProps<T> {
   rowKey: (row: T) => string | number
   isLoading?: boolean
   emptyMessage?: string
+  emptyAction?: ReactNode
   onRowClick?: (row: T) => void
 }
 
 const SKELETON_ROWS = 5
 
-export function DataTable<T>({ columns, rows, rowKey, isLoading, emptyMessage, onRowClick }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, rowKey, isLoading, emptyMessage, emptyAction, onRowClick }: DataTableProps<T>) {
   if (!isLoading && rows.length === 0) {
-    return <EmptyState message={emptyMessage} />
+    return <EmptyState message={emptyMessage} action={emptyAction} />
   }
 
   return (

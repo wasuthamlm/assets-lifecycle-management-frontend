@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Switch } from '@/components/ui/Switch'
 import { Spinner } from '@/components/ui/Spinner'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
@@ -201,6 +202,7 @@ function DomainsPanel({ companies }: DomainsPanelProps) {
   const [domainInput, setDomainInput] = useState('')
   const [companyId, setCompanyId] = useState('')
   const [editing, setEditing] = useState<AllowedDomain | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AllowedDomain | null>(null)
 
   function handleAdd() {
     if (!domainInput.trim()) {
@@ -228,9 +230,16 @@ function DomainsPanel({ companies }: DomainsPanelProps) {
   }
 
   function handleDelete(d: AllowedDomain) {
-    if (!window.confirm(`ลบโดเมน "${d.domain}" ใช่หรือไม่?`)) return
-    deleteMutation.mutate(d.allowedDomainId, {
-      onSuccess: () => toast.success('ลบโดเมนเรียบร้อยแล้ว'),
+    setDeleteTarget(d)
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return
+    deleteMutation.mutate(deleteTarget.allowedDomainId, {
+      onSuccess: () => {
+        toast.success('ลบโดเมนเรียบร้อยแล้ว')
+        setDeleteTarget(null)
+      },
       onError: (e) => toast.error(errorMessage(e)),
     })
   }
@@ -301,6 +310,16 @@ function DomainsPanel({ companies }: DomainsPanelProps) {
       <Modal open={!!editing} onClose={() => setEditing(null)} title="แก้ไขโดเมน" overlay="none">
         {editing && <DomainEditForm companies={companies} editing={editing} onClose={() => setEditing(null)} />}
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="ลบโดเมน"
+        description={`ลบโดเมน "${deleteTarget?.domain}" ใช่หรือไม่? อีเมลที่ใช้โดเมนนี้จะไม่สามารถเข้าสู่ระบบผ่าน SSO ได้อีก`}
+        confirmLabel="ลบโดเมน"
+        isLoading={deleteMutation.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   )
 }
@@ -346,6 +365,7 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
   const [name, setName] = useState(category.categoryName)
   const [assetType, setAssetType] = useState(category.assetType ?? '')
   const [parentCategoryId, setParentCategoryId] = useState(category.parentCategoryId ? String(category.parentCategoryId) : '')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const updateMutation = useUpdateAssetCategoryMutation(category.categoryId)
   const deleteMutation = useDeleteAssetCategoryMutation()
 
@@ -373,10 +393,12 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
     )
   }
 
-  function remove() {
-    if (!window.confirm(`ลบหมวดหมู่ "${category.categoryName}" ใช่หรือไม่?`)) return
+  function confirmRemove() {
     deleteMutation.mutate(category.categoryId, {
-      onSuccess: () => toast.success('ลบหมวดหมู่เรียบร้อยแล้ว'),
+      onSuccess: () => {
+        toast.success('ลบหมวดหมู่เรียบร้อยแล้ว')
+        setConfirmingDelete(false)
+      },
       onError: (e) => toast.error(errorMessage(e)),
     })
   }
@@ -438,8 +460,18 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
       )}
       <div className="flex shrink-0 items-center gap-0.5">
         <RowActionButton icon={Pencil} title="แก้ไข" onClick={startEdit} />
-        <RowActionButton icon={Trash2} title="ลบ" variant="danger" onClick={remove} />
+        <RowActionButton icon={Trash2} title="ลบ" variant="danger" onClick={() => setConfirmingDelete(true)} />
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="ลบหมวดหมู่"
+        description={`ลบหมวดหมู่ "${category.categoryName}" ใช่หรือไม่?${childCount ? ` หมวดหมู่ย่อยทั้ง ${childCount} รายการจะได้รับผลกระทบ` : ''}`}
+        confirmLabel="ลบหมวดหมู่"
+        isLoading={deleteMutation.isPending}
+        onConfirm={confirmRemove}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </div>
   )
 }
@@ -595,6 +627,7 @@ function LocationRow({ location, companies }: LocationRowProps) {
   const [type, setType] = useState(location.locationType ?? '')
   const [site, setSite] = useState(location.site ?? '')
   const [companyId, setCompanyId] = useState(location.companyId ? String(location.companyId) : '')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const updateMutation = useUpdateLocationMutation()
   const deleteMutation = useDeleteLocationMutation()
 
@@ -631,10 +664,12 @@ function LocationRow({ location, companies }: LocationRowProps) {
     )
   }
 
-  function remove() {
-    if (!window.confirm(`ลบสถานที่ "${location.locationName}" ใช่หรือไม่?`)) return
+  function confirmRemove() {
     deleteMutation.mutate(location.locationId, {
-      onSuccess: () => toast.success('ลบสถานที่เรียบร้อยแล้ว'),
+      onSuccess: () => {
+        toast.success('ลบสถานที่เรียบร้อยแล้ว')
+        setConfirmingDelete(false)
+      },
       onError: (e) => toast.error(errorMessage(e)),
     })
   }
@@ -678,8 +713,18 @@ function LocationRow({ location, companies }: LocationRowProps) {
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         <RowActionButton icon={Pencil} title="แก้ไข" onClick={startEdit} />
-        <RowActionButton icon={Trash2} title="ลบ" variant="danger" onClick={remove} />
+        <RowActionButton icon={Trash2} title="ลบ" variant="danger" onClick={() => setConfirmingDelete(true)} />
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="ลบสถานที่"
+        description={`ลบสถานที่ "${location.locationName}" ใช่หรือไม่?`}
+        confirmLabel="ลบสถานที่"
+        isLoading={deleteMutation.isPending}
+        onConfirm={confirmRemove}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </div>
   )
 }

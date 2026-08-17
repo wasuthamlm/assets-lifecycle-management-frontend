@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requisitionsService } from '@/api/services/requisitions.service'
 import type { ApproveRequisitionDto, CreateRequisitionDto } from '@/api/types/requisition.types'
 
-export function useRequisitionsQuery() {
+export function useRequisitionsQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['requisitions'],
     queryFn: () => requisitionsService.list(),
+    enabled: options?.enabled,
   })
 }
 

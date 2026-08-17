@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { useRequisitionsQuery } from '@/hooks/useRequisitions'
+import { usePendingApprovals } from '@/hooks/usePendingApprovals'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { Card } from '@/components/ui/Card'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useAuthStore } from '@/stores/auth.store'
-import { ApprovalStatus } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import type { Requisition } from '@/api/types/requisition.types'
@@ -15,14 +14,7 @@ export function ApprovalsPage() {
   usePageTitle('รออนุมัติ')
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.user)
-  const { data: requisitions = [], isLoading } = useRequisitionsQuery()
-
-  const pendingForMe = requisitions.filter((r) => {
-    if (r.overallStatus !== ApprovalStatus.PENDING) return false
-    const sorted = [...r.approvals].sort((a, b) => a.approvalLevel - b.approvalLevel)
-    const pendingApproval = sorted.find((a) => a.status === ApprovalStatus.PENDING)
-    return !!currentUser?.employeeId && pendingApproval?.approverId === currentUser.employeeId
-  })
+  const { pendingForMe, isLoading } = usePendingApprovals()
 
   const columns: DataTableColumn<Requisition>[] = [
     { key: 'no', header: 'เลขที่เอกสาร', render: (r) => <span className="font-medium">{r.requisitionNo}</span> },

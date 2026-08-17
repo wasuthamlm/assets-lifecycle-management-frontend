@@ -6,22 +6,42 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
+import { Pagination } from '@/components/ui/Pagination'
 import { RepairStatusPill } from '@/components/ui/StatusPill'
+import { REPAIR_STATUS_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
+import { RepairStatus } from '@/api/types/common.types'
 import type { Repair } from '@/api/types/repair.types'
+
+const PAGE_SIZE = 20
 
 export function RepairsListPage() {
   usePageTitle('ซ่อมบำรุง')
   const navigate = useNavigate()
   const { data: repairs = [], isLoading } = useRepairsQuery()
   const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const [page, setPage] = useState(1)
 
   const filtered = repairs.filter(
     (r) =>
-      (r.asset?.assetNo ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      (r.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase()),
+      ((r.asset?.assetNo ?? '').toLowerCase().includes(search.toLowerCase()) ||
+        (r.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase())) &&
+      (!status || r.status === status),
   )
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
+
+  function handleStatusChange(value: string) {
+    setStatus(value)
+    setPage(1)
+  }
 
   const columns: DataTableColumn<Repair>[] = [
     {
@@ -37,13 +57,23 @@ export function RepairsListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="ค้นหาเลขทรัพย์สินหรือชื่อ..."
-          className="max-w-xs"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="ค้นหาเลขทรัพย์สินหรือชื่อ..."
+            className="max-w-xs"
+          />
+          <Select value={status} onChange={(e) => handleStatusChange(e.target.value)} className="max-w-[10rem]">
+            <option value="">ทุกสถานะ</option>
+            {Object.values(RepairStatus).map((s) => (
+              <option key={s} value={s}>
+                {REPAIR_STATUS_LABEL[s]}
+              </option>
+            ))}
+          </Select>
+        </div>
         <Button onClick={() => navigate('/repairs/new')}>
           <Plus size={16} /> แจ้งซ่อมใหม่
         </Button>
@@ -53,12 +83,21 @@ export function RepairsListPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={filtered}
+            rows={pageRows}
             rowKey={(r) => r.repairId}
             isLoading={isLoading}
             onRowClick={(r) => navigate(`/repairs/${r.repairId}`)}
+            emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการแจ้งซ่อม'}
+            emptyAction={
+              !search && !status ? (
+                <Button size="sm" onClick={() => navigate('/repairs/new')}>
+                  <Plus size={16} /> แจ้งซ่อมใหม่
+                </Button>
+              ) : undefined
+            }
           />
         </div>
+        <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
       </Card>
     </div>
   )
