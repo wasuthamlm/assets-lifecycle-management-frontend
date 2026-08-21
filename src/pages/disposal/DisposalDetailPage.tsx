@@ -4,6 +4,8 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
+import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
 
@@ -11,14 +13,17 @@ export function DisposalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const disposalId = Number(id)
   usePageTitle(`การจำหน่ายทิ้ง #${id}`)
-  const { data: disposal, isLoading } = useDisposalQuery(disposalId)
+  const { data: disposal, isLoading, isError, error, refetch } = useDisposalQuery(disposalId)
 
-  if (isLoading || !disposal) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !disposal) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบรายการจำหน่ายทิ้งนี้" />
   }
 
   return (
@@ -58,6 +63,8 @@ export function DisposalDetailPage() {
           </div>
         )}
       </dl>
+
+      <AttachmentsPanel referenceType="disposal" referenceId={disposal.disposalId} />
       </DetailSheet>
     </div>
   )

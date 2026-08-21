@@ -20,7 +20,7 @@ const PAGE_SIZE = 20
 export function RepairsListPage() {
   usePageTitle('ซ่อมบำรุง')
   const navigate = useNavigate()
-  const { data: repairs = [], isLoading } = useRepairsQuery()
+  const { data: repairs = [], isLoading, isError, refetch } = useRepairsQuery()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -86,6 +86,8 @@ export function RepairsListPage() {
             rows={pageRows}
             rowKey={(r) => r.repairId}
             isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
             onRowClick={(r) => navigate(`/repairs/${r.repairId}`)}
             emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการแจ้งซ่อม'}
             emptyAction={

@@ -4,6 +4,9 @@ export const ENDPOINTS = {
     refresh: '/auth/refresh',
     logout: '/auth/logout',
     me: '/auth/me',
+    changePassword: '/auth/change-password',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
   },
   dashboard: {
     summary: '/dashboard/summary',
@@ -17,11 +20,16 @@ export const ENDPOINTS = {
     byId: (id: number) => `/requisitions/${id}`,
     approve: (id: number) => `/requisitions/${id}/approve`,
     nextNo: '/requisitions/next-no',
+    mine: '/requisitions/mine',
+    attachments: (id: number) => `/requisitions/${id}/attachments`,
+    attachmentById: (id: number, attachmentId: number) => `/requisitions/${id}/attachments/${attachmentId}`,
   },
   employees: {
     base: '/employees',
     byId: (id: number) => `/employees/${id}`,
     directory: '/employees/directory',
+    roles: (id: number) => `/employees/${id}/roles`,
+    preRegister: '/employees/pre-register',
   },
   departments: {
     base: '/departments',
@@ -92,5 +100,18 @@ export const ENDPOINTS = {
   rolesPermissions: {
     roles: '/roles',
     permissions: '/permissions',
+    rolePermissions: (id: number) => `/roles/${id}/permissions`,
+  },
+  attachments: {
+    base: '/attachments',
+    upload: '/attachments/upload',
+    byId: (id: number) => `/attachments/${id}`,
+  },
+  notifications: {
+    base: '/notifications',
+    stream: '/notifications/stream',
+    unreadCount: '/notifications/unread-count',
+    markRead: (id: number) => `/notifications/${id}/read`,
+    markAllRead: '/notifications/read-all',
   },
 } as const

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -11,11 +12,13 @@ interface ModalProps {
   variant?: 'center' | 'drawer'
   /** 'dim' (default) = darken the page behind the modal. 'none' = keep the page fully visible, just float the panel on top. */
   overlay?: 'dim' | 'none'
+  /** 'md' (default, 28rem) = ฟอร์มทั่วไป. 'xl' (~850px) = เนื้อหาที่กว้างกว่า เช่น เอกสารตัวอย่างขนาด A4 */
+  size?: 'md' | 'xl'
 }
 
 const EXIT_DURATION_MS = 150
 
-export function Modal({ open, onClose, title, children, variant = 'center', overlay = 'dim' }: ModalProps) {
+export function Modal({ open, onClose, title, children, variant = 'center', overlay = 'dim', size = 'md' }: ModalProps) {
   const [shouldRender, setShouldRender] = useState(open)
   const isDrawer = variant === 'drawer'
 
@@ -30,7 +33,7 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
 
   if (!shouldRender) return null
 
-  return (
+  return createPortal(
     <div
       className={cn(
         'fixed inset-0 z-50 flex',
@@ -41,8 +44,9 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
     >
       <div
         className={cn(
-          'flex w-full max-w-md flex-col bg-white shadow-2xl dark:bg-slate-900',
+          'flex w-full flex-col bg-white shadow-2xl dark:bg-slate-900',
           isDrawer ? 'h-full rounded-l-2xl' : 'max-h-[85vh] rounded-2xl',
+          !isDrawer && (size === 'xl' ? 'max-w-[850px]' : 'max-w-md'),
           open ? (isDrawer ? 'animate-drawer-in' : 'animate-sheet-in') : isDrawer ? 'animate-drawer-out' : 'animate-sheet-out',
         )}
       >
@@ -57,6 +61,7 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

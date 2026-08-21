@@ -1,13 +1,14 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { useLogin } from '@/hooks/useAuth'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 const loginSchema = z.object({
   username: z.string().min(1, 'กรุณากรอกชื่อผู้ใช้'),
@@ -26,13 +27,7 @@ export function LoginPage() {
 
   function onSubmit(values: LoginForm) {
     login.mutate(values, {
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'เข้าสู่ระบบไม่สำเร็จ')
-            : 'เข้าสู่ระบบไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'เข้าสู่ระบบไม่สำเร็จ')),
     })
   }
 
@@ -45,8 +40,13 @@ export function LoginPage() {
           {errors.username && <p className="mt-1 text-xs text-red-600">{errors.username.message}</p>}
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รหัสผ่าน</label>
-          <Input type="password" {...register('password')} placeholder="••••••••" />
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">รหัสผ่าน</label>
+            <Link to="/forgot-password" className="text-xs text-brand-600 hover:underline dark:text-brand-400">
+              ลืมรหัสผ่าน?
+            </Link>
+          </div>
+          <PasswordInput {...register('password')} placeholder="••••••••" />
           {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
         </div>
         <Button type="submit" className="w-full" disabled={login.isPending}>

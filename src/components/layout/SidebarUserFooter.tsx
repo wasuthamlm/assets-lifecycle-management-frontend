@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
 import { useLogoutFlow } from '@/hooks/useLogoutFlow'
+import { translateRoleName } from '@/lib/roleLabels'
 
 export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
   const user = useAuthStore((s) => s.user)
@@ -10,6 +11,7 @@ export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
 
   const displayName = user?.employee?.fullName ?? user?.username ?? '...'
   const initial = displayName.charAt(0).toUpperCase()
+  const roleLabel = user?.roles?.map(translateRoleName).join(' · ')
 
   return (
     <div className="border-t border-white/10 px-2 py-3">
@@ -18,7 +20,10 @@ export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
           {initial}
         </div>
         {!collapsed && (
-          <span className="truncate text-sm font-medium text-slate-100">{displayName}</span>
+          <div className="min-w-0">
+            <span className="block truncate text-sm font-medium text-slate-100">{displayName}</span>
+            {roleLabel && <span className="block truncate text-xs text-slate-400">{roleLabel}</span>}
+          </div>
         )}
       </div>
 

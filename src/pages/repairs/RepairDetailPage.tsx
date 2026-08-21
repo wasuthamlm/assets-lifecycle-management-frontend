@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { useRepairQuery, useUpdateRepairStatusMutation } from '@/hooks/useRepairs'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -15,15 +15,15 @@ import { Button } from '@/components/ui/Button'
 import { RepairStatusPill } from '@/components/ui/StatusPill'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { RepairResult, RepairStatus } from '@/api/types/common.types'
-import type { ApiErrorShape } from '@/api/types/common.types'
 import { REPAIR_RESULT_LABEL, REPAIR_STATUS_LABEL } from '@/lib/constants'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 export function RepairDetailPage() {
   const { id } = useParams<{ id: string }>()
   const repairId = Number(id)
   usePageTitle(`งานซ่อม #${id}`)
-  const { data: repair, isLoading } = useRepairQuery(repairId)
+  const { data: repair, isLoading, isError, error, refetch } = useRepairQuery(repairId)
   const updateStatus = useUpdateRepairStatusMutation(repairId)
   const { hasPermission } = usePermission()
 
@@ -32,12 +32,15 @@ export function RepairDetailPage() {
   const [repairCost, setRepairCost] = useState('')
   const [notes, setNotes] = useState('')
 
-  if (isLoading || !repair) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !repair) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบงานซ่อมนี้" />
   }
 
   function handleUpdate() {
@@ -57,13 +60,7 @@ export function RepairDetailPage() {
           setRepairCost('')
           setNotes('')
         },
-        onError: (error) => {
-          const message =
-            error instanceof AxiosError
-              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'อัปเดตไม่สำเร็จ')
-              : 'อัปเดตไม่สำเร็จ'
-          toast.error(Array.isArray(message) ? message.join(', ') : message)
-        },
+        onError: (error) => toast.error(getErrorMessage(error, 'อัปเดตไม่สำเร็จ')),
       },
     )
   }

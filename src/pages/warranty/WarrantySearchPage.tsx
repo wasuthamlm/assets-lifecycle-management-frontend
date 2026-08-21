@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { Plus } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useWarrantiesByAssetQuery, useCreateWarrantyMutation } from '@/hooks/useWarranty'
@@ -20,7 +19,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { WarrantyStatusPill } from '@/components/ui/StatusPill'
 import { formatThaiDate } from '@/lib/formatters'
 import { optionalPositiveInt } from '@/lib/zodHelpers'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 import type { Warranty } from '@/api/types/warranty.types'
 
 const formSchema = z.object({
@@ -41,7 +40,12 @@ export function WarrantySearchPage() {
   const [assetId, setAssetId] = useState<number | undefined>(assetIdParam ? Number(assetIdParam) : undefined)
   const [addFormOpen, setAddFormOpen] = useState(false)
   const { data: vendors = [] } = useVendorsQuery()
-  const { data: warranties = [], isLoading } = useWarrantiesByAssetQuery(assetId ?? 0)
+  const {
+    data: warranties = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useWarrantiesByAssetQuery(assetId ?? 0)
   const create = useCreateWarrantyMutation()
 
   const {
@@ -61,13 +65,7 @@ export function WarrantySearchPage() {
           setAddFormOpen(false)
           reset()
         },
-        onError: (error) => {
-          const message =
-            error instanceof AxiosError
-              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-              : 'บันทึกไม่สำเร็จ'
-          toast.error(Array.isArray(message) ? message.join(', ') : message)
-        },
+        onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
       },
     )
   }
@@ -152,6 +150,8 @@ export function WarrantySearchPage() {
               rows={warranties}
               rowKey={(w) => w.warrantyId}
               isLoading={isLoading}
+              isError={isError}
+              onRetry={refetch}
               emptyMessage="ทรัพย์สินนี้ยังไม่มีประวัติประกัน"
               onRowClick={(w) => navigate(`/warranty/${w.warrantyId}`)}
             />

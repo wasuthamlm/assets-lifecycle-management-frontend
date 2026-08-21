@@ -6,6 +6,7 @@ import { router } from '@/routes/router'
 import { applyTheme, useUiStore } from '@/stores/ui.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCurrentUser } from '@/hooks/useAuth'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,12 +34,14 @@ function App() {
   const accessToken = useAuthStore((s) => s.accessToken)
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeInitializer />
-      {accessToken && <CurrentUserBootstrap />}
-      <RouterProvider router={router} />
-      <Toaster richColors position="top-right" />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeInitializer />
+        {accessToken && <CurrentUserBootstrap />}
+        <RouterProvider router={router} />
+        <Toaster richColors position="top-right" />
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 

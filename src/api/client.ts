@@ -38,10 +38,24 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
   _retried?: boolean
 }
 
+// ต้องตรงกับข้อความใน PasswordChangeGuard ฝั่ง backend เป๊ะๆ — ใช้แยกแยะ 403 นี้ออกจาก
+// 403 อื่นๆ (ไม่มีสิทธิ์) เผื่อ guard นี้ทำงานนอก flow ที่ frontend คาดไว้ (เช่น session เก่าค้างอยู่)
+const MUST_CHANGE_PASSWORD_MESSAGE = 'ต้องเปลี่ยนรหัสผ่านก่อนใช้งานส่วนอื่นของระบบ'
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableConfig | undefined
+
+    if (
+      error.response?.status === 403 &&
+      (error.response.data as { message?: string } | undefined)?.message === MUST_CHANGE_PASSWORD_MESSAGE &&
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/change-password'
+    ) {
+      window.location.href = '/change-password'
+      return Promise.reject(error)
+    }
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retried) {
       originalRequest._retried = true

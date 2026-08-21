@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, ClipboardList } from 'lucide-react'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -19,8 +20,13 @@ export function AssetsListPage() {
   const navigate = useNavigate()
   const { hasPermission } = usePermission()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useAssetsQuery({ search: search || undefined, page, limit: PAGE_SIZE })
+  const { data, isLoading, isError, refetch } = useAssetsQuery({ search: debouncedSearch || undefined, page, limit: PAGE_SIZE })
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
 
   const columns: DataTableColumn<Asset>[] = [
     { key: 'no', header: 'เลขทรัพย์สิน', render: (a) => <span className="font-medium">{a.assetNo}</span> },
@@ -52,16 +58,13 @@ export function AssetsListPage() {
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <Input
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value)
-            setPage(1)
-          }}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="ค้นหาเลขทรัพย์สิน, ชื่อ, S/N..."
           className="max-w-xs"
         />
         {hasPermission('asset.create') && (
           <Button onClick={() => navigate('/assets/new')}>
-            <Plus size={16} /> ลงทะเบียนทรัพย์สินใหม่
+            <Plus size={16} /> เพิ่มทรัพย์สินใหม่
           </Button>
         )}
       </div>
@@ -73,12 +76,13 @@ export function AssetsListPage() {
             rows={data?.data ?? []}
             rowKey={(a) => a.assetId}
             isLoading={isLoading}
-            onRowClick={(a) => navigate(`/assets/${a.assetId}`)}
+            isError={isError}
+            onRetry={refetch}
             emptyMessage={search ? 'ไม่พบทรัพย์สินที่ค้นหา' : 'ยังไม่มีทรัพย์สินในระบบ'}
             emptyAction={
               !search && hasPermission('asset.create') ? (
                 <Button size="sm" onClick={() => navigate('/assets/new')}>
-                  <Plus size={16} /> ลงทะเบียนทรัพย์สินใหม่
+                  <Plus size={16} /> เพิ่มทรัพย์สินใหม่
                 </Button>
               ) : undefined
             }

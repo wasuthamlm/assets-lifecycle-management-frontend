@@ -17,7 +17,8 @@ const itemSchema = z.object({
   categoryId: z.coerce.number().int().positive('กรุณาเลือกหมวดหมู่'),
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
   serialNumber: z.string().optional(),
-  brandModel: z.string().optional(),
+  brand: z.string().optional(),
+  model: z.string().optional(),
   purchaseCost: optionalNonNegativeNumber(),
   warrantyExpireDate: optionalDateString(),
   conditionOnReceipt: z.string().optional(),
@@ -79,7 +80,8 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
           categoryId: i.categoryId,
           assetName: i.assetName,
           serialNumber: i.serialNumber,
-          brandModel: i.brandModel,
+          brand: i.brand,
+          model: i.model,
           purchaseCost: i.purchaseCost,
           warrantyExpireDate: i.warrantyExpireDate,
         },
@@ -198,7 +200,8 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
                   )}
                 </div>
                 <Input {...register(`items.${idx}.serialNumber` as const)} placeholder="Serial Number" />
-                <Input {...register(`items.${idx}.brandModel` as const)} placeholder="ยี่ห้อ/รุ่น" />
+                <Input {...register(`items.${idx}.brand` as const)} placeholder="ยี่ห้อ" />
+                <Input {...register(`items.${idx}.model` as const)} placeholder="รุ่น" />
                 <Input
                   type="number"
                   step="0.01"

@@ -21,9 +21,14 @@ export function StockListPage() {
   const [search, setSearch] = useState('')
   const [locationId, setLocationId] = useState<number | undefined>(undefined)
 
-  const { data: items = [], isLoading: itemsLoading } = useStockItemsQuery()
+  const { data: items = [], isLoading: itemsLoading, isError: itemsError, refetch: refetchItems } = useStockItemsQuery()
   const { data: locations = [] } = useLocationsQuery()
-  const { data: levels = [], isLoading: levelsLoading } = useStockLevelsByLocationQuery(locationId ?? 0)
+  const {
+    data: levels = [],
+    isLoading: levelsLoading,
+    isError: levelsError,
+    refetch: refetchLevels,
+  } = useStockLevelsByLocationQuery(locationId ?? 0)
 
   const filteredItems = items.filter((i) => i.itemName.toLowerCase().includes(search.toLowerCase()))
 
@@ -78,7 +83,14 @@ export function StockListPage() {
           </div>
           <Card className="p-0">
             <div className="p-4">
-              <DataTable columns={itemColumns} rows={filteredItems} rowKey={(i) => i.stockItemId} isLoading={itemsLoading} />
+              <DataTable
+                columns={itemColumns}
+                rows={filteredItems}
+                rowKey={(i) => i.stockItemId}
+                isLoading={itemsLoading}
+                isError={itemsError}
+                onRetry={refetchItems}
+              />
             </div>
           </Card>
         </>
@@ -109,6 +121,8 @@ export function StockListPage() {
                   rows={levels}
                   rowKey={(l) => l.stockLevelId}
                   isLoading={levelsLoading}
+                  isError={levelsError}
+                  onRetry={refetchLevels}
                   emptyMessage="ไม่มีข้อมูลคงเหลือของสถานที่นี้"
                 />
               </div>

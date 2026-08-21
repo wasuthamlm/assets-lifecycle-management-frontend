@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { employeesService } from '@/api/services/employees.service'
+import type { AssignRolesDto } from '@/api/types/roles-permissions.types'
+import type { PreRegisterEmployeeDto } from '@/api/types/employee.types'
 
 export function useEmployeesQuery() {
   return useQuery({
@@ -14,5 +16,28 @@ export function useEmployeeDirectoryQuery() {
     queryKey: ['employees', 'directory'],
     queryFn: () => employeesService.directory(),
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAssignEmployeeRolesMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ employeeId, dto }: { employeeId: number; dto: AssignRolesDto }) =>
+      employeesService.assignRoles(employeeId, dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+export function usePreRegisterEmployeeMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: PreRegisterEmployeeDto) => employeesService.preRegister(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
   })
 }

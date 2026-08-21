@@ -1,8 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
-import type { LoginDto } from '@/api/types/auth.types'
+import type { ChangePasswordDto, ForgotPasswordDto, LoginDto, ResetPasswordDto } from '@/api/types/auth.types'
 
 export function useCurrentUser() {
   const accessToken = useAuthStore((s) => s.accessToken)
@@ -28,8 +28,36 @@ export function useLogin() {
     mutationFn: (dto: LoginDto) => authService.login(dto),
     onSuccess: (tokens) => {
       setTokens(tokens.accessToken, tokens.refreshToken)
-      navigate('/dashboard')
+      navigate(tokens.mustChangePassword ? '/change-password' : '/assets')
     },
+  })
+}
+
+export function useChangePassword() {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (dto: ChangePasswordDto) => authService.changePassword(dto),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+      navigate('/assets')
+    },
+  })
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (dto: ForgotPasswordDto) => authService.forgotPassword(dto),
+  })
+}
+
+export function useResetPassword() {
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (dto: ResetPasswordDto) => authService.resetPassword(dto),
+    onSuccess: () => navigate('/login'),
   })
 }
 

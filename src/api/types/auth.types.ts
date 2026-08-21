@@ -6,6 +6,21 @@ export interface LoginDto {
 export interface TokenPair {
   accessToken: string
   refreshToken: string
+  mustChangePassword: boolean
+}
+
+export interface ChangePasswordDto {
+  currentPassword: string
+  newPassword: string
+}
+
+export interface ForgotPasswordDto {
+  email: string
+}
+
+export interface ResetPasswordDto {
+  token: string
+  newPassword: string
 }
 
 export interface CurrentUser {
@@ -13,7 +28,9 @@ export interface CurrentUser {
   username: string
   email: string | null
   employeeId: number | null
+  mustChangePassword: boolean
   permissions: string[]
+  roles: string[]
   employee: {
     employeeId: number
     employeeCode: string

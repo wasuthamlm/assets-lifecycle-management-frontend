@@ -30,7 +30,8 @@ export interface GoodsReceiptItemAssetInput {
   categoryId: number
   assetName: string
   serialNumber?: string
-  brandModel?: string
+  brand?: string
+  model?: string
   vendorId?: number
   purchaseCost?: number
   warrantyExpireDate?: string

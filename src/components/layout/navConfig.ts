@@ -15,6 +15,7 @@ import {
   CheckSquare,
   BarChart3,
   Users,
+  UserCog,
   KeyRound,
   Settings,
   type LucideIcon,
@@ -25,6 +26,8 @@ export interface NavItem {
   href: string
   icon: LucideIcon
   permission?: string
+  /** ซ่อนเมนูนี้ให้ role เหล่านี้ แม้จะมี permission ผ่านก็ตาม (เช่น employee มี asset.view แต่ไม่ควรเห็นประกัน/ประวัติการเคลื่อนไหว) */
+  excludeRoles?: string[]
 }
 
 export interface NavGroup {
@@ -45,7 +48,8 @@ export const NAV_CREATE_GROUP = {
   icon: PlusCircle,
   items: [
     { label: 'ใบขอเบิก/ยืมทรัพย์สิน', href: '/requisitions/new', icon: ClipboardList, permission: 'requisition.create' },
-    { label: 'ลงทะเบียนทรัพย์สินใหม่', href: '/assets/new', icon: Boxes, permission: 'asset.create' },
+    { label: 'เพิ่มทรัพย์สินใหม่', href: '/assets/new', icon: Boxes, permission: 'asset.create' },
+    { label: 'สร้างใบสั่งซื้อ', href: '/purchasing/new', icon: ShoppingCart, permission: 'po.create' },
   ] satisfies NavItem[],
 }
 
@@ -60,15 +64,16 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'รับเข้าสินค้า', href: '/goods-receipts', icon: PackageCheck, permission: 'goods_receipt.view' },
       { label: 'คลังพัสดุสิ้นเปลือง', href: '/stock', icon: Warehouse, permission: 'stock.view' },
       { label: 'ซ่อมบำรุง', href: '/repairs', icon: Wrench, permission: 'repair.view' },
-      { label: 'ประกัน', href: '/warranty', icon: ShieldCheck, permission: 'warranty.view' },
+      { label: 'ประกัน', href: '/warranty', icon: ShieldCheck, permission: 'asset.view', excludeRoles: ['employee'] },
       { label: 'จำหน่ายทิ้ง', href: '/disposal', icon: Trash2, permission: 'disposal.view' },
     ],
   },
   {
     label: '',
     items: [
-      { label: 'ประวัติการเคลื่อนไหว', href: '/movements', icon: History, permission: 'asset.view' },
+      { label: 'ประวัติการเคลื่อนไหว', href: '/movements', icon: History, permission: 'asset.view', excludeRoles: ['employee'] },
       { label: 'รายการของฉัน', href: '/my-items', icon: User },
+      { label: 'ใบขอเบิก/ยืมของฉัน', href: '/my-requisitions', icon: ClipboardList, permission: 'requisition.view_own' },
       { label: 'รออนุมัติ', href: '/approvals', icon: CheckSquare, permission: 'requisition.approve' },
       { label: 'รายงาน', href: '/reports', icon: BarChart3, permission: 'dashboard.view' },
     ],
@@ -78,8 +83,9 @@ export const NAV_GROUPS: NavGroup[] = [
     adminOnly: true,
     items: [
       { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: 'employee.view_all' },
+      { label: 'บัญชีผู้ใช้งาน', href: '/users', icon: UserCog, permission: 'user.view_all' },
       { label: 'สิทธิ์การใช้งาน', href: '/roles-permissions', icon: KeyRound, permission: 'rbac.manage' },
-      { label: 'ตั้งค่า', href: '/settings', icon: Settings },
+      { label: 'ตั้งค่า', href: '/settings', icon: Settings, permission: 'master.manage' },
     ],
   },
 ]

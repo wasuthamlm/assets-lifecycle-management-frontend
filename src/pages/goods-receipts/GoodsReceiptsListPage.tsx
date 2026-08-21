@@ -16,7 +16,7 @@ const PAGE_SIZE = 20
 export function GoodsReceiptsListPage() {
   usePageTitle('รับเข้าสินค้า')
   const navigate = useNavigate()
-  const { data: receipts = [], isLoading } = useGoodsReceiptsQuery()
+  const { data: receipts = [], isLoading, isError, refetch } = useGoodsReceiptsQuery()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
@@ -61,6 +61,8 @@ export function GoodsReceiptsListPage() {
             rows={pageRows}
             rowKey={(r) => r.receiptId}
             isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
             onRowClick={(r) => navigate(`/goods-receipts/${r.receiptId}`)}
             emptyMessage={search ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการรับเข้าสินค้า'}
             emptyAction={

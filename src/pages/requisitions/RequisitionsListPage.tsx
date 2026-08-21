@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useRequisitionsQuery } from '@/hooks/useRequisitions'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -20,33 +21,49 @@ const PAGE_SIZE = 20
 export function RequisitionsListPage() {
   usePageTitle('ใบขอเบิก/ยืม')
   const navigate = useNavigate()
-  const { data: requisitions = [], isLoading } = useRequisitionsQuery()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
+  const { data, isLoading, isError, refetch } = useRequisitionsQuery({
+    search: debouncedSearch || undefined,
+    status: (status || undefined) as ApprovalStatus | undefined,
+    page,
+    limit: PAGE_SIZE,
+  })
 
-  const filtered = requisitions.filter(
-    (r) =>
-      (r.requisitionNo.toLowerCase().includes(search.toLowerCase()) ||
-        (r.requestedByEmployee?.fullName ?? '').toLowerCase().includes(search.toLowerCase())) &&
-      (!status || r.overallStatus === status),
-  )
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, status])
 
   function handleSearchChange(value: string) {
     setSearch(value)
-    setPage(1)
   }
 
   function handleStatusChange(value: string) {
     setStatus(value)
-    setPage(1)
   }
 
   const columns: DataTableColumn<Requisition>[] = [
     { key: 'no', header: 'เลขที่เอกสาร', render: (r) => <span className="font-medium">{r.requisitionNo}</span> },
     { key: 'requester', header: 'ผู้ขอเบิก', render: (r) => r.requestedByEmployee?.fullName ?? '-' },
     { key: 'type', header: 'ประเภท', render: (r) => REQUEST_TYPE_LABEL[r.requestType] },
+    {
+      key: 'items',
+      header: 'รายการ',
+      className: 'max-w-xs whitespace-normal',
+      render: (r) => {
+        const names = r.items.map((item) =>
+          item.asset ? `${item.asset.assetNo} — ${item.asset.assetName}` : `Stock item #${item.stockItemId}`,
+        )
+        const text = names.join(', ')
+        return (
+          <span className="line-clamp-2" title={text}>
+            {text || '-'}
+          </span>
+        )
+      },
+    },
     {
       key: 'dueDate',
       header: 'วันคืน',
@@ -84,9 +101,11 @@ export function RequisitionsListPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={pageRows}
+            rows={data?.data ?? []}
             rowKey={(r) => r.requisitionId}
             isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
             onRowClick={(r) => navigate(`/requisitions/${r.requisitionId}`)}
             emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีใบขอเบิก/ยืม'}
             emptyAction={
@@ -98,7 +117,7 @@ export function RequisitionsListPage() {
             }
           />
         </div>
-        <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}
       </Card>
     </div>
   )

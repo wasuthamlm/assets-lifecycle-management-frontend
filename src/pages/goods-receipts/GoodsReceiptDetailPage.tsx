@@ -4,20 +4,25 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
+import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { formatThaiDate } from '@/lib/formatters'
 
 export function GoodsReceiptDetailPage() {
   const { id } = useParams<{ id: string }>()
   const receiptId = Number(id)
   usePageTitle(`ใบรับของ #${id}`)
-  const { data: receipt, isLoading } = useGoodsReceiptQuery(receiptId)
+  const { data: receipt, isLoading, isError, error, refetch } = useGoodsReceiptQuery(receiptId)
 
-  if (isLoading || !receipt) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !receipt) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบใบรับของนี้" />
   }
 
   return (
@@ -66,6 +71,8 @@ export function GoodsReceiptDetailPage() {
             ))}
           </div>
         </Section>
+
+        <AttachmentsPanel referenceType="goods_receipt" referenceId={receipt.receiptId} />
       </DetailSheet>
     </div>
   )

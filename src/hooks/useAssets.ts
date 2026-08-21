@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetsService } from '@/api/services/assets.service'
 import type { CreateAssetDto, QueryAssetDto, UpdateAssetDto } from '@/api/types/asset.types'
 
@@ -6,6 +6,7 @@ export function useAssetsQuery(query: QueryAssetDto = {}) {
   return useQuery({
     queryKey: ['assets', query],
     queryFn: () => assetsService.list(query),
+    placeholderData: keepPreviousData,
   })
 }
 

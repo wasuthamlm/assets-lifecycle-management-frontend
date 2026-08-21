@@ -16,3 +16,16 @@ export interface Role {
   description: string | null
   rolePermissions?: RolePermission[]
 }
+
+export interface CreateRoleDto {
+  roleName: string
+  description?: string
+}
+
+export interface AssignPermissionsDto {
+  permissionIds: number[]
+}
+
+export interface AssignRolesDto {
+  roleIds: number[]
+}

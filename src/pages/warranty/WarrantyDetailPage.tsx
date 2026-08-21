@@ -4,18 +4,19 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { useWarrantyQuery, useRenewWarrantyMutation } from '@/hooks/useWarranty'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { WarrantyStatusPill } from '@/components/ui/StatusPill'
-import { WarrantyStatus, type ApiErrorShape } from '@/api/types/common.types'
+import { WarrantyStatus } from '@/api/types/common.types'
 import { formatThaiDate } from '@/lib/formatters'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 const formSchema = z.object({
   newEndDate: z.string().min(1, 'กรุณาเลือกวันที่สิ้นสุดใหม่'),
@@ -28,7 +29,7 @@ export function WarrantyDetailPage() {
   const { id } = useParams<{ id: string }>()
   const warrantyId = Number(id)
   usePageTitle(`ข้อมูลประกัน #${id}`)
-  const { data: warranty, isLoading } = useWarrantyQuery(warrantyId)
+  const { data: warranty, isLoading, isError, error, refetch } = useWarrantyQuery(warrantyId)
   const renew = useRenewWarrantyMutation(warrantyId)
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -48,23 +49,20 @@ export function WarrantyDetailPage() {
           setModalOpen(false)
           reset()
         },
-        onError: (error) => {
-          const message =
-            error instanceof AxiosError
-              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-              : 'บันทึกไม่สำเร็จ'
-          toast.error(Array.isArray(message) ? message.join(', ') : message)
-        },
+        onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
       },
     )
   }
 
-  if (isLoading || !warranty) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !warranty) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบข้อมูลประกันนี้" />
   }
 
   return (

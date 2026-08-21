@@ -7,7 +7,8 @@ export interface Asset {
   category?: { categoryId: number; categoryName: string } | null
   assetName: string
   serialNumber: string | null
-  brandModel: string | null
+  brand: string | null
+  model: string | null
   vendorId: number | null
   vendor?: { vendorId: number; vendorName: string } | null
   purchaseDate: string | null
@@ -29,8 +30,9 @@ export interface CreateAssetDto {
   assetNo: string
   categoryId: number
   assetName: string
-  serialNumber?: string
-  brandModel?: string
+  serialNumber: string
+  brand: string
+  model: string
   vendorId?: number
   purchaseDate?: string
   purchaseCost?: number

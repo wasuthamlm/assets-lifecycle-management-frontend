@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateDisposalMutation } from '@/hooks/useDisposal'
 import { useAssetsQuery } from '@/hooks/useAssets'
@@ -16,7 +15,7 @@ import { BackLink } from '@/components/ui/BackLink'
 import { DisposalMethod } from '@/api/types/common.types'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
 import { optionalNonNegativeNumber } from '@/lib/zodHelpers'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 const formSchema = z.object({
   assetId: z.coerce.number().int().positive('กรุณาเลือกทรัพย์สิน'),
@@ -53,13 +52,7 @@ export function DisposalCreatePage() {
         toast.success('บันทึกการจำหน่ายทิ้งเรียบร้อยแล้ว')
         navigate(`/disposal/${disposal.disposalId}`)
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
     })
   }
 

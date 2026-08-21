@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateGoodsReceiptMutation } from '@/hooks/useGoodsReceipts'
 import { GoodsReceiptForm } from '@/components/goods-receipts/GoodsReceiptForm'
 import { Card } from '@/components/ui/Card'
 import { BackLink } from '@/components/ui/BackLink'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
 export function GoodsReceiptCreatePage() {
@@ -20,13 +19,7 @@ export function GoodsReceiptCreatePage() {
         toast.success('บันทึกรับของเรียบร้อยแล้ว')
         navigate(`/goods-receipts/${receipt.receiptId}`)
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
     })
   }
 

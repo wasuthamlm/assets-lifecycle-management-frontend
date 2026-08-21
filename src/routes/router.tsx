@@ -3,7 +3,11 @@ import { AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PermissionRoute } from './PermissionRoute'
+import { RequirePasswordChange } from './RequirePasswordChange'
 import { LoginPage } from '@/pages/auth/LoginPage'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
+import { ChangePasswordPage } from '@/pages/auth/ChangePasswordPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { RequisitionsListPage } from '@/pages/requisitions/RequisitionsListPage'
 import { RequisitionCreatePage } from '@/pages/requisitions/RequisitionCreatePage'
@@ -12,6 +16,7 @@ import { AssetsListPage } from '@/pages/assets/AssetsListPage'
 import { AssetCreatePage } from '@/pages/assets/AssetCreatePage'
 import { AssetDetailPage } from '@/pages/assets/AssetDetailPage'
 import { PurchaseOrdersListPage } from '@/pages/purchasing/PurchaseOrdersListPage'
+import { PurchaseOrderCreatePage } from '@/pages/purchasing/PurchaseOrderCreatePage'
 import { PurchaseOrderDetailPage } from '@/pages/purchasing/PurchaseOrderDetailPage'
 import { GoodsReceiptsListPage } from '@/pages/goods-receipts/GoodsReceiptsListPage'
 import { GoodsReceiptCreatePage } from '@/pages/goods-receipts/GoodsReceiptCreatePage'
@@ -33,6 +38,7 @@ import { EmployeesListPage } from '@/pages/employees/EmployeesListPage'
 import { UsersListPage } from '@/pages/users/UsersListPage'
 import { RolesPermissionsPage } from '@/pages/roles-permissions/RolesPermissionsPage'
 import { MyItemsPage } from '@/pages/my-items/MyItemsPage'
+import { MyRequisitionsPage } from '@/pages/requisitions/MyRequisitionsPage'
 import { ApprovalsPage } from '@/pages/approvals/ApprovalsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
@@ -41,15 +47,23 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
-    children: [{ path: '/login', element: <LoginPage /> }],
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+    ],
   },
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/change-password', element: <ChangePasswordPage /> },
+      {
+        element: <RequirePasswordChange />,
+        children: [
       {
         element: <AppLayout />,
         children: [
-          { path: '/', element: <Navigate to="/dashboard" replace /> },
+          { path: '/', element: <Navigate to="/assets" replace /> },
           {
             element: <PermissionRoute permission="dashboard.view" />,
             children: [
@@ -67,8 +81,12 @@ export const router = createBrowserRouter([
             children: [{ path: '/requisitions/new', element: <RequisitionCreatePage /> }],
           },
           {
-            element: <PermissionRoute permission="requisition.view_own" />,
+            element: <PermissionRoute permission={['requisition.view_own', 'requisition.view_all']} />,
             children: [{ path: '/requisitions/:id', element: <RequisitionDetailPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="requisition.view_own" />,
+            children: [{ path: '/my-requisitions', element: <MyRequisitionsPage /> }],
           },
 
           {
@@ -76,8 +94,11 @@ export const router = createBrowserRouter([
             children: [
               { path: '/assets', element: <AssetsListPage /> },
               { path: '/assets/:id', element: <AssetDetailPage /> },
-              { path: '/movements', element: <MovementsListPage /> },
             ],
+          },
+          {
+            element: <PermissionRoute permission="asset.view" excludeRoles={['employee']} />,
+            children: [{ path: '/movements', element: <MovementsListPage /> }],
           },
           {
             element: <PermissionRoute permission="asset.create" />,
@@ -98,6 +119,10 @@ export const router = createBrowserRouter([
               { path: '/purchasing', element: <PurchaseOrdersListPage /> },
               { path: '/purchasing/:id', element: <PurchaseOrderDetailPage /> },
             ],
+          },
+          {
+            element: <PermissionRoute permission="po.create" />,
+            children: [{ path: '/purchasing/new', element: <PurchaseOrderCreatePage /> }],
           },
 
           {
@@ -133,8 +158,13 @@ export const router = createBrowserRouter([
             children: [{ path: '/repairs/new', element: <RepairCreatePage /> }],
           },
 
-          { path: '/warranty', element: <WarrantySearchPage /> },
-          { path: '/warranty/:id', element: <WarrantyDetailPage /> },
+          {
+            element: <PermissionRoute permission="asset.view" excludeRoles={['employee']} />,
+            children: [
+              { path: '/warranty', element: <WarrantySearchPage /> },
+              { path: '/warranty/:id', element: <WarrantyDetailPage /> },
+            ],
+          },
 
           {
             element: <PermissionRoute permission="disposal.view" />,
@@ -165,9 +195,14 @@ export const router = createBrowserRouter([
             element: <PermissionRoute permission="user.view_all" />,
             children: [{ path: '/users', element: <UsersListPage /> }],
           },
-          { path: '/settings', element: <SettingsPage /> },
+          {
+            element: <PermissionRoute permission="master.manage" />,
+            children: [{ path: '/settings', element: <SettingsPage /> }],
+          },
 
           { path: '*', element: <NotFoundPage /> },
+        ],
+      },
         ],
       },
     ],

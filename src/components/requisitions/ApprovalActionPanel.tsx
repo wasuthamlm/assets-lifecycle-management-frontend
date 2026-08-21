@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Textarea'
 import { useApproveRequisitionMutation } from '@/hooks/useRequisitions'
 import { ApprovalStatus } from '@/api/types/common.types'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 export function ApprovalActionPanel({ requisitionId }: { requisitionId: number }) {
   const [comment, setComment] = useState('')
@@ -17,13 +16,7 @@ export function ApprovalActionPanel({ requisitionId }: { requisitionId: number }
       { status, comment: comment || undefined },
       {
         onSuccess: () => toast.success(status === ApprovalStatus.APPROVED ? 'อนุมัติเรียบร้อยแล้ว' : 'ปฏิเสธคำขอแล้ว'),
-        onError: (error) => {
-          const message =
-            error instanceof AxiosError
-              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'ดำเนินการไม่สำเร็จ')
-              : 'ดำเนินการไม่สำเร็จ'
-          toast.error(Array.isArray(message) ? message.join(', ') : message)
-        },
+        onError: (error) => toast.error(getErrorMessage(error, 'ดำเนินการไม่สำเร็จ')),
       },
     )
   }

@@ -1,36 +1,39 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { usePurchaseOrderQuery, useUpdatePurchaseOrderStatusMutation } from '@/hooks/usePurchaseOrders'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { PoStatusPill } from '@/components/ui/StatusPill'
 import { PoStatus } from '@/api/types/common.types'
-import type { ApiErrorShape } from '@/api/types/common.types'
 import { PO_STATUS_LABEL } from '@/lib/constants'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const poId = Number(id)
   usePageTitle(`ใบสั่งซื้อ #${id}`)
-  const { data: po, isLoading } = usePurchaseOrderQuery(poId)
+  const { data: po, isLoading, isError, error, refetch } = usePurchaseOrderQuery(poId)
   const updateStatus = useUpdatePurchaseOrderStatusMutation(poId)
   const { hasPermission } = usePermission()
   const [nextStatus, setNextStatus] = useState<PoStatus | ''>('')
 
-  if (isLoading || !po) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !po) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบใบสั่งซื้อนี้" />
   }
 
   function handleUpdateStatus() {
@@ -42,13 +45,7 @@ export function PurchaseOrderDetailPage() {
           toast.success('อัปเดตสถานะเรียบร้อยแล้ว')
           setNextStatus('')
         },
-        onError: (error) => {
-          const message =
-            error instanceof AxiosError
-              ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'อัปเดตไม่สำเร็จ')
-              : 'อัปเดตไม่สำเร็จ'
-          toast.error(Array.isArray(message) ? message.join(', ') : message)
-        },
+        onError: (error) => toast.error(getErrorMessage(error, 'อัปเดตไม่สำเร็จ')),
       },
     )
   }

@@ -24,7 +24,3 @@ export const useAuthStore = create<AuthState>()(
     { name: 'auth-storage' },
   ),
 )
-
-export function hasPermission(code: string): boolean {
-  return useAuthStore.getState().user?.permissions.includes(code) ?? false
-}

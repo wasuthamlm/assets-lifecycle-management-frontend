@@ -5,6 +5,7 @@ import type {
   CreateAssetCategoryDto,
   CreateCompanyDto,
   CreateLocationDto,
+  CreateVendorDto,
   UpdateAllowedDomainDto,
   UpdateAssetCategoryDto,
   UpdateLocationDto,
@@ -40,6 +41,14 @@ export function useDeleteAssetCategoryMutation() {
 
 export function useVendorsQuery() {
   return useQuery({ queryKey: ['vendors'], queryFn: masterDataService.vendors, staleTime: 5 * 60 * 1000 })
+}
+
+export function useCreateVendorMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreateVendorDto) => masterDataService.createVendor(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vendors'] }),
+  })
 }
 
 export function useLocationsQuery() {

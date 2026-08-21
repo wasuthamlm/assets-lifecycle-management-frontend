@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateRepairMutation } from '@/hooks/useRepairs'
 import { useAssetsQuery } from '@/hooks/useAssets'
@@ -14,7 +13,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { BackLink } from '@/components/ui/BackLink'
 import { optionalPositiveInt } from '@/lib/zodHelpers'
-import type { ApiErrorShape } from '@/api/types/common.types'
+import { getErrorMessage } from '@/lib/errorMessage'
 
 const formSchema = z.object({
   assetId: z.coerce.number().int().positive('กรุณาเลือกทรัพย์สิน'),
@@ -47,13 +46,7 @@ export function RepairCreatePage() {
         toast.success('แจ้งซ่อมเรียบร้อยแล้ว')
         navigate(`/repairs/${repair.repairId}`)
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
     })
   }
 

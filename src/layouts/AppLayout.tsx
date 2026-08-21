@@ -3,9 +3,11 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { Topbar } from '@/components/layout/Topbar'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { PageTitleProvider } from '@/hooks/usePageTitle'
+import { useNotificationsStream } from '@/hooks/useNotifications'
 
 export function AppLayout() {
   const location = useLocation()
+  useNotificationsStream()
 
   return (
     <PageTitleProvider>

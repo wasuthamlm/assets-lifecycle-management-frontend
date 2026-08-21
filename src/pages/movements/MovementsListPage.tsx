@@ -8,7 +8,7 @@ import type { Movement } from '@/api/types/movement.types'
 
 export function MovementsListPage() {
   usePageTitle('ประวัติการเคลื่อนไหว')
-  const { data: movements = [], isLoading } = useMovementsQuery()
+  const { data: movements = [], isLoading, isError, refetch } = useMovementsQuery()
 
   const columns: DataTableColumn<Movement>[] = [
     { key: 'date', header: 'วันที่', render: (m) => formatThaiDate(m.createdAt) },
@@ -24,7 +24,14 @@ export function MovementsListPage() {
     <div className="space-y-4">
       <Card className="p-0">
         <div className="p-4">
-          <DataTable columns={columns} rows={movements} rowKey={(m) => m.movementId} isLoading={isLoading} />
+          <DataTable
+            columns={columns}
+            rows={movements}
+            rowKey={(m) => m.movementId}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
+          />
         </div>
       </Card>
     </div>

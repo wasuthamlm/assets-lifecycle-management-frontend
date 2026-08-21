@@ -17,7 +17,7 @@ const PAGE_SIZE = 20
 export function DisposalsListPage() {
   usePageTitle('จำหน่ายทิ้ง')
   const navigate = useNavigate()
-  const { data: disposals = [], isLoading } = useDisposalsQuery()
+  const { data: disposals = [], isLoading, isError, refetch } = useDisposalsQuery()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
@@ -61,6 +61,8 @@ export function DisposalsListPage() {
             rows={pageRows}
             rowKey={(d) => d.disposalId}
             isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
             onRowClick={(d) => navigate(`/disposal/${d.disposalId}`)}
             emptyMessage={search ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการจำหน่ายทิ้ง'}
             emptyAction={

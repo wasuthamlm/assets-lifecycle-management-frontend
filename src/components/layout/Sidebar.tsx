@@ -6,17 +6,28 @@ import { SidebarNavItem } from './SidebarNavItem'
 import { SidebarUserFooter } from './SidebarUserFooter'
 import { usePermission } from '@/hooks/usePermission'
 import { usePendingApprovals } from '@/hooks/usePendingApprovals'
+import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
 import { cn } from '@/lib/utils'
+import type { NavItem } from './navConfig'
+
+const EMPTY_ROLES: string[] = []
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
   const { hasPermission } = usePermission()
+  const roles = useAuthStore((s) => s.user?.roles ?? EMPTY_ROLES)
   const location = useLocation()
   const [createOpen, setCreateOpen] = useState(true)
   const { pendingForMe } = usePendingApprovals()
 
-  const createItems = NAV_CREATE_GROUP.items.filter((i) => !i.permission || hasPermission(i.permission))
+  function isVisible(item: NavItem) {
+    if (item.permission && !hasPermission(item.permission)) return false
+    if (item.excludeRoles?.some((r) => roles.includes(r))) return false
+    return true
+  }
+
+  const createItems = NAV_CREATE_GROUP.items.filter(isVisible)
   const isCreateActive = createItems.some((i) => location.pathname === i.href)
 
   return (
@@ -91,7 +102,7 @@ export function Sidebar() {
         )}
 
         {NAV_GROUPS.map((group, idx) => {
-          const items = group.items.filter((i) => !i.permission || hasPermission(i.permission))
+          const items = group.items.filter(isVisible)
           if (items.length === 0) return null
           return (
             <div key={idx} className="pt-2">

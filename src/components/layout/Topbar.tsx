@@ -3,6 +3,7 @@ import { Search } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
 import { DateRangePicker, type DateRange } from './DateRangePicker'
 import { Breadcrumbs } from './Breadcrumbs'
+import { NotificationBell } from './NotificationBell'
 import { usePageTitleContext } from '@/hooks/usePageTitle'
 import { useCommandPaletteStore } from '@/stores/commandPalette.store'
 
@@ -36,6 +37,7 @@ export function Topbar() {
           </kbd>
         </button>
         <DateRangePicker value={range} onChange={setRange} />
+        <NotificationBell />
         <ThemeToggle />
       </div>
     </header>

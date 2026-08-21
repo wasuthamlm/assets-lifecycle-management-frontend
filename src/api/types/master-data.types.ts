@@ -20,6 +20,12 @@ export interface Vendor {
   contactInfo: string | null
 }
 
+export interface CreateVendorDto {
+  vendorName: string
+  vendorType?: string
+  contactInfo?: string
+}
+
 export interface Location {
   locationId: number
   locationName: string

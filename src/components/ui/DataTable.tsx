@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { EmptyState } from './EmptyState'
+import { ErrorState } from './ErrorState'
 
 export interface DataTableColumn<T> {
   key: string
@@ -13,6 +14,8 @@ interface DataTableProps<T> {
   rows: T[]
   rowKey: (row: T) => string | number
   isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
   emptyMessage?: string
   emptyAction?: ReactNode
   onRowClick?: (row: T) => void
@@ -20,7 +23,20 @@ interface DataTableProps<T> {
 
 const SKELETON_ROWS = 5
 
-export function DataTable<T>({ columns, rows, rowKey, isLoading, emptyMessage, emptyAction, onRowClick }: DataTableProps<T>) {
+export function DataTable<T>({
+  columns,
+  rows,
+  rowKey,
+  isLoading,
+  isError,
+  onRetry,
+  emptyMessage,
+  emptyAction,
+  onRowClick,
+}: DataTableProps<T>) {
+  if (isError) {
+    return <ErrorState onRetry={onRetry} />
+  }
   if (!isLoading && rows.length === 0) {
     return <EmptyState message={emptyMessage} action={emptyAction} />
   }

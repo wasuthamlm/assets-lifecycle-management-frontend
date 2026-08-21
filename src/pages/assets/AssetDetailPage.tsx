@@ -5,8 +5,10 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { Button } from '@/components/ui/Button'
 import { AssetStatusPill } from '@/components/ui/StatusPill'
+import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
 import { WarrantyStatus } from '@/api/types/common.types'
 
@@ -15,15 +17,18 @@ export function AssetDetailPage() {
   const assetId = Number(id)
   usePageTitle(`ทรัพย์สิน #${id}`)
   const navigate = useNavigate()
-  const { data: asset, isLoading } = useAssetQuery(assetId)
+  const { data: asset, isLoading, isError, error, refetch } = useAssetQuery(assetId)
   const { data: warranties = [] } = useWarrantiesByAssetQuery(assetId)
 
-  if (isLoading || !asset) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !asset) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบทรัพย์สินนี้" />
   }
 
   const renewableWarranty = warranties.find((w) => w.status !== WarrantyStatus.RENEWED)
@@ -50,8 +55,12 @@ export function AssetDetailPage() {
             <dd className="text-slate-700 dark:text-slate-200">{asset.serialNumber ?? '-'}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">ยี่ห้อ/รุ่น</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{asset.brandModel ?? '-'}</dd>
+            <dt className="text-slate-400">ยี่ห้อ</dt>
+            <dd className="text-slate-700 dark:text-slate-200">{asset.brand ?? '-'}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-400">รุ่น</dt>
+            <dd className="text-slate-700 dark:text-slate-200">{asset.model ?? '-'}</dd>
           </div>
           <div>
             <dt className="text-slate-400">ผู้ขาย</dt>
@@ -96,6 +105,8 @@ export function AssetDetailPage() {
             </Button>
           )}
         </div>
+
+        <AttachmentsPanel referenceType="asset" referenceId={asset.assetId} />
       </DetailSheet>
     </div>
   )

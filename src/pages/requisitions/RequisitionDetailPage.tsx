@@ -4,9 +4,11 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
+import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { ApprovalActionPanel } from '@/components/requisitions/ApprovalActionPanel'
+import { RequisitionAttachmentsPanel } from '@/components/attachments/RequisitionAttachmentsPanel'
 import { useAuthStore } from '@/stores/auth.store'
 import { ApprovalStatus } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
@@ -16,15 +18,18 @@ export function RequisitionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const requisitionId = Number(id)
   usePageTitle(`ใบขอเบิก/ยืม #${id}`)
-  const { data: requisition, isLoading } = useRequisitionQuery(requisitionId)
+  const { data: requisition, isLoading, isError, error, refetch } = useRequisitionQuery(requisitionId)
   const currentUser = useAuthStore((s) => s.user)
 
-  if (isLoading || !requisition) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-20">
         <Spinner />
       </div>
     )
+  }
+  if (isError || !requisition) {
+    return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบใบขอเบิก/ยืมนี้" />
   }
 
   const sortedApprovals = [...requisition.approvals].sort((a, b) => a.approvalLevel - b.approvalLevel)
@@ -96,6 +101,8 @@ export function RequisitionDetailPage() {
         <Section title="ลำดับการอนุมัติ">
           <Timeline steps={approvalSteps} />
         </Section>
+
+        <RequisitionAttachmentsPanel requisitionId={requisition.requisitionId} />
 
         {isMyTurn && pendingApproval && (
           <Section>

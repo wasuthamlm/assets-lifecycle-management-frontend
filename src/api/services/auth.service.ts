@@ -1,6 +1,13 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { CurrentUser, LoginDto, TokenPair } from '../types/auth.types'
+import type {
+  ChangePasswordDto,
+  CurrentUser,
+  ForgotPasswordDto,
+  LoginDto,
+  ResetPasswordDto,
+  TokenPair,
+} from '../types/auth.types'
 
 export const authService = {
   async login(dto: LoginDto): Promise<TokenPair> {
@@ -13,5 +20,14 @@ export const authService = {
   },
   async logout(): Promise<void> {
     await apiClient.post(ENDPOINTS.auth.logout)
+  },
+  async changePassword(dto: ChangePasswordDto): Promise<void> {
+    await apiClient.patch(ENDPOINTS.auth.changePassword, dto)
+  },
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    await apiClient.post(ENDPOINTS.auth.forgotPassword, dto)
+  },
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    await apiClient.post(ENDPOINTS.auth.resetPassword, dto)
   },
 }

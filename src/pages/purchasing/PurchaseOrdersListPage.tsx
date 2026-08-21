@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Plus } from 'lucide-react'
 import { usePurchaseOrdersQuery } from '@/hooks/usePurchaseOrders'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { usePermission } from '@/hooks/usePermission'
 import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
@@ -18,7 +21,8 @@ const PAGE_SIZE = 20
 export function PurchaseOrdersListPage() {
   usePageTitle('ใบสั่งซื้อ')
   const navigate = useNavigate()
-  const { data: orders = [], isLoading } = usePurchaseOrdersQuery()
+  const { hasPermission } = usePermission()
+  const { data: orders = [], isLoading, isError, refetch } = usePurchaseOrdersQuery()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -70,6 +74,11 @@ export function PurchaseOrdersListPage() {
             </option>
           ))}
         </Select>
+        {hasPermission('po.create') && (
+          <Button className="ml-auto" onClick={() => navigate('/purchasing/new')}>
+            <Plus size={16} /> สร้างใบสั่งซื้อ
+          </Button>
+        )}
       </div>
 
       <Card className="p-0">
@@ -79,8 +88,17 @@ export function PurchaseOrdersListPage() {
             rows={pageRows}
             rowKey={(po) => po.poId}
             isLoading={isLoading}
+            isError={isError}
+            onRetry={refetch}
             onRowClick={(po) => navigate(`/purchasing/${po.poId}`)}
             emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีใบสั่งซื้อ'}
+            emptyAction={
+              !search && !status && hasPermission('po.create') ? (
+                <Button size="sm" onClick={() => navigate('/purchasing/new')}>
+                  <Plus size={16} /> สร้างใบสั่งซื้อ
+                </Button>
+              ) : undefined
+            }
           />
         </div>
         <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />

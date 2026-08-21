@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { ArrowLeftRight, RotateCcw } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useAssetsQuery } from '@/hooks/useAssets'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
   useAssignmentsByAssetQuery,
   useIssueAssetMutation,
@@ -22,24 +22,35 @@ import { IssueAssetForm } from '@/components/assignments/IssueAssetForm'
 import { ReturnAssetForm } from '@/components/assignments/ReturnAssetForm'
 import { ASSIGNMENT_TYPE_LABEL, HOLDER_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
+import { getErrorMessage } from '@/lib/errorMessage'
 import { cn } from '@/lib/utils'
-import type { ApiErrorShape } from '@/api/types/common.types'
 import type { Assignment, IssueAssetDto, ReturnAssetDto } from '@/api/types/assignment.types'
 
 export function AssignmentsListPage() {
   usePageTitle('การเบิก-จ่าย/รับคืน')
   const navigate = useNavigate()
   const [assetSearch, setAssetSearch] = useState('')
+  const debouncedAssetSearch = useDebouncedValue(assetSearch, 300)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
   const [issueOpen, setIssueOpen] = useState(false)
   const [returningId, setReturningId] = useState<number | null>(null)
 
-  const { data: assetsPage } = useAssetsQuery({ search: assetSearch || undefined, limit: 10 })
+  const { data: assetsPage } = useAssetsQuery({ search: debouncedAssetSearch || undefined, limit: 10 })
   const assets = assetsPage?.data ?? []
   const selectedAsset = assets.find((a) => a.assetId === selectedAssetId)
 
-  const { data: assignments = [], isLoading } = useAssignmentsByAssetQuery(selectedAssetId ?? undefined)
-  const { data: pendingReturns = [], isLoading: pendingLoading } = usePendingReturnsQuery()
+  const {
+    data: assignments = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useAssignmentsByAssetQuery(selectedAssetId ?? undefined)
+  const {
+    data: pendingReturns = [],
+    isLoading: pendingLoading,
+    isError: pendingError,
+    refetch: refetchPending,
+  } = usePendingReturnsQuery()
   const issueMutation = useIssueAssetMutation()
   const returnMutation = useReturnAssetMutation(returningId ?? 0)
 
@@ -49,13 +60,7 @@ export function AssignmentsListPage() {
         toast.success('บันทึกการเบิก-จ่ายเรียบร้อยแล้ว')
         setIssueOpen(false)
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
     })
   }
 
@@ -65,13 +70,7 @@ export function AssignmentsListPage() {
         toast.success('บันทึกการรับคืนเรียบร้อยแล้ว')
         setReturningId(null)
       },
-      onError: (error) => {
-        const message =
-          error instanceof AxiosError
-            ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ')
-            : 'บันทึกไม่สำเร็จ'
-        toast.error(Array.isArray(message) ? message.join(', ') : message)
-      },
+      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
     })
   }
 
@@ -163,6 +162,8 @@ export function AssignmentsListPage() {
             rows={pendingReturns}
             rowKey={(a) => a.assignmentId}
             isLoading={pendingLoading}
+            isError={pendingError}
+            onRetry={refetchPending}
             onRowClick={(a) => navigate(`/assignments/${a.assignmentId}`)}
             emptyMessage="ไม่มีทรัพย์สินที่รอรับคืนตอนนี้"
           />
@@ -224,6 +225,8 @@ export function AssignmentsListPage() {
               rows={assignments}
               rowKey={(a) => a.assignmentId}
               isLoading={isLoading}
+              isError={isError}
+              onRetry={refetch}
               onRowClick={(a) => navigate(`/assignments/${a.assignmentId}`)}
               emptyMessage="ยังไม่มีประวัติการเบิก-จ่าย"
             />

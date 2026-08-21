@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { AxiosError } from 'axios'
 import { ChevronRight, CornerDownRight, LogOut, Moon, Plus, Pencil, Sun, Trash2, User } from 'lucide-react'
 import { useCurrentUser } from '@/hooks/useAuth'
 import { useLogoutFlow } from '@/hooks/useLogoutFlow'
@@ -14,6 +13,7 @@ import {
   useCreateAssetCategoryMutation,
   useCreateCompanyMutation,
   useCreateLocationMutation,
+  useCreateVendorMutation,
   useDeleteAllowedDomainMutation,
   useDeleteAssetCategoryMutation,
   useDeleteLocationMutation,
@@ -36,16 +36,14 @@ import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { applyTheme, useUiStore } from '@/stores/ui.store'
 import { cn } from '@/lib/utils'
 import { formatThaiDate } from '@/lib/formatters'
+import { getErrorMessage } from '@/lib/errorMessage'
 import type { AllowedDomain, AssetCategory, Company, Location, Vendor } from '@/api/types/master-data.types'
-import type { ApiErrorShape } from '@/api/types/common.types'
 import type { Department } from '@/api/types/employee.types'
 
 type Tab = 'profile' | 'companies' | 'departments' | 'locations' | 'categories' | 'vendors'
 
 function errorMessage(error: unknown): string {
-  const message =
-    error instanceof AxiosError ? ((error.response?.data as ApiErrorShape | undefined)?.message ?? 'บันทึกไม่สำเร็จ') : 'บันทึกไม่สำเร็จ'
-  return Array.isArray(message) ? message.join(', ') : message
+  return getErrorMessage(error, 'บันทึกไม่สำเร็จ')
 }
 
 interface DomainEditFormProps {
@@ -788,6 +786,89 @@ function LocationManager({ locations, companies, isLoading }: LocationManagerPro
   )
 }
 
+interface VendorManagerProps {
+  vendors: Vendor[]
+  isLoading: boolean
+}
+
+function VendorManager({ vendors, isLoading }: VendorManagerProps) {
+  const [newName, setNewName] = useState('')
+  const [newType, setNewType] = useState('')
+  const [newContact, setNewContact] = useState('')
+  const createMutation = useCreateVendorMutation()
+
+  function handleAdd() {
+    if (!newName.trim()) {
+      toast.error('กรุณากรอกชื่อผู้ขาย')
+      return
+    }
+    createMutation.mutate(
+      { vendorName: newName.trim(), vendorType: newType.trim() || undefined, contactInfo: newContact.trim() || undefined },
+      {
+        onSuccess: () => {
+          toast.success('เพิ่มผู้ขายเรียบร้อยแล้ว')
+          setNewName('')
+          setNewType('')
+          setNewContact('')
+        },
+        onError: (e) => toast.error(errorMessage(e)),
+      },
+    )
+  }
+
+  return (
+    <Card className="p-0">
+      <div className="border-b border-slate-100 p-4 dark:border-slate-800">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">จัดการผู้ขาย/ผู้ให้บริการ</h3>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="ชื่อผู้ขาย"
+            className="sm:col-span-2"
+          />
+          <Input
+            value={newType}
+            onChange={(e) => setNewType(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="ประเภท (ผู้ขาย/ผู้รับซ่อม/บริษัทประกัน)"
+          />
+          <Input
+            value={newContact}
+            onChange={(e) => setNewContact(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="ข้อมูลติดต่อ"
+          />
+        </div>
+        <Button className="mt-2" onClick={handleAdd} disabled={createMutation.isPending}>
+          <Plus size={16} /> เพิ่ม
+        </Button>
+      </div>
+      <div className="p-4">
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Spinner />
+          </div>
+        ) : vendors.length === 0 ? (
+          <p className="py-10 text-center text-sm text-slate-400">ยังไม่มีผู้ขาย — เริ่มเพิ่มได้จากด้านบน</p>
+        ) : (
+          <DataTable
+            columns={[
+              { key: 'name', header: 'ชื่อผู้ขาย', render: (v: Vendor) => v.vendorName },
+              { key: 'type', header: 'ประเภท', render: (v: Vendor) => v.vendorType ?? '-' },
+              { key: 'contact', header: 'ข้อมูลติดต่อ', render: (v: Vendor) => v.contactInfo ?? '-' },
+            ]}
+            rows={vendors}
+            rowKey={(v) => v.vendorId}
+            isLoading={false}
+          />
+        )}
+      </div>
+    </Card>
+  )
+}
+
 function ProfileTab() {
   const { data: user, isLoading } = useCurrentUser()
   const { handleLogout, isPending, modal } = useLogoutFlow()
@@ -920,12 +1001,6 @@ export function SettingsPage() {
     { key: 'site', header: 'ไซต์งาน', render: (d) => d.site ?? '-' },
   ]
 
-  const vendorColumns: DataTableColumn<Vendor>[] = [
-    { key: 'name', header: 'ชื่อผู้ขาย', render: (v) => v.vendorName },
-    { key: 'type', header: 'ประเภท', render: (v) => v.vendorType ?? '-' },
-    { key: 'contact', header: 'ข้อมูลติดต่อ', render: (v) => v.contactInfo ?? '-' },
-  ]
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-100 bg-white p-1.5 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
@@ -964,15 +1039,12 @@ export function SettingsPage() {
 
           {tab === 'categories' && <CategoryManager categories={categories} isLoading={categoriesLoading} />}
 
-          {tab !== 'companies' && tab !== 'locations' && tab !== 'categories' && (
+          {tab === 'vendors' && <VendorManager vendors={vendors} isLoading={vendorsLoading} />}
+
+          {tab === 'departments' && (
             <Card className="p-0">
               <div className="p-4">
-                {tab === 'departments' && (
-                  <DataTable columns={departmentColumns} rows={departments} rowKey={(d) => d.departmentId} isLoading={departmentsLoading} />
-                )}
-                {tab === 'vendors' && (
-                  <DataTable columns={vendorColumns} rows={vendors} rowKey={(v) => v.vendorId} isLoading={vendorsLoading} />
-                )}
+                <DataTable columns={departmentColumns} rows={departments} rowKey={(d) => d.departmentId} isLoading={departmentsLoading} />
               </div>
             </Card>
           )}

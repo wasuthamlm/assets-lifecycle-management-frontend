@@ -53,3 +53,13 @@ export interface ApproveRequisitionDto {
   status: ApprovalStatus
   comment?: string
 }
+
+export interface QueryRequisitionDto {
+  search?: string
+  status?: ApprovalStatus
+  requestType?: RequestType
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  limit?: number
+}

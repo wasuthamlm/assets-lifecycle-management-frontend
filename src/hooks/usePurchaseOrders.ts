@@ -1,11 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { purchaseOrdersService } from '@/api/services/purchase-orders.service'
-import type { UpdatePurchaseOrderStatusDto } from '@/api/types/purchase-order.types'
+import type { CreatePurchaseOrderDto, UpdatePurchaseOrderStatusDto } from '@/api/types/purchase-order.types'
 
 export function usePurchaseOrdersQuery() {
   return useQuery({
     queryKey: ['purchase-orders'],
     queryFn: () => purchaseOrdersService.list(),
+  })
+}
+
+export function useCreatePurchaseOrderMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: CreatePurchaseOrderDto) => purchaseOrdersService.create(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
+    },
   })
 }
 

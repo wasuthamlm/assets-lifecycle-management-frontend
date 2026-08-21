@@ -9,7 +9,7 @@ export const PERMISSION_LABELS_TH: Record<string, string> = {
   'requisition.approve': 'อนุมัติใบขอเบิก/ยืม',
 
   'asset.view': 'ดูทรัพย์สิน',
-  'asset.create': 'ลงทะเบียนทรัพย์สินใหม่',
+  'asset.create': 'เพิ่มทรัพย์สินใหม่',
 
   'assignment.return': 'เบิก-จ่าย/รับคืนทรัพย์สิน',
 

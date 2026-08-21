@@ -8,6 +8,7 @@ import type {
   CreateAssetCategoryDto,
   CreateCompanyDto,
   CreateLocationDto,
+  CreateVendorDto,
   Location,
   UpdateAllowedDomainDto,
   UpdateAssetCategoryDto,
@@ -34,6 +35,10 @@ export const masterDataService = {
   },
   async vendors(): Promise<Vendor[]> {
     const { data } = await apiClient.get<Vendor[]>(ENDPOINTS.vendors.base)
+    return data
+  },
+  async createVendor(dto: CreateVendorDto): Promise<Vendor> {
+    const { data } = await apiClient.post<Vendor>(ENDPOINTS.vendors.base, dto)
     return data
   },
   async locations(): Promise<Location[]> {
