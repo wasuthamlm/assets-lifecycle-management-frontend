@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { ArrowLeft, Building2, ShieldCheck } from 'lucide-react'
 import { useLogin } from '@/hooks/useAuth'
 import { Input } from '@/components/ui/Input'
 import { PasswordInput } from '@/components/ui/PasswordInput'
@@ -19,8 +20,11 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
+type LoginMode = 'choice' | 'admin'
+
 export function LoginPage() {
   const login = useLogin()
+  const [mode, setMode] = useState<LoginMode>(isSsoConfigured ? 'choice' : 'admin')
   const [ssoLoading, setSsoLoading] = useState(false)
   const {
     register,
@@ -48,25 +52,56 @@ export function LoginPage() {
     }
   }
 
+  if (mode === 'choice') {
+    return (
+      <Card>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">เลือกวิธีเข้าสู่ระบบ</p>
+        <div className="space-y-3">
+          <button
+            type="button"
+            disabled={ssoLoading}
+            onClick={onSsoLogin}
+            className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-400 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:hover:border-brand-500 dark:hover:bg-brand-500/10"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
+              <Building2 size={20} />
+            </span>
+            <span>
+              <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">
+                {ssoLoading ? 'กำลังเชื่อมต่อ...' : 'เข้าสู่ระบบด้วยอีเมลบริษัท'}
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">Microsoft (SSO)</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('admin')}
+            className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-brand-400 hover:bg-brand-50 dark:border-slate-800 dark:hover:border-brand-500 dark:hover:bg-brand-500/10"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <ShieldCheck size={20} />
+            </span>
+            <span>
+              <span className="block text-sm font-medium text-slate-800 dark:text-slate-100">เข้าสู่ระบบด้วยแอดมิน</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">ชื่อผู้ใช้และรหัสผ่าน</span>
+            </span>
+          </button>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       {isSsoConfigured && (
-        <>
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full"
-            disabled={ssoLoading}
-            onClick={onSsoLogin}
-          >
-            {ssoLoading ? 'กำลังเชื่อมต่อ...' : 'เข้าสู่ระบบด้วยอีเมลบริษัท (Microsoft)'}
-          </Button>
-          <div className="my-4 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-            หรือ
-            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
-          </div>
-        </>
+        <button
+          type="button"
+          onClick={() => setMode('choice')}
+          className="mb-4 flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400"
+        >
+          <ArrowLeft size={14} />
+          กลับไปเลือกวิธีเข้าสู่ระบบ
+        </button>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
