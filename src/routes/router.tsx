@@ -5,6 +5,7 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { PermissionRoute } from './PermissionRoute'
 import { RequirePasswordChange } from './RequirePasswordChange'
 import { LoginPage } from '@/pages/auth/LoginPage'
+import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { ChangePasswordPage } from '@/pages/auth/ChangePasswordPage'
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/auth/callback', element: <AuthCallbackPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
     ],

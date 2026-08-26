@@ -7,6 +7,7 @@ export const ENDPOINTS = {
     changePassword: '/auth/change-password',
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
+    ssoExchange: '/auth/sso/exchange',
   },
   dashboard: {
     summary: '/dashboard/summary',

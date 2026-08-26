@@ -23,6 +23,10 @@ export interface ResetPasswordDto {
   newPassword: string
 }
 
+export interface SsoExchangeDto {
+  accessToken: string
+}
+
 export interface CurrentUser {
   userId: number
   username: string

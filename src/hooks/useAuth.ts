@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
-import type { ChangePasswordDto, ForgotPasswordDto, LoginDto, ResetPasswordDto } from '@/api/types/auth.types'
+import type { ChangePasswordDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SsoExchangeDto } from '@/api/types/auth.types'
 
 export function useCurrentUser() {
   const accessToken = useAuthStore((s) => s.accessToken)
@@ -26,6 +26,21 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (dto: LoginDto) => authService.login(dto),
+    onSuccess: (tokens) => {
+      setTokens(tokens.accessToken, tokens.refreshToken)
+      navigate(tokens.mustChangePassword ? '/change-password' : '/assets')
+    },
+  })
+}
+
+// ใช้ตอน login ผ่าน Microsoft SSO — แลก Supabase access token (จากหน้า /auth/callback) เป็น TokenPair
+// ของระบบเราเอง เหมือน useLogin ทุกประการหลังจากได้ tokens มาแล้ว
+export function useSsoLogin() {
+  const setTokens = useAuthStore((s) => s.setTokens)
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (dto: SsoExchangeDto) => authService.ssoExchange(dto),
     onSuccess: (tokens) => {
       setTokens(tokens.accessToken, tokens.refreshToken)
       navigate(tokens.mustChangePassword ? '/change-password' : '/assets')

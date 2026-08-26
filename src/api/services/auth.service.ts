@@ -6,6 +6,7 @@ import type {
   ForgotPasswordDto,
   LoginDto,
   ResetPasswordDto,
+  SsoExchangeDto,
   TokenPair,
 } from '../types/auth.types'
 
@@ -29,5 +30,9 @@ export const authService = {
   },
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
     await apiClient.post(ENDPOINTS.auth.resetPassword, dto)
+  },
+  async ssoExchange(dto: SsoExchangeDto): Promise<TokenPair> {
+    const { data } = await apiClient.post<TokenPair>(ENDPOINTS.auth.ssoExchange, dto)
+    return data
   },
 }
