@@ -74,7 +74,7 @@ export function AssignmentDetailPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                {asset ? `${asset.assetNo} — ${asset.assetName}` : `ทรัพย์สิน #${assignment.assetId}`}
+                {asset ? asset.assetName : `ทรัพย์สิน #${assignment.assetId}`}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {ASSIGNMENT_TYPE_LABEL[assignment.assignmentType]} · {HOLDER_TYPE_LABEL[assignment.holderType]} #

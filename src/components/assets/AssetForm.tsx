@@ -1,0 +1,304 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
+import { Plus } from 'lucide-react'
+import { useAssetCategoriesQuery, useCreateAssetCategoryMutation, useVendorsQuery, useLocationsQuery } from '@/hooks/useMasterData'
+import { Card } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Textarea } from '@/components/ui/Textarea'
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
+import { getErrorMessage } from '@/lib/errorMessage'
+
+const formSchema = z.object({
+  assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
+  serialNumber: z.string().min(1, 'กรุณากรอก Serial Number'),
+  brand: z.string().min(1, 'กรุณากรอกยี่ห้อ'),
+  model: z.string().min(1, 'กรุณากรอกรุ่น'),
+  vendorId: optionalPositiveInt(),
+  purchaseDate: optionalDateString(),
+  purchaseCost: optionalNonNegativeNumber(),
+  warrantyExpireDate: optionalDateString(),
+  currentLocationId: optionalPositiveInt(),
+  notes: z.string().optional(),
+})
+
+type FormValues = z.output<typeof formSchema>
+type FormInput = z.input<typeof formSchema>
+
+export interface AssetFormInitial {
+  assetName: string
+  serialNumber: string | null
+  brand: string | null
+  model: string | null
+  vendorId: number | null
+  purchaseDate: string | null
+  purchaseCost: number | null
+  warrantyExpireDate: string | null
+  currentLocationId: number | null
+  notes: string | null
+  /** หมวดหมู่หลักที่เลือกไว้จริง (parent ถ้ามี ไม่งั้นใช้ category ตัวมันเองเพราะเป็นหมวดหมู่หลักอยู่แล้ว) */
+  mainCategoryId: number | null
+  /** หมวดหมู่ย่อยที่เลือกไว้จริง — มีค่าเฉพาะตอนที่ category มี parent เท่านั้น (ดู AssetsListPage: mainCategoryName/subCategoryName) */
+  subCategoryId: number | null
+}
+
+interface AssetFormProps {
+  initial?: AssetFormInitial
+  submitLabel: string
+  submitPendingLabel: string
+  isSubmitting: boolean
+  onSubmit: (values: FormValues & { categoryId: number }) => void
+}
+
+/** ฟอร์มกรอกข้อมูลทรัพย์สิน ใช้ร่วมกันทั้งตอนสร้างใหม่ (AssetCreatePage) และแก้ไข (AssetEditPage) —
+ * ต่างกันแค่ initial values กับปลายทางตอน submit (create vs update) ผู้เรียกเป็นคนตัดสินใจเอง */
+export function AssetForm({ initial, submitLabel, submitPendingLabel, isSubmitting, onSubmit }: AssetFormProps) {
+  const createCategory = useCreateAssetCategoryMutation()
+  const { data: categories = [] } = useAssetCategoriesQuery()
+  const { data: vendors = [] } = useVendorsQuery()
+  const { data: locations = [] } = useLocationsQuery()
+
+  const [mainCategoryId, setMainCategoryId] = useState(initial?.mainCategoryId ? String(initial.mainCategoryId) : '')
+  const [subCategoryId, setSubCategoryId] = useState(initial?.subCategoryId ? String(initial.subCategoryId) : '')
+  const [categoryError, setCategoryError] = useState('')
+  const [newCategoryModal, setNewCategoryModal] = useState<'main' | 'sub' | null>(null)
+  const [newCategoryName, setNewCategoryName] = useState('')
+
+  const mainCategories = categories.filter((c) => !c.parentCategoryId)
+  const subCategories = categories.filter((c) => c.parentCategoryId === Number(mainCategoryId))
+
+  function handleMainCategoryChange(value: string) {
+    setMainCategoryId(value)
+    setSubCategoryId('')
+  }
+
+  function openNewCategoryModal(kind: 'main' | 'sub') {
+    setNewCategoryName('')
+    setNewCategoryModal(kind)
+  }
+
+  function confirmNewCategory() {
+    if (!newCategoryName.trim()) {
+      toast.error('กรอกชื่อหมวดหมู่ใหม่')
+      return
+    }
+    createCategory.mutate(
+      {
+        categoryName: newCategoryName.trim(),
+        parentCategoryId: newCategoryModal === 'sub' ? Number(mainCategoryId) : undefined,
+      },
+      {
+        onSuccess: (created) => {
+          toast.success('เพิ่มหมวดหมู่ใหม่เรียบร้อยแล้ว')
+          if (newCategoryModal === 'main') {
+            setMainCategoryId(String(created.categoryId))
+            setSubCategoryId('')
+          } else {
+            setSubCategoryId(String(created.categoryId))
+          }
+          setNewCategoryModal(null)
+        },
+        onError: (e) => toast.error(getErrorMessage(e, 'เพิ่มหมวดหมู่ไม่สำเร็จ')),
+      },
+    )
+  }
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initial
+      ? {
+          assetName: initial.assetName,
+          serialNumber: initial.serialNumber ?? '',
+          brand: initial.brand ?? '',
+          model: initial.model ?? '',
+          vendorId: initial.vendorId ?? undefined,
+          purchaseDate: initial.purchaseDate ?? undefined,
+          purchaseCost: initial.purchaseCost ?? undefined,
+          warrantyExpireDate: initial.warrantyExpireDate ?? undefined,
+          currentLocationId: initial.currentLocationId ?? undefined,
+          notes: initial.notes ?? '',
+        }
+      : undefined,
+  })
+
+  function handleFormSubmit(values: FormValues) {
+    if (!mainCategoryId) {
+      setCategoryError('กรุณาเลือกหมวดหมู่หลัก')
+      return
+    }
+    // หมวดหมู่ย่อยไม่บังคับเลือก/สร้าง แม้จะมีหมวดหมู่ย่อยให้เลือกอยู่ก็ตาม — ถ้าชื่อหมวดหมู่หลักสื่อความหมายพอแล้ว
+    // ไม่จำเป็นต้องแยกย่อยอีกชั้น ปล่อยว่างได้ ระบบจะใช้หมวดหมู่หลักเป็น categoryId ของทรัพย์สินแทน
+    const categoryId = subCategoryId || mainCategoryId
+    setCategoryError('')
+    onSubmit({ ...values, categoryId: Number(categoryId) })
+  }
+
+  return (
+    <>
+      <Card>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ชื่อทรัพย์สิน <span className="text-red-600">*</span></label>
+              <Input {...register('assetName')} placeholder="Notebook Dell Latitude" />
+              {errors.assetName && <p className="mt-1 text-xs text-red-600">{errors.assetName.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมวดหมู่หลัก <span className="text-red-600">*</span></label>
+              <div className="flex gap-2">
+                <Select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} className="flex-1">
+                  <option value="">เลือกหมวดหมู่หลัก</option>
+                  {mainCategories.map((c) => (
+                    <option key={c.categoryId} value={c.categoryId}>
+                      {c.categoryName}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="shrink-0 px-3"
+                  onClick={() => openNewCategoryModal('main')}
+                  aria-label="เพิ่มหมวดหมู่หลักใหม่"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมวดหมู่ย่อย (ไม่บังคับ)</label>
+              <div className="flex gap-2">
+                <Select value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)} className="flex-1">
+                  {mainCategoryId ? (
+                    subCategories.length > 0 ? (
+                      <>
+                        <option value="">ไม่ระบุ — ใช้หมวดหมู่หลักเลย</option>
+                        {subCategories.map((c) => (
+                          <option key={c.categoryId} value={c.categoryId}>
+                            {c.categoryName}
+                          </option>
+                        ))}
+                      </>
+                    ) : (
+                      <option value="">ไม่มีหมวดหมู่ย่อย — ใช้หมวดหมู่หลักเลย</option>
+                    )
+                  ) : (
+                    <option value="">เลือกหมวดหมู่หลักก่อน</option>
+                  )}
+                </Select>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="shrink-0 px-3"
+                  onClick={() => openNewCategoryModal('sub')}
+                  disabled={!mainCategoryId}
+                  title={!mainCategoryId ? 'เลือกหมวดหมู่หลักก่อน' : undefined}
+                  aria-label="เพิ่มหมวดหมู่ย่อยใหม่"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+              {categoryError && <p className="mt-1 text-xs text-red-600">{categoryError}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Serial Number <span className="text-red-600">*</span></label>
+              <Input {...register('serialNumber')} />
+              {errors.serialNumber && <p className="mt-1 text-xs text-red-600">{errors.serialNumber.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ยี่ห้อ <span className="text-red-600">*</span></label>
+              <Input {...register('brand')} />
+              {errors.brand && <p className="mt-1 text-xs text-red-600">{errors.brand.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รุ่น <span className="text-red-600">*</span></label>
+              <Input {...register('model')} />
+              {errors.model && <p className="mt-1 text-xs text-red-600">{errors.model.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้ขาย</label>
+              <Select {...register('vendorId')}>
+                <option value="">ไม่ระบุ</option>
+                {vendors.map((v) => (
+                  <option key={v.vendorId} value={v.vendorId}>
+                    {v.vendorName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันที่ซื้อ</label>
+              <Input type="date" {...register('purchaseDate')} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">มูลค่า (บาท)</label>
+              <Input type="number" step="0.01" {...register('purchaseCost')} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">วันหมดประกัน</label>
+              <Input type="date" {...register('warrantyExpireDate')} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">สถานที่ปัจจุบัน</label>
+              <Select {...register('currentLocationId')}>
+                <option value="">ไม่ระบุ</option>
+                {locations.map((l) => (
+                  <option key={l.locationId} value={l.locationId}>
+                    {l.locationName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมายเหตุ</label>
+            <Textarea rows={3} {...register('notes')} />
+          </div>
+
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? submitPendingLabel : submitLabel}
+          </Button>
+        </form>
+      </Card>
+
+      <Modal
+        open={newCategoryModal !== null}
+        onClose={() => setNewCategoryModal(null)}
+        title={newCategoryModal === 'sub' ? 'เพิ่มหมวดหมู่ย่อยใหม่' : 'เพิ่มหมวดหมู่หลักใหม่'}
+      >
+        <div className="space-y-4">
+          {newCategoryModal === 'sub' && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              จะเพิ่มเป็นหมวดหมู่ย่อยของ{' '}
+              <span className="font-medium text-slate-700 dark:text-slate-200">
+                {mainCategories.find((c) => String(c.categoryId) === mainCategoryId)?.categoryName}
+              </span>
+            </p>
+          )}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ชื่อหมวดหมู่</label>
+            <Input value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="เช่น อุปกรณ์คอมพิวเตอร์" autoFocus />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setNewCategoryModal(null)}>
+              ยกเลิก
+            </Button>
+            <Button type="button" onClick={confirmNewCategory} disabled={createCategory.isPending}>
+              {createCategory.isPending ? 'กำลังบันทึก...' : 'ยืนยันเพิ่ม'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  )
+}

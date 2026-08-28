@@ -13,7 +13,7 @@ interface AssetComboboxProps {
 
 const RESULT_LIMIT = 20
 
-export function AssetCombobox({ value, onChange, placeholder = 'พิมพ์เพื่อค้นหาเลขทรัพย์สินหรือชื่อ...', disabled, className }: AssetComboboxProps) {
+export function AssetCombobox({ value, onChange, placeholder = 'พิมพ์เพื่อค้นหาชื่อทรัพย์สิน, ยี่ห้อ, S/N...', disabled, className }: AssetComboboxProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -79,7 +79,9 @@ export function AssetCombobox({ value, onChange, placeholder = 'พิมพ์�
     }
   }
 
-  const displayLabel = selectedAsset ? `${selectedAsset.assetNo} — ${selectedAsset.assetName}` : ''
+  const displayLabel = selectedAsset
+    ? [selectedAsset.assetName, selectedAsset.brand, selectedAsset.model].filter(Boolean).join(' > ')
+    : ''
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
@@ -156,8 +158,10 @@ export function AssetCombobox({ value, onChange, placeholder = 'พิมพ์�
                       : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800',
                   )}
                 >
-                  <span className="font-medium">{a.assetNo}</span>
-                  <span className="truncate text-xs text-slate-400">{a.assetName}</span>
+                  <span className="font-medium">{a.assetName}</span>
+                  {(a.brand || a.model) && (
+                    <span className="truncate text-xs text-slate-400">{[a.brand, a.model].filter(Boolean).join(' ')}</span>
+                  )}
                 </button>
               ))
             )}

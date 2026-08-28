@@ -101,7 +101,7 @@ export function RepairDetailPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                {repair.asset ? `${repair.asset.assetNo} — ${repair.asset.assetName}` : `ทรัพย์สิน #${repair.assetId}`}
+                {repair.asset ? repair.asset.assetName : `ทรัพย์สิน #${repair.assetId}`}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">ผู้รับซ่อม: {repair.vendor?.vendorName ?? 'ซ่อมภายใน'}</p>
             </div>

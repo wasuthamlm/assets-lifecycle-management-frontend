@@ -12,8 +12,11 @@ export function MovementsListPage() {
 
   const columns: DataTableColumn<Movement>[] = [
     { key: 'date', header: 'วันที่', render: (m) => formatThaiDate(m.createdAt) },
-    { key: 'asset', header: 'ทรัพย์สิน', render: (m) => (m.asset ? `${m.asset.assetNo} — ${m.asset.assetName}` : `#${m.assetId}`) },
+    { key: 'asset', header: 'ทรัพย์สิน', render: (m) => (m.asset ? m.asset.assetName : `#${m.assetId}`) },
     { key: 'type', header: 'ประเภทการเคลื่อนไหว', render: (m) => MOVEMENT_TYPE_LABEL[m.movementType] },
+    { key: 'holder', header: 'ผู้เบิก/ยืม', render: (m) => m.toHolderEmployee?.fullName ?? '-' },
+    { key: 'holderCode', header: 'รหัสพนักงาน', render: (m) => m.toHolderEmployee?.employeeCode ?? '-' },
+    { key: 'holderDept', header: 'แผนก', render: (m) => m.toHolderEmployee?.department?.departmentName ?? '-' },
     { key: 'from', header: 'จาก', render: (m) => m.fromLocation?.locationName ?? '-' },
     { key: 'to', header: 'ไปยัง', render: (m) => m.toLocation?.locationName ?? '-' },
     { key: 'by', header: 'ผู้ดำเนินการ', render: (m) => m.performedByEmployee?.fullName ?? '-' },

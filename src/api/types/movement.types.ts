@@ -13,6 +13,13 @@ export interface Movement {
   fromHolderId: number | null
   toHolderType: HolderType | null
   toHolderId: number | null
+  /** resolve แล้วเฉพาะตอน toHolderType เป็น employee (ใครเบิก/ยืมของไป) — ดู MovementsService.attachToHolderEmployee */
+  toHolderEmployee?: {
+    employeeId: number
+    employeeCode: string
+    fullName: string
+    department?: { departmentId: number; departmentName: string } | null
+  } | null
   referenceType: string | null
   referenceId: number | null
   performedBy: number

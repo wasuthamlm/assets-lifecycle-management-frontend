@@ -9,7 +9,7 @@ export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
   const toggleSidebar = useUiStore((s) => s.toggleSidebar)
   const { handleLogout, modal } = useLogoutFlow()
 
-  const displayName = user?.employee?.fullName ?? user?.username ?? '...'
+  const displayName = user?.employee?.fullName ?? user?.fullName ?? user?.username ?? '...'
   const initial = displayName.charAt(0).toUpperCase()
   const roleLabel = user?.roles?.map(translateRoleName).join(' · ')
 

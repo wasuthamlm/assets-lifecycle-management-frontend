@@ -61,7 +61,7 @@ export function GoodsReceiptDetailPage() {
               <div key={item.receiptItemId} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-slate-700 dark:text-slate-200">
                   {item.asset
-                    ? `${item.asset.assetNo} — ${item.asset.assetName}`
+                    ? item.asset.assetName
                     : item.stockItem
                       ? `${item.stockItem.itemName} x${item.receivedQuantity ?? 0}`
                       : '-'}

@@ -8,6 +8,7 @@ export const ENDPOINTS = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
     ssoExchange: '/auth/sso/exchange',
+    completeEmployeeProfile: '/auth/me/employee-profile',
   },
   dashboard: {
     summary: '/dashboard/summary',
@@ -114,5 +115,7 @@ export const ENDPOINTS = {
     unreadCount: '/notifications/unread-count',
     markRead: (id: number) => `/notifications/${id}/read`,
     markAllRead: '/notifications/read-all',
+    dismiss: (id: number) => `/notifications/${id}/dismiss`,
+    dismissAll: '/notifications/dismiss-all',
   },
 } as const

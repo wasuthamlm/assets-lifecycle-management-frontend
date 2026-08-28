@@ -33,6 +33,15 @@ export interface EmployeeDirectoryEntry {
   position: string | null
 }
 
+export interface CreateEmployeeDto {
+  employeeCode: string
+  fullName: string
+  departmentId?: number
+  position?: string
+  email?: string
+  phone?: string
+}
+
 export interface PreRegisterEmployeeDto {
   employeeCode: string
   fullName: string

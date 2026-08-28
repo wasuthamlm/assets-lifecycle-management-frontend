@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
-import type { ChangePasswordDto, ForgotPasswordDto, LoginDto, ResetPasswordDto, SsoExchangeDto } from '@/api/types/auth.types'
+import type {
+  ChangePasswordDto,
+  CompleteEmployeeProfileDto,
+  ForgotPasswordDto,
+  LoginDto,
+  ResetPasswordDto,
+  SsoExchangeDto,
+} from '@/api/types/auth.types'
 
 export function useCurrentUser() {
   const accessToken = useAuthStore((s) => s.accessToken)
@@ -54,6 +61,19 @@ export function useChangePassword() {
 
   return useMutation({
     mutationFn: (dto: ChangePasswordDto) => authService.changePassword(dto),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+      navigate('/assets')
+    },
+  })
+}
+
+export function useCompleteEmployeeProfile() {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (dto: CompleteEmployeeProfileDto) => authService.completeEmployeeProfile(dto),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
       navigate('/assets')

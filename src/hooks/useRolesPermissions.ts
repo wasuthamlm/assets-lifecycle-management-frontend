@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { rolesPermissionsService } from '@/api/services/roles-permissions.service'
 import type { AssignPermissionsDto, CreateRoleDto } from '@/api/types/roles-permissions.types'
 
-export function useRolesQuery() {
-  return useQuery({ queryKey: ['roles'], queryFn: () => rolesPermissionsService.roles() })
+export function useRolesQuery(options?: { enabled?: boolean }) {
+  return useQuery({ queryKey: ['roles'], queryFn: () => rolesPermissionsService.roles(), enabled: options?.enabled })
 }
 
 export function usePermissionsQuery() {

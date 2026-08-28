@@ -32,7 +32,7 @@ export function DisposalDetailPage() {
       <DetailSheet>
       <div>
         <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          {disposal.asset ? `${disposal.asset.assetNo} — ${disposal.asset.assetName}` : `ทรัพย์สิน #${disposal.assetId}`}
+          {disposal.asset ? disposal.asset.assetName : `ทรัพย์สิน #${disposal.assetId}`}
         </p>
         <p className="text-sm text-slate-500 dark:text-slate-400">{DISPOSAL_METHOD_LABEL[disposal.disposalMethod]}</p>
       </div>

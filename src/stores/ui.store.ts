@@ -8,6 +8,8 @@ interface UiState {
   toggleSidebar: () => void
   theme: Theme
   setTheme: (theme: Theme) => void
+  notificationSoundMuted: boolean
+  toggleNotificationSound: () => void
 }
 
 export const useUiStore = create<UiState>()(
@@ -17,6 +19,8 @@ export const useUiStore = create<UiState>()(
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
       theme: 'light',
       setTheme: (theme) => set({ theme }),
+      notificationSoundMuted: false,
+      toggleNotificationSound: () => set({ notificationSoundMuted: !get().notificationSoundMuted }),
     }),
     { name: 'ui-storage' },
   ),

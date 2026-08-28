@@ -43,7 +43,12 @@ export function LoginPage() {
     setSsoLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'azure',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        // ต้องขอ scope profile ด้วย ไม่งั้น Azure AD จะไม่ใส่ given_name/family_name มาใน ID token เลย
+        // แม้จะตั้ง optional claims ไว้ที่ฝั่ง Azure App registration แล้วก็ตาม
+        scopes: 'openid profile email',
+      },
     })
     // ไม่ต้อง setSsoLoading(false) ตอนสำเร็จ — เบราว์เซอร์จะ redirect ออกจากหน้านี้ไปเลย
     if (error) {

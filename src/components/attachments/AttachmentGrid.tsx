@@ -9,6 +9,23 @@ import type { Attachment } from '@/api/types/attachment.types'
 
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
 const ACCEPTED_TYPES_ATTR = ACCEPTED_TYPES.join(',')
+// Chromium บน Windows บางเครื่อง/บางเวอร์ชัน sniff File.type ไม่ได้ตอนลากไฟล์วาง (drag-and-drop) ทำให้ได้
+// file.type เป็นค่าว่าง '' ทั้งที่เลือกไฟล์เดียวกันผ่านไดอะล็อก <input type=file> แล้วได้ type ถูกต้องปกติ —
+// ผลคือลากไฟล์รูปวางแล้วโดนปฏิเสธเพราะดูเหมือนไม่รองรับ ทั้งที่ไฟล์ถูกต้อง จึง fallback ไปเดาจากนามสกุลไฟล์
+// เฉพาะตอน type ว่างเท่านั้น (ไม่ใช้แทนที่ type ที่ browser ให้มาแล้ว เผื่อไฟล์ผิดชนิดจริงๆ ต้องโดนกันเหมือนเดิม)
+const EXTENSION_TO_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  pdf: 'application/pdf',
+}
+
+function resolveMimeType(file: File): string {
+  if (file.type) return file.type
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  return (ext && EXTENSION_TO_MIME[ext]) || ''
+}
 // ยังไม่มีเอกสารระบุ limit จาก backend — ตั้งไว้ 10MB ฝั่ง client ก่อนกันไฟล์ใหญ่เกินจริงหลุดไปถึง
 // ขั้นอัปโหลดแล้วค่อยพัง ต้องยืนยันตัวเลขจริงกับ backend อีกทีตอน deploy
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
@@ -23,7 +40,8 @@ function formatFileSize(bytes: number | null): string {
 function filterValidFiles(files: File[]): File[] {
   const valid: File[] = []
   for (const file of files) {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    const mimeType = resolveMimeType(file)
+    if (!ACCEPTED_TYPES.includes(mimeType)) {
       toast.error(`ไม่รองรับไฟล์ "${file.name}" (รองรับเฉพาะ PNG, JPEG, WebP, PDF)`)
       continue
     }
@@ -31,7 +49,10 @@ function filterValidFiles(files: File[]): File[] {
       toast.error(`ไฟล์ "${file.name}" ใหญ่เกินไป (จำกัดไม่เกิน ${formatFileSize(MAX_FILE_SIZE_BYTES)})`)
       continue
     }
-    valid.push(file)
+    // file.type ว่าง (ดูคอมเมนต์ที่ resolveMimeType) ต้อง re-wrap ด้วย type ที่เดาได้ก่อนส่งต่อ ไม่งั้น
+    // FormData จะยังใช้ file.type เดิม (ว่าง) ตั้ง Content-Type ของไฟล์ตอนอัปโหลดจริง แล้วโดน backend
+    // fileFilter (ALLOWED_ATTACHMENT_MIME_TYPES) ปฏิเสธซ้ำอีกชั้นที่ server อยู่ดี
+    valid.push(file.type ? file : new File([file], file.name, { type: mimeType }))
   }
   return valid
 }

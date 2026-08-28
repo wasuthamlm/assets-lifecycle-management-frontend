@@ -2,6 +2,7 @@ import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
 import type {
   ChangePasswordDto,
+  CompleteEmployeeProfileDto,
   CurrentUser,
   ForgotPasswordDto,
   LoginDto,
@@ -34,5 +35,8 @@ export const authService = {
   async ssoExchange(dto: SsoExchangeDto): Promise<TokenPair> {
     const { data } = await apiClient.post<TokenPair>(ENDPOINTS.auth.ssoExchange, dto)
     return data
+  },
+  async completeEmployeeProfile(dto: CompleteEmployeeProfileDto): Promise<void> {
+    await apiClient.post(ENDPOINTS.auth.completeEmployeeProfile, dto)
   },
 }

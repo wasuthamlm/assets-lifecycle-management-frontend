@@ -19,8 +19,7 @@ export function MyItemsPage() {
   const myAssets = (data?.data ?? []).filter((a) => a.currentHolderId === currentUser?.employeeId)
 
   const columns: DataTableColumn<Asset>[] = [
-    { key: 'no', header: 'เลขทรัพย์สิน', render: (a) => <span className="font-medium">{a.assetNo}</span> },
-    { key: 'name', header: 'ชื่อทรัพย์สิน', render: (a) => a.assetName },
+    { key: 'name', header: 'ชื่อทรัพย์สิน', render: (a) => <span className="font-medium">{a.assetName}</span> },
     { key: 'category', header: 'หมวดหมู่', render: (a) => a.category?.categoryName ?? '-' },
     { key: 'status', header: 'สถานะ', render: (a) => (a.currentStatus ? <AssetStatusPill status={a.currentStatus} /> : '-') },
     { key: 'location', header: 'สถานที่', render: (a) => a.currentLocation?.locationName ?? '-' },

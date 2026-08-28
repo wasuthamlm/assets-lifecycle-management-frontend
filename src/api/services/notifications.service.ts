@@ -19,4 +19,10 @@ export const notificationsService = {
   async markAllRead(): Promise<void> {
     await apiClient.post(ENDPOINTS.notifications.markAllRead)
   },
+  async dismiss(id: number): Promise<void> {
+    await apiClient.post(ENDPOINTS.notifications.dismiss(id))
+  },
+  async dismissAll(): Promise<void> {
+    await apiClient.post(ENDPOINTS.notifications.dismissAll)
+  },
 }

@@ -4,17 +4,20 @@ import { AuthLayout } from '@/layouts/AuthLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PermissionRoute } from './PermissionRoute'
 import { RequirePasswordChange } from './RequirePasswordChange'
+import { RequireEmployeeProfile } from './RequireEmployeeProfile'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthCallbackPage } from '@/pages/auth/AuthCallbackPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { ChangePasswordPage } from '@/pages/auth/ChangePasswordPage'
+import { CompleteProfilePage } from '@/pages/auth/CompleteProfilePage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { RequisitionsListPage } from '@/pages/requisitions/RequisitionsListPage'
 import { RequisitionCreatePage } from '@/pages/requisitions/RequisitionCreatePage'
 import { RequisitionDetailPage } from '@/pages/requisitions/RequisitionDetailPage'
 import { AssetsListPage } from '@/pages/assets/AssetsListPage'
 import { AssetCreatePage } from '@/pages/assets/AssetCreatePage'
+import { AssetEditPage } from '@/pages/assets/AssetEditPage'
 import { AssetDetailPage } from '@/pages/assets/AssetDetailPage'
 import { PurchaseOrdersListPage } from '@/pages/purchasing/PurchaseOrdersListPage'
 import { PurchaseOrderCreatePage } from '@/pages/purchasing/PurchaseOrderCreatePage'
@@ -36,10 +39,8 @@ import { StockListPage } from '@/pages/stock/StockListPage'
 import { StockCreatePage } from '@/pages/stock/StockCreatePage'
 import { MovementsListPage } from '@/pages/movements/MovementsListPage'
 import { EmployeesListPage } from '@/pages/employees/EmployeesListPage'
-import { UsersListPage } from '@/pages/users/UsersListPage'
 import { RolesPermissionsPage } from '@/pages/roles-permissions/RolesPermissionsPage'
 import { MyItemsPage } from '@/pages/my-items/MyItemsPage'
-import { MyRequisitionsPage } from '@/pages/requisitions/MyRequisitionsPage'
 import { ApprovalsPage } from '@/pages/approvals/ApprovalsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
@@ -59,8 +60,12 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       { path: '/change-password', element: <ChangePasswordPage /> },
+      { path: '/complete-profile', element: <CompleteProfilePage /> },
       {
         element: <RequirePasswordChange />,
+        children: [
+      {
+        element: <RequireEmployeeProfile />,
         children: [
       {
         element: <AppLayout />,
@@ -75,7 +80,7 @@ export const router = createBrowserRouter([
           },
 
           {
-            element: <PermissionRoute permission="requisition.view_all" />,
+            element: <PermissionRoute permission={['requisition.view_all', 'requisition.view_own']} />,
             children: [{ path: '/requisitions', element: <RequisitionsListPage /> }],
           },
           {
@@ -86,10 +91,9 @@ export const router = createBrowserRouter([
             element: <PermissionRoute permission={['requisition.view_own', 'requisition.view_all']} />,
             children: [{ path: '/requisitions/:id', element: <RequisitionDetailPage /> }],
           },
-          {
-            element: <PermissionRoute permission="requisition.view_own" />,
-            children: [{ path: '/my-requisitions', element: <MyRequisitionsPage /> }],
-          },
+          // /my-requisitions ถูกรวมเข้า /requisitions แล้ว (สลับมุมมองด้วยปุ่ม "ทั้งหมด/ของฉัน" แทน) —
+          // เก็บ redirect ไว้กัน bookmark/ลิงก์เก่าพัง
+          { path: '/my-requisitions', element: <Navigate to="/requisitions" replace /> },
 
           {
             element: <PermissionRoute permission="asset.view" />,
@@ -105,6 +109,10 @@ export const router = createBrowserRouter([
           {
             element: <PermissionRoute permission="asset.create" />,
             children: [{ path: '/assets/new', element: <AssetCreatePage /> }],
+          },
+          {
+            element: <PermissionRoute permission="asset.update" />,
+            children: [{ path: '/assets/:id/edit', element: <AssetEditPage /> }],
           },
 
           {
@@ -186,23 +194,24 @@ export const router = createBrowserRouter([
             children: [{ path: '/approvals', element: <ApprovalsPage /> }],
           },
           {
-            element: <PermissionRoute permission="employee.view_all" />,
+            element: <PermissionRoute permission={['employee.view_all', 'user.view_all']} />,
             children: [{ path: '/employees', element: <EmployeesListPage /> }],
           },
           {
             element: <PermissionRoute permission="rbac.manage" />,
             children: [{ path: '/roles-permissions', element: <RolesPermissionsPage /> }],
           },
-          {
-            element: <PermissionRoute permission="user.view_all" />,
-            children: [{ path: '/users', element: <UsersListPage /> }],
-          },
+          // /users ถูกรวมเข้า /employees แล้ว (คอลัมน์ roles/สถานะ + ปุ่ม "กำหนดสิทธิ์" อยู่ในหน้าเดียวกัน
+          // ตอนนี้ ดู EmployeesListPage) — เก็บ redirect ไว้กัน bookmark/ลิงก์เก่าพัง
+          { path: '/users', element: <Navigate to="/employees" replace /> },
           {
             element: <PermissionRoute permission="master.manage" />,
             children: [{ path: '/settings', element: <SettingsPage /> }],
           },
 
           { path: '*', element: <NotFoundPage /> },
+        ],
+      },
         ],
       },
         ],

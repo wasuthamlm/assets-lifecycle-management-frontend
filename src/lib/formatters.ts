@@ -16,7 +16,3 @@ export function formatThaiDate(date: string | Date): string {
   const buddhistYear = d.getFullYear() + 543
   return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${buddhistYear}`
 }
-
-export function formatThaiDateRange(from: Date, to: Date): string {
-  return `${formatThaiDate(from)} – ${formatThaiDate(to)}`
-}

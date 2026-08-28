@@ -26,10 +26,7 @@ export function RepairsListPage() {
   const [page, setPage] = useState(1)
 
   const filtered = repairs.filter(
-    (r) =>
-      ((r.asset?.assetNo ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (r.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase())) &&
-      (!status || r.status === status),
+    (r) => (r.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase()) && (!status || r.status === status),
   )
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -47,7 +44,7 @@ export function RepairsListPage() {
     {
       key: 'asset',
       header: 'ทรัพย์สิน',
-      render: (r) => <span className="font-medium">{r.asset ? `${r.asset.assetNo} — ${r.asset.assetName}` : '-'}</span>,
+      render: (r) => <span className="font-medium">{r.asset?.assetName ?? '-'}</span>,
     },
     { key: 'problem', header: 'ปัญหา', render: (r) => r.problemDescription ?? '-' },
     { key: 'vendor', header: 'ผู้รับซ่อม', render: (r) => r.vendor?.vendorName ?? 'ซ่อมภายใน' },
@@ -62,7 +59,7 @@ export function RepairsListPage() {
           <Input
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="ค้นหาเลขทรัพย์สินหรือชื่อ..."
+            placeholder="ค้นหาชื่อทรัพย์สิน..."
             className="max-w-xs"
           />
           <Select value={status} onChange={(e) => handleStatusChange(e.target.value)} className="max-w-[10rem]">

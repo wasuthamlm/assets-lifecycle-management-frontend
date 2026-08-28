@@ -1,6 +1,6 @@
 export const ROLE_LABELS_TH: Record<string, string> = {
   it_admin: 'ผู้ดูแลระบบ (IT)',
-  employee: 'พนักงานทั่วไป',
+  employee: 'พนักงาน',
   hr: 'ฝ่ายบุคคล (HR)',
 }
 

@@ -10,7 +10,26 @@ import { Button } from '@/components/ui/Button'
 import { AssetStatusPill } from '@/components/ui/StatusPill'
 import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
-import { WarrantyStatus } from '@/api/types/common.types'
+import { HolderType, WarrantyStatus } from '@/api/types/common.types'
+import type { Asset } from '@/api/types/asset.types'
+
+// currentHolderId เป็น polymorphic FK — ต้องเลือก field ชื่อที่ตรงกับ currentHolderType เอาเอง
+// (ดูคอมเมนต์ resolveHolder ฝั่ง backend, asset.entity.ts)
+function resolveHolderName(asset: Asset): string | null {
+  if (!asset.holder) return null
+  switch (asset.currentHolderType) {
+    case HolderType.EMPLOYEE:
+      return asset.holder.fullName ?? null
+    case HolderType.DEPARTMENT:
+      return asset.holder.departmentName ?? null
+    case HolderType.LOCATION:
+      return asset.holder.locationName ?? null
+    case HolderType.VENDOR:
+      return asset.holder.vendorName ?? null
+    default:
+      return null
+  }
+}
 
 export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -32,6 +51,7 @@ export function AssetDetailPage() {
   }
 
   const renewableWarranty = warranties.find((w) => w.status !== WarrantyStatus.RENEWED)
+  const holderName = resolveHolderName(asset)
 
   return (
     <div>
@@ -39,16 +59,26 @@ export function AssetDetailPage() {
       <DetailSheet>
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">{asset.assetNo}</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{asset.assetName}</p>
+            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">{asset.assetName}</p>
+            {(asset.brand || asset.model) && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">{[asset.brand, asset.model].filter(Boolean).join(' ')}</p>
+            )}
           </div>
           {asset.currentStatus && <AssetStatusPill status={asset.currentStatus} />}
         </div>
 
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-slate-400">หมวดหมู่</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{asset.category?.categoryName ?? '-'}</dd>
+            <dt className="text-slate-400">หมวดหมู่หลัก</dt>
+            <dd className="text-slate-700 dark:text-slate-200">
+              {(asset.category?.parent?.categoryName ?? asset.category?.categoryName) || '-'}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-slate-400">หมวดหมู่ย่อย</dt>
+            {/* asset.category ไม่มี parent แปลว่ามันคือหมวดหมู่หลักเอง (ไม่ได้แยกหมวดหมู่ย่อย) — ไม่ใช่หมวดหมู่ย่อยที่หายไป
+                (ดู AssetCreatePage: หมวดหมู่ย่อยไม่บังคับสร้าง ถ้าชื่อหมวดหมู่หลักสื่อความหมายพอแล้ว) */}
+            <dd className="text-slate-700 dark:text-slate-200">{(asset.category?.parent ? asset.category.categoryName : null) ?? '-'}</dd>
           </div>
           <div>
             <dt className="text-slate-400">Serial Number</dt>
@@ -81,6 +111,10 @@ export function AssetDetailPage() {
             <dd className="text-slate-700 dark:text-slate-200">
               {asset.warrantyExpireDate ? formatThaiDate(asset.warrantyExpireDate) : '-'}
             </dd>
+          </div>
+          <div>
+            <dt className="text-slate-400">ผู้ถือครองปัจจุบัน</dt>
+            <dd className="text-slate-700 dark:text-slate-200">{holderName ?? '-'}</dd>
           </div>
           <div>
             <dt className="text-slate-400">สถานที่ปัจจุบัน</dt>

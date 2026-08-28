@@ -72,7 +72,7 @@ export function WarrantyDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              {warranty.asset ? `${warranty.asset.assetNo} — ${warranty.asset.assetName}` : `ทรัพย์สิน #${warranty.assetId}`}
+              {warranty.asset ? warranty.asset.assetName : `ทรัพย์สิน #${warranty.assetId}`}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">{warranty.vendor?.vendorName ?? 'ไม่ระบุผู้รับประกัน'}</p>
           </div>

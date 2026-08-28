@@ -80,7 +80,7 @@ export function AssignmentsListPage() {
     {
       key: 'asset',
       header: 'ทรัพย์สิน',
-      render: (a) => (a.asset ? `${a.asset.assetNo} — ${a.asset.assetName}` : `#${a.assetId}`),
+      render: (a) => (a.asset ? a.asset.assetName : `#${a.assetId}`),
     },
     { key: 'holder', header: 'ผู้ถือครอง', render: (a) => `${HOLDER_TYPE_LABEL[a.holderType]} #${a.holderId}` },
     { key: 'issued', header: 'วันที่เบิก-จ่าย', render: (a) => formatThaiDate(a.issuedDate) },
@@ -178,7 +178,7 @@ export function AssignmentsListPage() {
             setAssetSearch(e.target.value)
             setSelectedAssetId(null)
           }}
-          placeholder="ค้นหาเลขทรัพย์สิน, ชื่อ, S/N..."
+          placeholder="ค้นหาชื่อทรัพย์สิน, S/N..."
           className="max-w-sm"
         />
         {assetSearch && !selectedAssetId && (
@@ -190,11 +190,11 @@ export function AssignmentsListPage() {
                 type="button"
                 onClick={() => {
                   setSelectedAssetId(a.assetId)
-                  setAssetSearch(`${a.assetNo} — ${a.assetName}`)
+                  setAssetSearch(a.assetName)
                 }}
                 className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
               >
-                {a.assetNo} — {a.assetName}
+                {a.assetName}
               </button>
             ))}
           </div>
@@ -205,9 +205,7 @@ export function AssignmentsListPage() {
         <Card className="p-0">
           <div className="flex items-center justify-between p-4">
             <div>
-              <p className="font-semibold text-slate-800 dark:text-slate-100">
-                {selectedAsset.assetNo} — {selectedAsset.assetName}
-              </p>
+              <p className="font-semibold text-slate-800 dark:text-slate-100">{selectedAsset.assetName}</p>
               <div className="mt-1">{selectedAsset.currentStatus && <AssetStatusPill status={selectedAsset.currentStatus} />}</div>
             </div>
             <div className="flex gap-2">

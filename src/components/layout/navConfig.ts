@@ -15,7 +15,6 @@ import {
   CheckSquare,
   BarChart3,
   Users,
-  UserCog,
   KeyRound,
   Settings,
   type LucideIcon,
@@ -25,7 +24,8 @@ export interface NavItem {
   label: string
   href: string
   icon: LucideIcon
-  permission?: string
+  /** string[] = มีสิทธิ์ข้อใดข้อหนึ่งก็เห็น (any-of) เช่น requisition.view_all หรือ view_own อย่างใดอย่างหนึ่งก็พอ */
+  permission?: string | string[]
   /** ซ่อนเมนูนี้ให้ role เหล่านี้ แม้จะมี permission ผ่านก็ตาม (เช่น employee มี asset.view แต่ไม่ควรเห็นประกัน/ประวัติการเคลื่อนไหว) */
   excludeRoles?: string[]
 }
@@ -57,8 +57,15 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: '',
     items: [
+      // อยู่บนสุดของกลุ่มเมนูหลักเสมอ (ใต้แดชบอร์ด) — งานที่ต้องรีบทำ (มีคนรออนุมัติอยู่) ควรเด่นกว่ารายการข้อมูลทั่วไป
+      { label: 'รออนุมัติ', href: '/approvals', icon: CheckSquare, permission: 'requisition.approve' },
       { label: 'ทรัพย์สิน', href: '/assets', icon: Boxes, permission: 'asset.view' },
-      { label: 'ใบขอเบิก/ยืม', href: '/requisitions', icon: ClipboardList, permission: 'requisition.view_all' },
+      {
+        label: 'ใบขอเบิก/ยืม',
+        href: '/requisitions',
+        icon: ClipboardList,
+        permission: ['requisition.view_all', 'requisition.view_own'],
+      },
       { label: 'การเบิก-จ่าย/รับคืน', href: '/assignments', icon: ArrowLeftRight, permission: 'assignment.return' },
       { label: 'ใบสั่งซื้อ', href: '/purchasing', icon: ShoppingCart, permission: 'po.view' },
       { label: 'รับเข้าสินค้า', href: '/goods-receipts', icon: PackageCheck, permission: 'goods_receipt.view' },
@@ -73,8 +80,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'ประวัติการเคลื่อนไหว', href: '/movements', icon: History, permission: 'asset.view', excludeRoles: ['employee'] },
       { label: 'รายการของฉัน', href: '/my-items', icon: User },
-      { label: 'ใบขอเบิก/ยืมของฉัน', href: '/my-requisitions', icon: ClipboardList, permission: 'requisition.view_own' },
-      { label: 'รออนุมัติ', href: '/approvals', icon: CheckSquare, permission: 'requisition.approve' },
       { label: 'รายงาน', href: '/reports', icon: BarChart3, permission: 'dashboard.view' },
     ],
   },
@@ -82,8 +87,9 @@ export const NAV_GROUPS: NavGroup[] = [
     label: '',
     adminOnly: true,
     items: [
-      { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: 'employee.view_all' },
-      { label: 'บัญชีผู้ใช้งาน', href: '/users', icon: UserCog, permission: 'user.view_all' },
+      // รวมหน้า "บัญชีผู้ใช้งาน" (/users) เข้ามาในหน้านี้แล้ว (ดู EmployeesListPage) — เห็นได้ถ้ามี
+      // สิทธิ์ข้อใดข้อหนึ่ง คอลัมน์ roles/สถานะ/ปุ่มกำหนดสิทธิ์ ค่อยเช็ค user.view_all/rbac.manage แยกในหน้าเอง
+      { label: 'ผู้ใช้งาน/พนักงาน', href: '/employees', icon: Users, permission: ['employee.view_all', 'user.view_all'] },
       { label: 'สิทธิ์การใช้งาน', href: '/roles-permissions', icon: KeyRound, permission: 'rbac.manage' },
       { label: 'ตั้งค่า', href: '/settings', icon: Settings, permission: 'master.manage' },
     ],

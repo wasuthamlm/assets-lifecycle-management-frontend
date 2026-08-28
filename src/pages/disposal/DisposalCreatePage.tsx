@@ -68,7 +68,7 @@ export function DisposalCreatePage() {
               <option value="">เลือกทรัพย์สิน</option>
               {assets.map((a) => (
                 <option key={a.assetId} value={a.assetId}>
-                  {a.assetNo} — {a.assetName}
+                  {a.assetName}
                 </option>
               ))}
             </Select>

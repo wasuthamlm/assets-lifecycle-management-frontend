@@ -26,7 +26,6 @@ export interface GoodsReceipt {
 }
 
 export interface GoodsReceiptItemAssetInput {
-  assetNo: string
   categoryId: number
   assetName: string
   serialNumber?: string

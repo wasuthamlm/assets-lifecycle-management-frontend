@@ -13,7 +13,6 @@ import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
 const itemSchema = z.object({
   poItemId: optionalPositiveInt(),
-  assetNo: z.string().min(1, 'กรุณากรอกเลขทรัพย์สิน'),
   categoryId: z.coerce.number().int().positive('กรุณาเลือกหมวดหมู่'),
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
   serialNumber: z.string().optional(),
@@ -56,7 +55,7 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       receiptNo: '',
-      items: [{ assetNo: '', assetName: '' }],
+      items: [{ assetName: '' }],
     },
   })
 
@@ -76,7 +75,6 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
         poItemId: i.poItemId,
         conditionOnReceipt: i.conditionOnReceipt,
         assetData: {
-          assetNo: i.assetNo,
           categoryId: i.categoryId,
           assetName: i.assetName,
           serialNumber: i.serialNumber,
@@ -145,7 +143,7 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => itemsArray.append({ assetNo: '', assetName: '', categoryId: undefined as unknown as number })}
+            onClick={() => itemsArray.append({ assetName: '', categoryId: undefined as unknown as number })}
           >
             <Plus size={14} /> เพิ่มรายการ
           </Button>
@@ -174,12 +172,6 @@ export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormPro
                     ))}
                   </Select>
                 )}
-                <div>
-                  <Input {...register(`items.${idx}.assetNo` as const)} placeholder="เลขทรัพย์สิน" />
-                  {errors.items?.[idx]?.assetNo && (
-                    <p className="mt-1 text-xs text-red-600">{errors.items[idx]?.assetNo?.message}</p>
-                  )}
-                </div>
                 <div>
                   <Input {...register(`items.${idx}.assetName` as const)} placeholder="ชื่อทรัพย์สิน" />
                   {errors.items?.[idx]?.assetName && (

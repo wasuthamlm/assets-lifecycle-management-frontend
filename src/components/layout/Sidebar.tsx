@@ -15,14 +15,17 @@ const EMPTY_ROLES: string[] = []
 
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
-  const { hasPermission } = usePermission()
+  const { hasPermission, hasAnyPermission } = usePermission()
   const roles = useAuthStore((s) => s.user?.roles ?? EMPTY_ROLES)
   const location = useLocation()
   const [createOpen, setCreateOpen] = useState(true)
   const { pendingForMe } = usePendingApprovals()
 
   function isVisible(item: NavItem) {
-    if (item.permission && !hasPermission(item.permission)) return false
+    if (item.permission) {
+      const allowed = Array.isArray(item.permission) ? hasAnyPermission(item.permission) : hasPermission(item.permission)
+      if (!allowed) return false
+    }
     if (item.excludeRoles?.some((r) => roles.includes(r))) return false
     return true
   }
@@ -50,9 +53,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-2">
-        {(!NAV_TOP.permission || hasPermission(NAV_TOP.permission)) && (
-          <SidebarNavItem item={NAV_TOP} collapsed={collapsed} />
-        )}
+        {isVisible(NAV_TOP) && <SidebarNavItem item={NAV_TOP} collapsed={collapsed} />}
 
         {createItems.length > 0 && (
           <div>

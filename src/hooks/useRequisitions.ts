@@ -12,10 +12,11 @@ export function useRequisitionsQuery(query: QueryRequisitionDto = {}, options?: 
   })
 }
 
-export function useMyRequisitionsQuery(query: QueryRequisitionDto = {}) {
+export function useMyRequisitionsQuery(query: QueryRequisitionDto = {}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['requisitions', 'mine', query],
     queryFn: () => requisitionsService.mine(query),
+    enabled: options?.enabled,
     placeholderData: keepPreviousData,
   })
 }

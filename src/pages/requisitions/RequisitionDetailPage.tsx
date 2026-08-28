@@ -90,7 +90,7 @@ export function RequisitionDetailPage() {
             {requisition.items.map((item) => (
               <div key={item.requisitionItemId} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-slate-700 dark:text-slate-200">
-                  {item.asset ? `${item.asset.assetNo} — ${item.asset.assetName}` : `Stock item #${item.stockItemId}`}
+                  {item.asset ? item.asset.assetName : `Stock item #${item.stockItemId}`}
                 </span>
                 {item.quantity && <span className="text-slate-400">x{item.quantity}</span>}
               </div>

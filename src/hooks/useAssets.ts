@@ -35,6 +35,18 @@ export function useUpdateAssetMutation(id: number) {
     mutationFn: (dto: UpdateAssetDto) => assetsService.update(id, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: ['assets', id] })
+    },
+  })
+}
+
+export function useDeleteAssetMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => assetsService.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }

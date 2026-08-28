@@ -4,6 +4,8 @@ export type NotificationType =
   | 'requisition_rejected'
   | 'warranty_expiring'
   | 'assignment_overdue'
+  | 'employee_profile_completed'
+  | 'permissions_updated'
 
 export interface AppNotification {
   notificationId: number
@@ -14,5 +16,6 @@ export interface AppNotification {
   referenceType: string | null
   referenceId: number | null
   isRead: boolean
+  dismissedAt: string | null
   createdAt: string
 }

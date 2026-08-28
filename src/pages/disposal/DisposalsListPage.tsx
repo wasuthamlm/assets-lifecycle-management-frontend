@@ -21,11 +21,7 @@ export function DisposalsListPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const filtered = disposals.filter(
-    (d) =>
-      (d.asset?.assetNo ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      (d.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase()),
-  )
+  const filtered = disposals.filter((d) => (d.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase()))
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   function handleSearchChange(value: string) {
@@ -34,7 +30,7 @@ export function DisposalsListPage() {
   }
 
   const columns: DataTableColumn<Disposal>[] = [
-    { key: 'asset', header: 'ทรัพย์สิน', render: (d) => (d.asset ? `${d.asset.assetNo} — ${d.asset.assetName}` : '-') },
+    { key: 'asset', header: 'ทรัพย์สิน', render: (d) => d.asset?.assetName ?? '-' },
     { key: 'method', header: 'วิธีจำหน่าย', render: (d) => DISPOSAL_METHOD_LABEL[d.disposalMethod] },
     { key: 'date', header: 'วันที่จำหน่าย', render: (d) => formatThaiDate(d.disposalDate) },
     { key: 'amount', header: 'มูลค่าที่ขายได้', render: (d) => (d.saleAmount != null ? `${formatCurrency(d.saleAmount)} บาท` : '-') },
@@ -46,7 +42,7 @@ export function DisposalsListPage() {
         <Input
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="ค้นหาเลขทรัพย์สินหรือชื่อ..."
+          placeholder="ค้นหาชื่อทรัพย์สิน..."
           className="max-w-xs"
         />
         <Button onClick={() => navigate('/disposal/new')}>

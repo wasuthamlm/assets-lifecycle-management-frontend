@@ -4,7 +4,11 @@ export interface Asset {
   assetId: number
   assetNo: string
   categoryId: number | null
-  category?: { categoryId: number; categoryName: string } | null
+  category?: {
+    categoryId: number
+    categoryName: string
+    parent?: { categoryId: number; categoryName: string } | null
+  } | null
   assetName: string
   serialNumber: string | null
   brand: string | null
@@ -24,10 +28,17 @@ export interface Asset {
   createdAt: string
   updatedAt: string | null
   availableCount?: number
+  // มีเฉพาะตอนเรียก GET /assets/:id (ดู AssetsService.findOneWithHolder) — เป็น entity แบบ polymorphic
+  // ตาม currentHolderType เลือก field ชื่อที่ตรงกันเอาเอง (ดู resolveHolderName ใน AssetDetailPage)
+  holder?: {
+    fullName?: string
+    departmentName?: string
+    locationName?: string
+    vendorName?: string
+  } | null
 }
 
 export interface CreateAssetDto {
-  assetNo: string
   categoryId: number
   assetName: string
   serialNumber: string
