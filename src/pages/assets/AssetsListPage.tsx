@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, ClipboardList, Pencil, Trash2 } from 'lucide-react'
-import { useAssetsQuery, useDeleteAssetMutation } from '@/hooks/useAssets'
+import { Plus, ClipboardList, Search, Pencil, Trash2 } from 'lucide-react'
+import { useAssetsQuery, useAssetBrandsQuery, useDeleteAssetMutation } from '@/hooks/useAssets'
+import { useAssetCategoriesQuery } from '@/hooks/useMasterData'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { Pagination } from '@/components/ui/Pagination'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -17,7 +19,7 @@ import { getErrorMessage } from '@/lib/errorMessage'
 import { AssetStatus } from '@/api/types/common.types'
 import type { Asset } from '@/api/types/asset.types'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 8
 
 // asset.category คือหมวดหมู่ "ปลายทาง" ที่เลือกไว้จริง (เลือกได้ทั้งหมวดหมู่หลักตรงๆ หรือหมวดหมู่ย่อย —
 // ดู AssetCreatePage: หมวดหมู่ย่อยไม่บังคับ) ต้องแยกตรงนี้ว่าจะโชว์คอลัมน์ไหน ไม่ใช่ผูก parent เข้ากับ
@@ -38,14 +40,33 @@ export function AssetsListPage() {
   const canDelete = hasPermission('asset.delete')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
+  const [mainCategoryId, setMainCategoryId] = useState('')
+  const [subCategoryId, setSubCategoryId] = useState('')
+  const [brand, setBrand] = useState('')
   const [page, setPage] = useState(1)
   const [deletingAsset, setDeletingAsset] = useState<Asset | null>(null)
-  const { data, isLoading, isError, refetch } = useAssetsQuery({ search: debouncedSearch || undefined, page, limit: PAGE_SIZE })
+  const { data: categories = [] } = useAssetCategoriesQuery()
+  const { data: brands = [] } = useAssetBrandsQuery()
+  const mainCategories = categories.filter((c) => !c.parentCategoryId)
+  const subCategories = categories.filter((c) => c.parentCategoryId === Number(mainCategoryId))
+  const { data, isLoading, isError, refetch } = useAssetsQuery({
+    search: debouncedSearch || undefined,
+    mainCategoryId: mainCategoryId ? Number(mainCategoryId) : undefined,
+    categoryId: subCategoryId ? Number(subCategoryId) : undefined,
+    brand: brand || undefined,
+    page,
+    limit: PAGE_SIZE,
+  })
   const deleteMutation = useDeleteAssetMutation()
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch])
+  }, [debouncedSearch, mainCategoryId, subCategoryId, brand])
+
+  function handleMainCategoryChange(value: string) {
+    setMainCategoryId(value)
+    setSubCategoryId('')
+  }
 
   function confirmDelete() {
     if (!deletingAsset) return
@@ -81,6 +102,18 @@ export function AssetsListPage() {
           >
             <ClipboardList size={14} /> ทำรายการ เบิก/ยืม
           </Button>
+          <button
+            type="button"
+            title="ดูรายละเอียด"
+            aria-label="ดูรายละเอียดทรัพย์สิน"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/assets/${a.assetId}`)
+            }}
+            className="rounded-lg p-1.5 text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
+          >
+            <Search size={16} />
+          </button>
           {canUpdate && (
             <button
               type="button"
@@ -116,15 +149,57 @@ export function AssetsListPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="ค้นหาชื่อทรัพย์สิน, S/N..."
-          className="max-w-xs"
+          className="w-56"
         />
+        <Select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} className="w-44">
+          <option value="">หมวดหมู่หลัก: ทั้งหมด</option>
+          {mainCategories.map((c) => (
+            <option key={c.categoryId} value={c.categoryId}>
+              {c.categoryName}
+            </option>
+          ))}
+        </Select>
+        <Select
+          value={subCategoryId}
+          onChange={(e) => setSubCategoryId(e.target.value)}
+          disabled={!mainCategoryId || subCategories.length === 0}
+          className="w-44"
+        >
+          <option value="">หมวดหมู่ย่อย: ทั้งหมด</option>
+          {subCategories.map((c) => (
+            <option key={c.categoryId} value={c.categoryId}>
+              {c.categoryName}
+            </option>
+          ))}
+        </Select>
+        <Select value={brand} onChange={(e) => setBrand(e.target.value)} className="w-44">
+          <option value="">ยี่ห้อ: ทั้งหมด</option>
+          {brands.map((b) => (
+            <option key={b} value={b}>
+              {b}
+            </option>
+          ))}
+        </Select>
+        {(mainCategoryId || subCategoryId || brand) && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setMainCategoryId('')
+              setSubCategoryId('')
+              setBrand('')
+            }}
+          >
+            ล้างตัวกรอง
+          </Button>
+        )}
         {hasPermission('asset.create') && (
-          <Button onClick={() => navigate('/assets/new')}>
+          <Button className="ml-auto" onClick={() => navigate('/assets/new')}>
             <Plus size={16} /> เพิ่มทรัพย์สินใหม่
           </Button>
         )}
@@ -139,9 +214,11 @@ export function AssetsListPage() {
             isLoading={isLoading}
             isError={isError}
             onRetry={refetch}
-            emptyMessage={search ? 'ไม่พบทรัพย์สินที่ค้นหา' : 'ยังไม่มีทรัพย์สินในระบบ'}
+            emptyMessage={
+              search || mainCategoryId || subCategoryId || brand ? 'ไม่พบทรัพย์สินที่ตรงกับเงื่อนไข' : 'ยังไม่มีทรัพย์สินในระบบ'
+            }
             emptyAction={
-              !search && hasPermission('asset.create') ? (
+              !search && !mainCategoryId && !subCategoryId && !brand && hasPermission('asset.create') ? (
                 <Button size="sm" onClick={() => navigate('/assets/new')}>
                   <Plus size={16} /> เพิ่มทรัพย์สินใหม่
                 </Button>

@@ -61,6 +61,9 @@ export type UpdateAssetDto = Partial<CreateAssetDto>
 export interface QueryAssetDto {
   search?: string
   categoryId?: number
+  /** หมวดหมู่หลัก — match ทั้งตัวหมวดหมู่หลักเองและหมวดหมู่ย่อยทุกอันข้างใต้ ใช้แทน categoryId ตอนยังไม่เจาะจงหมวดหมู่ย่อย */
+  mainCategoryId?: number
+  brand?: string
   status?: AssetStatus
   holderType?: HolderType
   page?: number

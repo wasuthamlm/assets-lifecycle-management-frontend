@@ -16,6 +16,7 @@ export const ENDPOINTS = {
   assets: {
     base: '/assets',
     byId: (id: number) => `/assets/${id}`,
+    brands: '/assets/brands',
   },
   requisitions: {
     base: '/requisitions',

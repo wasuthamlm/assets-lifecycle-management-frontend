@@ -8,6 +8,10 @@ export const assetsService = {
     const { data } = await apiClient.get<Paginated<Asset>>(ENDPOINTS.assets.base, { params: query })
     return data
   },
+  async brands(): Promise<string[]> {
+    const { data } = await apiClient.get<string[]>(ENDPOINTS.assets.brands)
+    return data
+  },
   async get(id: number): Promise<Asset> {
     const { data } = await apiClient.get<Asset>(ENDPOINTS.assets.byId(id))
     return data

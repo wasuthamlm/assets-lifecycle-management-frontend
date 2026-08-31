@@ -10,6 +10,10 @@ export function useAssetsQuery(query: QueryAssetDto = {}) {
   })
 }
 
+export function useAssetBrandsQuery() {
+  return useQuery({ queryKey: ['assets', 'brands'], queryFn: assetsService.brands, staleTime: 5 * 60 * 1000 })
+}
+
 export function useAssetQuery(id: number) {
   return useQuery({
     queryKey: ['assets', id],

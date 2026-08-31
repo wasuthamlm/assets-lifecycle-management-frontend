@@ -53,6 +53,7 @@ export function AssetEditPage() {
         submitPendingLabel="กำลังบันทึก..."
         isSubmitting={update.isPending}
         onSubmit={(values) =>
+          // imageFile จะเป็น null เสมอที่นี่ — ช่องแนบรูปใน AssetForm แสดงเฉพาะตอนสร้างใหม่ (ไม่มี initial)
           update.mutate(values, {
             onSuccess: () => {
               toast.success('บันทึกการแก้ไขเรียบร้อยแล้ว')

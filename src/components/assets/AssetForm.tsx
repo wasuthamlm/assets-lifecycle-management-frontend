@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { Plus, Image as ImageIcon, X } from 'lucide-react'
 import { useAssetCategoriesQuery, useCreateAssetCategoryMutation, useVendorsQuery, useLocationsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -13,6 +13,19 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { optionalDateString, optionalNonNegativeNumber, optionalPositiveInt } from '@/lib/zodHelpers'
 import { getErrorMessage } from '@/lib/errorMessage'
+import { cn } from '@/lib/utils'
+
+// รองรับเฉพาะรูปภาพ (ไม่รวม PDF เหมือน AttachmentGrid ทั่วไป) เพราะช่องนี้เจาะจงไว้สำหรับ "รูปทรัพย์สิน"
+// ตอนสร้างใหม่โดยเฉพาะ — ไฟล์เอกสารอื่นแนบเพิ่มทีหลังได้ผ่าน AttachmentsPanel ที่หน้ารายละเอียด
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+
+function resolveImageMimeType(file: File): string {
+  if (file.type) return file.type
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  const map: Record<string, string> = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp' }
+  return (ext && map[ext]) || ''
+}
 
 const formSchema = z.object({
   assetName: z.string().min(1, 'กรุณากรอกชื่อทรัพย์สิน'),
@@ -52,7 +65,9 @@ interface AssetFormProps {
   submitLabel: string
   submitPendingLabel: string
   isSubmitting: boolean
-  onSubmit: (values: FormValues & { categoryId: number }) => void
+  /** imageFiles มีค่าเฉพาะตอนสร้างใหม่ (ไม่มี initial) — ผู้เรียกเป็นคนอัปโหลดเองหลังสร้างทรัพย์สินสำเร็จ
+   * ได้ assetId มาแล้ว (ดู AssetCreatePage) เพราะ endpoint แนบไฟล์ต้องมี referenceId ของที่มีอยู่จริงก่อน */
+  onSubmit: (values: FormValues & { categoryId: number }, imageFiles: File[]) => void
 }
 
 /** ฟอร์มกรอกข้อมูลทรัพย์สิน ใช้ร่วมกันทั้งตอนสร้างใหม่ (AssetCreatePage) และแก้ไข (AssetEditPage) —
@@ -68,6 +83,77 @@ export function AssetForm({ initial, submitLabel, submitPendingLabel, isSubmitti
   const [categoryError, setCategoryError] = useState('')
   const [newCategoryModal, setNewCategoryModal] = useState<'main' | 'sub' | null>(null)
   const [newCategoryName, setNewCategoryName] = useState('')
+
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [isDraggingImage, setIsDraggingImage] = useState(false)
+  const imageDragCounter = useRef(0)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+
+  // สร้าง object URL ใหม่ทุกครั้งที่ imageFiles เปลี่ยน (reference ใหม่) — useEffect ด้านล่าง revoke
+  // ชุดก่อนหน้าให้เองตอน cleanup (React รัน cleanup ของ effect เก่าก่อนรัน effect ใหม่เสมอ) กัน object URL ค้าง memory
+  const imagePreviews = useMemo(
+    () => imageFiles.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [imageFiles],
+  )
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((p) => URL.revokeObjectURL(p.url))
+    }
+  }, [imagePreviews])
+
+  function addImageFiles(files: File[]) {
+    const valid: File[] = []
+    for (const file of files) {
+      const mimeType = resolveImageMimeType(file)
+      if (!ACCEPTED_IMAGE_TYPES.includes(mimeType)) {
+        toast.error(`ไม่รองรับไฟล์ "${file.name}" (รองรับเฉพาะ PNG, JPEG, WebP)`)
+        continue
+      }
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        toast.error(`ไฟล์ "${file.name}" ใหญ่เกินไป (จำกัดไม่เกิน 10 MB)`)
+        continue
+      }
+      valid.push(file.type ? file : new File([file], file.name, { type: mimeType }))
+    }
+    if (valid.length > 0) setImageFiles((prev) => [...prev, ...valid])
+  }
+
+  function handleImageInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    if (files.length > 0) addImageFiles(files)
+  }
+
+  function removeImageAt(index: number) {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function handleImageDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    imageDragCounter.current = 0
+    setIsDraggingImage(false)
+    const files = Array.from(e.dataTransfer.files ?? [])
+    if (files.length > 0) addImageFiles(files)
+  }
+
+  function handleImageDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+  }
+
+  function handleImageDragEnter(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    imageDragCounter.current += 1
+    setIsDraggingImage(true)
+  }
+
+  function handleImageDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    imageDragCounter.current -= 1
+    if (imageDragCounter.current <= 0) {
+      imageDragCounter.current = 0
+      setIsDraggingImage(false)
+    }
+  }
 
   const mainCategories = categories.filter((c) => !c.parentCategoryId)
   const subCategories = categories.filter((c) => c.parentCategoryId === Number(mainCategoryId))
@@ -139,7 +225,7 @@ export function AssetForm({ initial, submitLabel, submitPendingLabel, isSubmitti
     // ไม่จำเป็นต้องแยกย่อยอีกชั้น ปล่อยว่างได้ ระบบจะใช้หมวดหมู่หลักเป็น categoryId ของทรัพย์สินแทน
     const categoryId = subCategoryId || mainCategoryId
     setCategoryError('')
-    onSubmit({ ...values, categoryId: Number(categoryId) })
+    onSubmit({ ...values, categoryId: Number(categoryId) }, imageFiles)
   }
 
   return (
@@ -264,6 +350,59 @@ export function AssetForm({ initial, submitLabel, submitPendingLabel, isSubmitti
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">หมายเหตุ</label>
             <Textarea rows={3} {...register('notes')} />
           </div>
+
+          {/* เฉพาะตอนสร้างใหม่เท่านั้น (ไม่มี initial) — ตอนแก้ไขจัดการรูป/ไฟล์แนบผ่าน AttachmentsPanel
+              ที่หน้ารายละเอียดแทน กันไม่ให้มี 2 ทางอัปโหลดที่ทำงานคนละแบบซ้อนกันในฟอร์มเดียว */}
+          {!initial && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รูปภาพทรัพย์สิน</label>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                multiple
+                className="hidden"
+                onChange={handleImageInputChange}
+              />
+              <div
+                onDragEnter={handleImageDragEnter}
+                onDragOver={handleImageDragOver}
+                onDragLeave={handleImageDragLeave}
+                onDrop={handleImageDrop}
+                onClick={() => imageInputRef.current?.click()}
+                className={cn(
+                  'flex min-h-24 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed p-4 text-center text-sm text-slate-400 transition-colors',
+                  isDraggingImage
+                    ? 'border-brand-500 bg-brand-50/40 dark:bg-brand-500/5'
+                    : 'border-slate-200 dark:border-slate-700',
+                )}
+              >
+                <ImageIcon size={20} />
+                <span>ลากรูปมาวาง หรือ กดเพื่อเลือกไฟล์ (เลือกได้หลายรูป)</span>
+              </div>
+              {imagePreviews.length > 0 && (
+                <ul className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {imagePreviews.map((p, idx) => (
+                    <li key={`${p.file.name}-${idx}`} className="group relative overflow-hidden rounded-xl border border-slate-100 dark:border-slate-800">
+                      <img src={p.url} alt={p.file.name} className="h-20 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeImageAt(idx)
+                        }}
+                        className="absolute right-1.5 top-1.5 rounded-lg bg-white/90 p-1 text-slate-500 opacity-0 shadow-sm transition-opacity hover:text-red-600 group-hover:opacity-100 dark:bg-slate-900/90"
+                        aria-label={`เอารูป ${p.file.name} ออก`}
+                      >
+                        <X size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1 text-xs text-slate-400">ไม่บังคับ — รองรับ PNG, JPEG, WebP ไม่เกิน 10 MB ต่อไฟล์</p>
+            </div>
+          )}
 
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? submitPendingLabel : submitLabel}
