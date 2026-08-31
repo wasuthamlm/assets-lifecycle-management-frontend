@@ -3,11 +3,12 @@ import { employeesService } from '@/api/services/employees.service'
 import type { AssignRolesDto } from '@/api/types/roles-permissions.types'
 import type { CreateEmployeeDto, PreRegisterEmployeeDto } from '@/api/types/employee.types'
 
-export function useEmployeesQuery() {
+export function useEmployeesQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['employees'],
     queryFn: () => employeesService.list(),
     staleTime: 5 * 60 * 1000,
+    enabled: options?.enabled,
   })
 }
 

@@ -45,6 +45,7 @@ export interface CreateRequisitionDto {
   requestType: RequestType
   dueDate?: string
   reason?: string
+  onBehalfOfEmployeeId?: number
   items: RequisitionItemInput[]
   approverIds: number[]
 }

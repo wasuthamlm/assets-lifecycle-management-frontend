@@ -8,13 +8,14 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { useEmployeeDirectoryQuery } from '@/hooks/useEmployees'
+import { useEmployeeDirectoryQuery, useEmployeesQuery } from '@/hooks/useEmployees'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { useNextRequisitionNo } from '@/hooks/useRequisitions'
+import { usePermission } from '@/hooks/usePermission'
 import { RequestType } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
-import { optionalDateString } from '@/lib/zodHelpers'
+import { optionalDateString, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { Asset } from '@/api/types/asset.types'
 import type { CreateRequisitionDto } from '@/api/types/requisition.types'
 
@@ -49,6 +50,7 @@ function buildFormSchema(assets: Asset[]) {
       requestType: z.nativeEnum(RequestType),
       dueDate: optionalDateString(),
       reason: z.string().optional(),
+      onBehalfOfEmployeeId: optionalPositiveInt('กรุณาเลือกพนักงาน'),
       items: z.array(itemSchema).min(1, 'กรุณาเพิ่มอย่างน้อย 1 รายการ'),
       approverIds: z
         .array(z.object({ employeeId: z.coerce.number().int().positive('กรุณาเลือกผู้อนุมัติ') }))
@@ -75,6 +77,7 @@ function toDto(values: RequisitionFormValues): CreateRequisitionDto {
     requestType: values.requestType,
     dueDate: values.requestType === RequestType.BORROW ? values.dueDate : undefined,
     reason: values.reason,
+    onBehalfOfEmployeeId: values.onBehalfOfEmployeeId,
     items: values.items.map((i) => ({ assetId: i.assetId, quantity: i.quantity })),
     approverIds: values.approverIds.map((a) => a.employeeId),
   }
@@ -87,6 +90,11 @@ export function RequisitionForm({
   isSubmitting,
 }: RequisitionFormProps) {
   const { data: employees = [] } = useEmployeeDirectoryQuery()
+  const { hasPermission } = usePermission()
+  // เบิก/ยืมแทนคนอื่นได้เฉพาะคนที่มี requisition.view_all (hr/it_admin) — ต้องตรงกับเงื่อนไขที่
+  // backend เช็คใน RequisitionsService.create() ไม่งั้น employee ทั่วไปจะเห็นช่องนี้ทั้งที่ยิงจริงไม่ผ่าน
+  const canRequestOnBehalf = hasPermission('requisition.view_all')
+  const { data: allEmployees = [] } = useEmployeesQuery({ enabled: canRequestOnBehalf })
   const { data: assetsPage } = useAssetsQuery({ limit: 100 })
   const assets = useMemo(() => assetsPage?.data ?? [], [assetsPage])
   // ซ่อนทรัพย์สินที่ไม่เหลือของว่างให้เบิก/ยืมออกจาก dropdown เสมอ — แม้แต่ทรัพย์สินที่มากับ
@@ -149,6 +157,9 @@ export function RequisitionForm({
     const asset = assets.find((a) => a.assetId === id)
     return asset ? assetOptionLabel(asset) : '-'
   }
+  // ผู้ขอตัวจริงที่จะไปโผล่ในเอกสาร — ถ้าเลือก "เบิกแทน" ไว้ ให้ใช้ชื่อพนักงานคนนั้นแทนบัญชีที่ล็อกอินอยู่
+  const onBehalfName = (id?: number) => allEmployees.find((e) => e.employeeId === id)?.fullName
+  const displayedRequesterName = (onBehalfId?: number) => onBehalfName(onBehalfId) ?? requestedByName ?? 'บัญชีของคุณ'
 
   return (
     <form noValidate onSubmit={handleSubmit((values) => onSubmit(toDto(values)))} className="space-y-6">
@@ -178,9 +189,23 @@ export function RequisitionForm({
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ผู้ขอเบิก</label>
-          <div className="flex h-10 items-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-            {requestedByName ?? 'บัญชีของคุณ'}
-          </div>
+          {canRequestOnBehalf ? (
+            <>
+              <Select {...register('onBehalfOfEmployeeId')}>
+                <option value="">{requestedByName ?? 'บัญชีของคุณ'} (ตัวเอง)</option>
+                {allEmployees.map((e) => (
+                  <option key={e.employeeId} value={e.employeeId}>
+                    {e.employeeCode} - {e.fullName}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-1 text-xs text-slate-400">เลือกพนักงานคนอื่นถ้าเบิก/ยืมแทน เช่น เตรียมอุปกรณ์ให้พนักงานใหม่</p>
+            </>
+          ) : (
+            <div className="flex h-10 items-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
+              {requestedByName ?? 'บัญชีของคุณ'}
+            </div>
+          )}
         </div>
 
         {requestType === RequestType.BORROW && (
@@ -347,7 +372,7 @@ export function RequisitionForm({
                     <tr>
                       <td className="w-32 border border-slate-300 bg-slate-50 px-3 py-2 font-medium">ผู้ขอเบิก/ยืม</td>
                       <td className="border border-slate-300 px-3 py-2" colSpan={3}>
-                        {requestedByName ?? 'บัญชีของคุณ'}
+                        {displayedRequesterName(previewValues.onBehalfOfEmployeeId)}
                       </td>
                     </tr>
                     <tr>
