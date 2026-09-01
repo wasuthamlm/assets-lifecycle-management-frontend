@@ -9,12 +9,16 @@ import { ErrorState } from '@/components/ui/ErrorState'
 
 interface PermissionRouteProps {
   permission: string | string[]
+  /** เมื่อ permission เป็น array — 'any' (ค่าเริ่มต้น) แปลว่ามีข้อใดข้อหนึ่งก็พอ, 'all' แปลว่าต้องมีครบทุกข้อ
+   * (ใช้ 'all' กับหน้าที่มีหลายการกระทำผูกกับคนละ permission เช่น /approvals ที่ต้องมีทั้ง requisition.approve
+   * และ requisition.view_all ถึงจะโหลดรายการที่รออนุมัติได้จริง ไม่ใช่แค่ approve อย่างเดียว) */
+  mode?: 'any' | 'all'
   /** ปิดกั้น role เหล่านี้แม้จะผ่าน permission ก็ตาม (เช่น employee มี asset.view แต่ไม่ควรเข้าประกัน/ประวัติการเคลื่อนไหว) */
   excludeRoles?: string[]
 }
 
-export function PermissionRoute({ permission, excludeRoles }: PermissionRouteProps) {
-  const { hasPermission, hasAnyPermission } = usePermission()
+export function PermissionRoute({ permission, mode = 'any', excludeRoles }: PermissionRouteProps) {
+  const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermission()
   const accessToken = useAuthStore((s) => s.accessToken)
   const user = useAuthStore((s) => s.user)
   const location = useLocation()
@@ -22,7 +26,11 @@ export function PermissionRoute({ permission, excludeRoles }: PermissionRoutePro
   // เพื่อรู้ isError/refetch ตอน /auth/me ล้มเหลว (เช่น backend ต่อไม่ติด)
   const { isError, refetch } = useCurrentUser()
 
-  const allowed = Array.isArray(permission) ? hasAnyPermission(permission) : hasPermission(permission)
+  const allowed = Array.isArray(permission)
+    ? mode === 'all'
+      ? hasAllPermissions(permission)
+      : hasAnyPermission(permission)
+    : hasPermission(permission)
   const excluded = !!excludeRoles?.some((r) => user?.roles?.includes(r))
   const denied = !!user && (!allowed || excluded)
 

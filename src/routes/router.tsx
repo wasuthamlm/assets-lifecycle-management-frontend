@@ -190,7 +190,9 @@ export const router = createBrowserRouter([
 
           { path: '/my-items', element: <MyItemsPage /> },
           {
-            element: <PermissionRoute permission="requisition.approve" />,
+            // ต้องมีทั้ง 2 สิทธิ์ — หน้านี้โหลดรายการผ่าน GET /requisitions?status=pending ซึ่ง backend
+            // ต้องการ requisition.view_all ไม่ใช่แค่ requisition.approve (ดู usePendingApprovals.ts)
+            element: <PermissionRoute permission={['requisition.approve', 'requisition.view_all']} mode="all" />,
             children: [{ path: '/approvals', element: <ApprovalsPage /> }],
           },
           {

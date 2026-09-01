@@ -8,21 +8,53 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { AssetHandoverDocument } from '@/components/requisitions/AssetHandoverDocument'
 import { useEmployeeDirectoryQuery, useEmployeesQuery } from '@/hooks/useEmployees'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { useNextRequisitionNo } from '@/hooks/useRequisitions'
 import { usePermission } from '@/hooks/usePermission'
-import { RequestType } from '@/api/types/common.types'
+import { AssetStatus, RequestType } from '@/api/types/common.types'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
-import { formatThaiDate } from '@/lib/formatters'
 import { optionalDateString, optionalPositiveInt } from '@/lib/zodHelpers'
 import type { Asset } from '@/api/types/asset.types'
 import type { CreateRequisitionDto } from '@/api/types/requisition.types'
 
 // ชื่อทรัพย์สิน > ยี่ห้อ > รุ่น พร้อมจำนวนที่เหลือให้ว่างในวงเล็บ — ไม่ขึ้นต้นด้วยหมวดหมู่แล้ว
+// ใช้เป็นทั้ง label เต็มในตัวอย่างเอกสาร และเป็นหัวกลุ่ม (optgroup) ของ dropdown เลือกทรัพย์สิน
 function assetOptionLabel(asset: Asset): string {
   const label = [asset.assetName, asset.brand, asset.model].filter(Boolean).join(' > ')
   return `${label} (เหลือ ${asset.availableCount ?? 0} ชิ้น)`
+}
+
+// S/N คือสิ่งเดียวที่ต่างกันจริงในกลุ่มเดียวกัน — โชว์แค่นี้ในแต่ละแถวให้สั้น สแกนไว ไม่ปนกับหัวกลุ่ม
+// ต่อท้ายด้วยหมายเหตุของเครื่องนั้นๆ (เช่นสภาพ/ตำหนิ) ช่วยให้ผู้เบิกตัดสินใจเลือกเครื่องได้ง่ายขึ้น
+// ไม่มีหมายเหตุก็โชว์ "-" แทนที่จะซ่อนไปเฉยๆ (เหมือนกับหน้ารายละเอียดทรัพย์สิน)
+function assetUnitLabel(asset: Asset): string {
+  return `S/N: ${asset.serialNumber ?? `ไม่มี (#${asset.assetId})`} — หมายเหตุ: ${asset.notes || '-'}`
+}
+
+// ข้อความเต็มไว้โชว์ตอน dropdown ปิดอยู่ (attribute label ของ <option>) กันเห็นแค่ S/N ลอยๆ
+// ไม่รู้ว่าเป็นเครื่องอะไร เช่นตอนมาจากปุ่ม "ทำรายการ เบิก/ยืม" ที่ preselect มาให้
+function assetUnitTriggerLabel(asset: Asset): string {
+  return `${asset.assetName} — ${assetUnitLabel(asset)}`
+}
+
+// จัดกลุ่มทรัพย์สินที่เลือกได้ตามรุ่น (ชื่อ+ยี่ห้อ+รุ่นเดียวกัน) ไว้ทำ optgroup — คงลำดับตามที่เจอครั้งแรก
+// แต่ละกลุ่มพ่วงชื่อหมวดหมู่ (chip) ไว้ด้วย ให้ dropdown แสดงแถบกรองตามหมวดหมู่เวลามีของหลายหมวดปนกัน
+function groupAssetsByModel(list: Asset[]): { label: string; chip: string; assets: Asset[] }[] {
+  const groups: { label: string; chip: string; assets: Asset[] }[] = []
+  const indexByLabel = new Map<string, number>()
+  for (const asset of list) {
+    const label = assetOptionLabel(asset)
+    const existingIdx = indexByLabel.get(label)
+    if (existingIdx == null) {
+      indexByLabel.set(label, groups.length)
+      groups.push({ label, chip: asset.category?.categoryName ?? 'ไม่มีหมวดหมู่', assets: [asset] })
+    } else {
+      groups[existingIdx].assets.push(asset)
+    }
+  }
+  return groups
 }
 
 // รับ assets เข้ามาสร้าง schema ใหม่ทุกครั้งที่ข้อมูลทรัพย์สินเปลี่ยน เพื่อเช็คจำนวนที่กรอกเทียบ
@@ -60,13 +92,28 @@ function buildFormSchema(assets: Asset[]) {
       message: 'กรุณาระบุกำหนดคืน',
       path: ['dueDate'],
     })
+    .refine((data) => new Set(data.items.map((i) => i.assetId)).size === data.items.length, {
+      message: 'มีทรัพย์สินชิ้นเดียวกันถูกเลือกซ้ำหลายรายการ',
+      path: ['items'],
+    })
 }
 
 export type RequisitionFormValues = z.output<ReturnType<typeof buildFormSchema>>
 type RequisitionFormInput = z.input<ReturnType<typeof buildFormSchema>>
 
+// ข้อมูล employee ที่ล็อกอินอยู่ ใช้ default ค่าที่ไม่ได้กรอก (position/department/เบอร์ติดต่อ) ให้ตัวอย่างเอกสาร
+// ตรงกับที่ backend จะ default ให้จริงตอน create (ดู RequisitionsService.create) — ไม่ส่งค่า placeholder พวกนี้
+// ขึ้น DTO เอง ปล่อยให้ backend resolve จาก employee record ตรงๆ เพื่อกันข้อมูลเพี้ยนถ้า onBehalf เปลี่ยนคน
+interface RequesterEmployeeInfo {
+  employeeCode?: string | null
+  position?: string | null
+  phone?: string | null
+  department?: string | null
+}
+
 interface RequisitionFormProps {
   requestedByName?: string
+  requestedByEmployee?: RequesterEmployeeInfo | null
   defaultAssetId?: number
   onSubmit: (dto: CreateRequisitionDto) => void
   isSubmitting?: boolean
@@ -85,6 +132,7 @@ function toDto(values: RequisitionFormValues): CreateRequisitionDto {
 
 export function RequisitionForm({
   requestedByName,
+  requestedByEmployee,
   defaultAssetId,
   onSubmit,
   isSubmitting,
@@ -95,7 +143,10 @@ export function RequisitionForm({
   // backend เช็คใน RequisitionsService.create() ไม่งั้น employee ทั่วไปจะเห็นช่องนี้ทั้งที่ยิงจริงไม่ผ่าน
   const canRequestOnBehalf = hasPermission('requisition.view_all')
   const { data: allEmployees = [] } = useEmployeesQuery({ enabled: canRequestOnBehalf })
-  const { data: assetsPage } = useAssetsQuery({ limit: 100 })
+  // กรอง status=in_stock ที่ query ตรงๆ — ไม่พึ่ง availableCount (นับรวมของ "รุ่นเดียวกัน" ทั้งหมด) เพียว
+  // เพราะ availableCount ของแถวหนึ่งจะยังนับรวมพี่น้องรุ่นเดียวกันที่ยัง in_stock อยู่ แม้ตัวมันเองถูกเบิก/ยืม
+  // ไปแล้วก็ตาม — ถ้าไม่กรองตรงนี้ เครื่องที่มีคนเบิกไปแล้วจะยังโผล่เป็นตัวเลือกได้ถ้ารุ่นเดียวกันยังมีของเหลือ
+  const { data: assetsPage } = useAssetsQuery({ limit: 100, status: AssetStatus.IN_STOCK })
   const assets = useMemo(() => assetsPage?.data ?? [], [assetsPage])
   // ซ่อนทรัพย์สินที่ไม่เหลือของว่างให้เบิก/ยืมออกจาก dropdown เสมอ — แม้แต่ทรัพย์สินที่มากับ
   // defaultAssetId (เช่นเปิดหน้านี้ผ่านลิงก์/URL ตรงๆ ตอนของยังว่าง แล้วของหมดไปก่อนหน้าโหลดเสร็จ)
@@ -152,7 +203,6 @@ export function RequisitionForm({
     watchedValues.approverIds.length > 0 &&
     watchedValues.approverIds.every((a) => !!a?.employeeId)
 
-  const employeeName = (id?: number) => employees.find((e) => e.employeeId === id)?.fullName ?? '-'
   const assetLabel = (id?: number) => {
     const asset = assets.find((a) => a.assetId === id)
     return asset ? assetOptionLabel(asset) : '-'
@@ -160,6 +210,20 @@ export function RequisitionForm({
   // ผู้ขอตัวจริงที่จะไปโผล่ในเอกสาร — ถ้าเลือก "เบิกแทน" ไว้ ให้ใช้ชื่อพนักงานคนนั้นแทนบัญชีที่ล็อกอินอยู่
   const onBehalfName = (id?: number) => allEmployees.find((e) => e.employeeId === id)?.fullName
   const displayedRequesterName = (onBehalfId?: number) => onBehalfName(onBehalfId) ?? requestedByName ?? 'บัญชีของคุณ'
+  // ใช้ทำ placeholder ในฟอร์ม + ตัวอย่างเอกสาร ให้ตรงกับค่าที่ backend จะ default ให้จริง (employee ของคนที่
+  // จะเป็นเจ้าของคำขอจริง — ตัวเองหรือคนที่เลือก "เบิกแทน" ไว้)
+  const effectiveEmployeeDefaults = (onBehalfId?: number): RequesterEmployeeInfo | null => {
+    const onBehalfEmployee = onBehalfId ? allEmployees.find((e) => e.employeeId === onBehalfId) : undefined
+    if (onBehalfEmployee) {
+      return {
+        employeeCode: onBehalfEmployee.employeeCode,
+        position: onBehalfEmployee.position,
+        phone: onBehalfEmployee.phone,
+        department: onBehalfEmployee.department?.departmentName ?? null,
+      }
+    }
+    return requestedByEmployee ?? null
+  }
 
   return (
     <form noValidate onSubmit={handleSubmit((values) => onSubmit(toDto(values)))} className="space-y-6">
@@ -241,6 +305,14 @@ export function RequisitionForm({
             const enteredQuantity = Number(watchedValues.items?.[idx]?.quantity)
             const exceedsMax = typeof maxQuantity === 'number' && enteredQuantity > maxQuantity
             const quantityError = errors.items?.[idx]?.quantity?.message
+            // ทรัพย์สินที่แถวอื่นเลือกไปแล้วต้องเอาออกจากตัวเลือกของแถวนี้ กันเลือกเครื่องเดียวกันซ้ำ 2 แถว
+            const pickedElsewhere = new Set(
+              watchedValues.items
+                ?.map((item, i) => (i === idx ? undefined : Number(item?.assetId)))
+                .filter((id): id is number => !!id),
+            )
+            const rowSelectableAssets = selectableAssets.filter((a) => !pickedElsewhere.has(a.assetId))
+            const assetGroups = groupAssetsByModel(rowSelectableAssets)
             return (
               <div key={field.id}>
                 <div className="flex items-center gap-2">
@@ -256,10 +328,14 @@ export function RequisitionForm({
                         className="flex-1"
                       >
                         <option value="">เลือกทรัพย์สิน</option>
-                        {selectableAssets.map((a) => (
-                          <option key={a.assetId} value={a.assetId}>
-                            {assetOptionLabel(a)}
-                          </option>
+                        {assetGroups.map((group) => (
+                          <optgroup key={group.label} label={group.label} data-chip={group.chip}>
+                            {group.assets.map((a) => (
+                              <option key={a.assetId} value={a.assetId} label={assetUnitTriggerLabel(a)}>
+                                {assetUnitLabel(a)}
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </Select>
                     )}
@@ -349,93 +425,39 @@ export function RequisitionForm({
         </Button>
       </div>
 
-      <Modal open={!!previewValues} onClose={() => setPreviewValues(null)} title="ตัวอย่างเอกสารใบขอเบิก/ยืม" size="xl">
+      <Modal open={!!previewValues} onClose={() => setPreviewValues(null)} title="ตัวอย่างใบส่งมอบ-ส่งคืนทรัพย์สิน" size="xl">
         {previewValues && (
           <div className="space-y-4">
             {/* พื้นสีเทาจำลองโต๊ะวางกระดาษ ให้กระดาษ A4 สีขาวเด้งเป็นแผ่นเอกสารจริงชัดเจน — ขนาดคงที่ 210mm
                 เท่ากระดาษจริงเสมอไม่ยืดตามจอ ห่อด้วย overflow-x-auto กันจอแคบตัดขอบกระดาษ */}
             <div className="overflow-x-auto rounded-xl bg-slate-100 p-6 dark:bg-slate-950/40 sm:p-10">
-              {/* พื้นขาว/ตัวหนังสือเข้มคงที่เสมอ ไม่ตามธีมมืด เพราะเป็นตัวอย่างเอกสารพิมพ์ */}
-              <div className="mx-auto min-h-[297mm] w-[210mm] max-w-none bg-white p-12 text-slate-900 shadow-xl">
-                <div className="mb-6 flex items-start justify-between gap-4 border-b border-slate-300 pb-4">
-                  <h2 className="text-lg font-bold">
-                    {previewValues.requestType === RequestType.BORROW ? 'ใบขอยืมทรัพย์สิน' : 'ใบขอเบิกทรัพย์สิน'}
-                  </h2>
-                  <div className="shrink-0 text-right">
-                    <p className="text-xs text-slate-500">เลขที่เอกสาร</p>
-                    <p className="font-mono text-sm font-semibold">{docNo ?? 'กำลังโหลด...'}</p>
-                  </div>
-                </div>
-
-                <table className="mb-6 w-full border-collapse text-sm">
-                  <tbody>
-                    <tr>
-                      <td className="w-32 border border-slate-300 bg-slate-50 px-3 py-2 font-medium">ผู้ขอเบิก/ยืม</td>
-                      <td className="border border-slate-300 px-3 py-2" colSpan={3}>
-                        {displayedRequesterName(previewValues.onBehalfOfEmployeeId)}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="border border-slate-300 bg-slate-50 px-3 py-2 font-medium">ประเภทคำขอ</td>
-                      <td className="border border-slate-300 px-3 py-2">{REQUEST_TYPE_LABEL[previewValues.requestType]}</td>
-                      <td className="w-32 border border-slate-300 bg-slate-50 px-3 py-2 font-medium">วันที่เอกสาร</td>
-                      <td className="border border-slate-300 px-3 py-2">{formatThaiDate(new Date())}</td>
-                    </tr>
-                    {previewValues.requestType === RequestType.BORROW && previewValues.dueDate && (
-                      <tr>
-                        <td className="border border-slate-300 bg-slate-50 px-3 py-2 font-medium">กำหนดคืน</td>
-                        <td className="border border-slate-300 px-3 py-2" colSpan={3}>
-                          {formatThaiDate(previewValues.dueDate)}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-
-                <table className="mb-6 w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-slate-50">
-                      <th className="w-10 border border-slate-300 px-3 py-2 text-left">#</th>
-                      <th className="border border-slate-300 px-3 py-2 text-left">รายการทรัพย์สิน</th>
-                      <th className="w-20 border border-slate-300 px-3 py-2 text-right">จำนวน</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewValues.items.map((item, idx) => (
-                      <tr key={idx}>
-                        <td className="border border-slate-300 px-3 py-2 text-center">{idx + 1}</td>
-                        <td className="border border-slate-300 px-3 py-2">{assetLabel(item.assetId)}</td>
-                        <td className="border border-slate-300 px-3 py-2 text-right">{item.quantity ?? 1}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {previewValues.reason && (
-                  <div className="mb-6">
-                    <p className="mb-1 text-sm font-medium">เหตุผล</p>
-                    <p className="rounded border border-slate-300 px-3 py-2 text-sm">{previewValues.reason}</p>
-                  </div>
-                )}
-
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-slate-50">
-                      <th className="w-14 border border-slate-300 px-3 py-2 text-left">ลำดับ</th>
-                      <th className="border border-slate-300 px-3 py-2 text-left">ผู้อนุมัติ</th>
-                      <th className="w-32 border border-slate-300 px-3 py-2 text-left">ลงชื่อ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewValues.approverIds.map((a, idx) => (
-                      <tr key={idx}>
-                        <td className="border border-slate-300 px-3 py-2 text-center">{idx + 1}</td>
-                        <td className="border border-slate-300 px-3 py-2">{employeeName(a.employeeId)}</td>
-                        <td className="border border-slate-300 px-3 py-2">&nbsp;</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mx-auto">
+                {(() => {
+                  const previewEmployee = effectiveEmployeeDefaults(previewValues.onBehalfOfEmployeeId)
+                  return (
+                <AssetHandoverDocument
+                  requisitionNo={docNo ?? 'กำลังโหลด...'}
+                  requestType={previewValues.requestType}
+                  documentDate={new Date()}
+                  employeeName={displayedRequesterName(previewValues.onBehalfOfEmployeeId)}
+                  position={previewEmployee?.position}
+                  department={previewEmployee?.department}
+                  employeeCode={previewEmployee?.employeeCode}
+                  contactPhone={previewEmployee?.phone}
+                  items={previewValues.items.map((item, idx) => {
+                    const asset = assets.find((a) => a.assetId === Number(item.assetId))
+                    return {
+                      seq: idx + 1,
+                      name: asset ? asset.assetName : assetLabel(item.assetId),
+                      brand: asset?.brand ?? '',
+                      model: asset?.model ?? '',
+                      serialNumber: asset?.serialNumber ?? '',
+                      note: asset?.notes ?? '',
+                    }
+                  })}
+                />
+                  )
+                })()}
               </div>
             </div>
 

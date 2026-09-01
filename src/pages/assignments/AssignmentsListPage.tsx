@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeftRight, RotateCcw } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { usePermission } from '@/hooks/usePermission'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
@@ -20,15 +21,20 @@ import { AssetStatusPill } from '@/components/ui/StatusPill'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { IssueAssetForm } from '@/components/assignments/IssueAssetForm'
 import { ReturnAssetForm } from '@/components/assignments/ReturnAssetForm'
-import { ASSIGNMENT_TYPE_LABEL, HOLDER_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
+import { ASSIGNMENT_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
 import { cn } from '@/lib/utils'
+import { resolveHolderName, resolveHolderDepartment, resolveHolderPhone } from '@/lib/holder'
 import type { Assignment, IssueAssetDto, ReturnAssetDto } from '@/api/types/assignment.types'
 
 export function AssignmentsListPage() {
   usePageTitle('การเบิก-จ่าย/รับคืน')
   const navigate = useNavigate()
+  // route นี้เข้าได้ด้วย assignment.return เท่านั้น (จำเป็นสำหรับดูคิว "รอรับคืน") แต่ปุ่ม "เบิก-จ่าย"
+  // ยิง POST /assignments/issue ซึ่งต้องการ assignment.issue แยกต่างหาก — role ที่มีแค่ return ต้องไม่เห็นปุ่มนี้
+  const { hasPermission } = usePermission()
+  const canIssue = hasPermission('assignment.issue')
   const [assetSearch, setAssetSearch] = useState('')
   const debouncedAssetSearch = useDebouncedValue(assetSearch, 300)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
@@ -82,7 +88,9 @@ export function AssignmentsListPage() {
       header: 'ทรัพย์สิน',
       render: (a) => (a.asset ? a.asset.assetName : `#${a.assetId}`),
     },
-    { key: 'holder', header: 'ผู้ถือครอง', render: (a) => `${HOLDER_TYPE_LABEL[a.holderType]} #${a.holderId}` },
+    { key: 'holderName', header: 'ชื่อผู้ถือครอง', render: (a) => resolveHolderName(a) },
+    { key: 'holderDepartment', header: 'แผนก', render: (a) => resolveHolderDepartment(a) },
+    { key: 'holderPhone', header: 'เบอร์โทร', render: (a) => resolveHolderPhone(a) },
     { key: 'issued', header: 'วันที่เบิก-จ่าย', render: (a) => formatThaiDate(a.issuedDate) },
     {
       key: 'due',
@@ -118,7 +126,9 @@ export function AssignmentsListPage() {
 
   const columns: DataTableColumn<Assignment>[] = [
     { key: 'type', header: 'ประเภท', render: (a) => ASSIGNMENT_TYPE_LABEL[a.assignmentType] },
-    { key: 'holder', header: 'ผู้ถือครอง', render: (a) => `${HOLDER_TYPE_LABEL[a.holderType]} #${a.holderId}` },
+    { key: 'holderName', header: 'ชื่อผู้ถือครอง', render: (a) => resolveHolderName(a) },
+    { key: 'holderDepartment', header: 'แผนก', render: (a) => resolveHolderDepartment(a) },
+    { key: 'holderPhone', header: 'เบอร์โทร', render: (a) => resolveHolderPhone(a) },
     { key: 'issued', header: 'วันที่เบิก-จ่าย', render: (a) => formatThaiDate(a.issuedDate) },
     { key: 'due', header: 'กำหนดคืน', render: (a) => (a.dueDate ? formatThaiDate(a.dueDate) : '-') },
     {
@@ -212,9 +222,11 @@ export function AssignmentsListPage() {
               <Button variant="secondary" size="sm" onClick={() => navigate(`/assets/${selectedAsset.assetId}`)}>
                 ดูรายละเอียดทรัพย์สิน
               </Button>
-              <Button size="sm" onClick={() => setIssueOpen(true)}>
-                <ArrowLeftRight size={14} /> เบิก-จ่าย
-              </Button>
+              {canIssue && (
+                <Button size="sm" onClick={() => setIssueOpen(true)}>
+                  <ArrowLeftRight size={14} /> เบิก-จ่าย
+                </Button>
+              )}
             </div>
           </div>
           <div className="p-4 pt-0">

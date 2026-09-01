@@ -120,12 +120,10 @@ export function AssetDetailPage() {
             <dt className="text-slate-400">สถานที่ปัจจุบัน</dt>
             <dd className="text-slate-700 dark:text-slate-200">{asset.currentLocation?.locationName ?? '-'}</dd>
           </div>
-          {asset.notes && (
-            <div className="col-span-2">
-              <dt className="text-slate-400">หมายเหตุ</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{asset.notes}</dd>
-            </div>
-          )}
+          <div className="col-span-2">
+            <dt className="text-slate-400">หมายเหตุ</dt>
+            <dd className="text-slate-700 dark:text-slate-200">{asset.notes || '-'}</dd>
+          </div>
         </dl>
 
         <div className="mt-4">

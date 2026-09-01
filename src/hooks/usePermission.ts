@@ -12,5 +12,9 @@ export function usePermission() {
     return codes.some(hasPermission)
   }
 
-  return { hasPermission, hasAnyPermission, permissions: user?.permissions ?? [] }
+  function hasAllPermissions(codes: string[]): boolean {
+    return codes.every(hasPermission)
+  }
+
+  return { hasPermission, hasAnyPermission, hasAllPermissions, permissions: user?.permissions ?? [] }
 }

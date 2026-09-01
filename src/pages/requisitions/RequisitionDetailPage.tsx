@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { FileText } from 'lucide-react'
 import { useRequisitionQuery } from '@/hooks/useRequisitions'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Spinner'
 import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { ApprovalActionPanel } from '@/components/requisitions/ApprovalActionPanel'
+import { AssetHandoverDocument } from '@/components/requisitions/AssetHandoverDocument'
 import { RequisitionAttachmentsPanel } from '@/components/attachments/RequisitionAttachmentsPanel'
 import { useAuthStore } from '@/stores/auth.store'
 import { ApprovalStatus } from '@/api/types/common.types'
@@ -20,6 +25,7 @@ export function RequisitionDetailPage() {
   usePageTitle(`ใบขอเบิก/ยืม #${id}`)
   const { data: requisition, isLoading, isError, error, refetch } = useRequisitionQuery(requisitionId)
   const currentUser = useAuthStore((s) => s.user)
+  const [showDocument, setShowDocument] = useState(false)
 
   if (isLoading) {
     return (
@@ -62,7 +68,12 @@ export function RequisitionDetailPage() {
                 {REQUEST_TYPE_LABEL[requisition.requestType]} · โดย {requisition.requestedByEmployee?.fullName ?? '-'}
               </p>
             </div>
-            <ApprovalStatusPill status={requisition.overallStatus} />
+            <div className="flex shrink-0 items-center gap-2">
+              <Button type="button" variant="secondary" size="sm" onClick={() => setShowDocument(true)}>
+                <FileText size={14} /> ดูเอกสาร
+              </Button>
+              <ApprovalStatusPill status={requisition.overallStatus} />
+            </div>
           </div>
 
           <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -110,6 +121,34 @@ export function RequisitionDetailPage() {
           </Section>
         )}
       </DetailSheet>
+
+      <Modal open={showDocument} onClose={() => setShowDocument(false)} title="ใบส่งมอบ-ส่งคืนทรัพย์สิน" size="xl">
+        <div className="overflow-x-auto rounded-xl bg-slate-100 p-6 dark:bg-slate-950/40 sm:p-10">
+          <div className="mx-auto">
+            <AssetHandoverDocument
+              requisitionNo={requisition.requisitionNo}
+              requestType={requisition.requestType}
+              documentDate={requisition.createdAt}
+              employeeName={requisition.requestedByEmployee?.fullName ?? '-'}
+              employeeNameEn={requisition.documentInfo?.employeeNameEn}
+              startDate={requisition.documentInfo?.startDate}
+              position={requisition.documentInfo?.position ?? requisition.requestedByEmployee?.position}
+              department={requisition.documentInfo?.department ?? requisition.requestedByEmployee?.department?.departmentName}
+              employeeCode={requisition.requestedByEmployee?.employeeCode}
+              contactPhone={requisition.documentInfo?.contactPhone}
+              accessories={requisition.documentInfo?.accessories}
+              items={requisition.items.map((item, idx) => ({
+                seq: idx + 1,
+                name: item.asset?.assetName ?? item.stockItem?.itemName ?? '-',
+                brand: item.asset?.brand ?? '',
+                model: item.asset?.model ?? '',
+                serialNumber: item.asset?.serialNumber ?? '',
+                note: item.note ?? item.asset?.notes ?? '',
+              }))}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

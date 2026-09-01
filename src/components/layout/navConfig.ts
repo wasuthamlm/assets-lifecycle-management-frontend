@@ -24,8 +24,10 @@ export interface NavItem {
   label: string
   href: string
   icon: LucideIcon
-  /** string[] = มีสิทธิ์ข้อใดข้อหนึ่งก็เห็น (any-of) เช่น requisition.view_all หรือ view_own อย่างใดอย่างหนึ่งก็พอ */
+  /** string[] = มีสิทธิ์ข้อใดข้อหนึ่งก็เห็น (any-of) เช่น requisition.view_all หรือ view_own อย่างใดอย่างหนึ่งก็พอ
+   * ยกเว้นตั้ง permissionMode: 'all' — ให้ 'ต้องมีครบทุกข้อ' แทน (ใช้เมื่อหน้าปลายทางต้องการหลายสิทธิ์พร้อมกันจริง) */
   permission?: string | string[]
+  permissionMode?: 'any' | 'all'
   /** ซ่อนเมนูนี้ให้ role เหล่านี้ แม้จะมี permission ผ่านก็ตาม (เช่น employee มี asset.view แต่ไม่ควรเห็นประกัน/ประวัติการเคลื่อนไหว) */
   excludeRoles?: string[]
 }
@@ -58,7 +60,14 @@ export const NAV_GROUPS: NavGroup[] = [
     label: '',
     items: [
       // อยู่บนสุดของกลุ่มเมนูหลักเสมอ (ใต้แดชบอร์ด) — งานที่ต้องรีบทำ (มีคนรออนุมัติอยู่) ควรเด่นกว่ารายการข้อมูลทั่วไป
-      { label: 'รออนุมัติ', href: '/approvals', icon: CheckSquare, permission: 'requisition.approve' },
+      // ต้องมีทั้ง 2 สิทธิ์ — ให้ตรงกับ PermissionRoute mode="all" ของ /approvals (ดู router.tsx)
+      {
+        label: 'รออนุมัติ',
+        href: '/approvals',
+        icon: CheckSquare,
+        permission: ['requisition.approve', 'requisition.view_all'],
+        permissionMode: 'all',
+      },
       { label: 'ทรัพย์สิน', href: '/assets', icon: Boxes, permission: 'asset.view' },
       {
         label: 'ใบขอเบิก/ยืม',

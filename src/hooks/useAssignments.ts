@@ -17,6 +17,15 @@ export function usePendingReturnsQuery() {
   })
 }
 
+/** ทรัพย์สินที่ผู้ใช้ปัจจุบันถือครองอยู่ (ยังไม่คืน) — ใช้ endpoint /assignments/mine ตรงๆ แทนการดึง
+ * asset ทั้งหมดมากรองเองฝั่ง client (ซึ่งตัดข้อมูลทิ้งได้เมื่อทรัพย์สินทั่วบริษัทเกิน limit ของ query) */
+export function useMyAssignmentsQuery() {
+  return useQuery({
+    queryKey: ['assignments', 'mine'],
+    queryFn: () => assignmentsService.mine(),
+  })
+}
+
 export function useAssignmentQuery(id: number) {
   return useQuery({
     queryKey: ['assignments', id],

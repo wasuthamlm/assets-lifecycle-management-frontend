@@ -34,6 +34,16 @@ export function RequisitionCreatePage() {
       <Card>
         <RequisitionForm
           requestedByName={currentUser?.employee?.fullName ?? currentUser?.username}
+          requestedByEmployee={
+            currentUser?.employee
+              ? {
+                  employeeCode: currentUser.employee.employeeCode,
+                  position: currentUser.employee.position,
+                  phone: currentUser.employee.phone,
+                  department: currentUser.employee.department?.departmentName ?? null,
+                }
+              : null
+          }
           defaultAssetId={defaultAssetId}
           onSubmit={handleSubmit}
           isSubmitting={create.isPending}

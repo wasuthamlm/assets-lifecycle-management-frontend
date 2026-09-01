@@ -57,6 +57,7 @@ export const ENDPOINTS = {
     base: '/assignments',
     issue: '/assignments/issue',
     return: (id: number) => `/assignments/${id}/return`,
+    mine: '/assignments/mine',
     byAsset: (assetId: number) => `/assignments/asset/${assetId}`,
     byId: (id: number) => `/assignments/${id}`,
   },

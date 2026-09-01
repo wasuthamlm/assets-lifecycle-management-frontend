@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { ReturnAssetForm } from '@/components/assignments/ReturnAssetForm'
-import { ASSIGNMENT_TYPE_LABEL, HOLDER_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
+import { ASSIGNMENT_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
+import { resolveHolderDepartment, resolveHolderName, resolveHolderPhone } from '@/lib/holder'
 import type { ReturnAssetDto } from '@/api/types/assignment.types'
 
 export function AssignmentDetailPage() {
@@ -77,8 +78,9 @@ export function AssignmentDetailPage() {
                 {asset ? asset.assetName : `ทรัพย์สิน #${assignment.assetId}`}
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {ASSIGNMENT_TYPE_LABEL[assignment.assignmentType]} · {HOLDER_TYPE_LABEL[assignment.holderType]} #
-                {assignment.holderId}
+                {ASSIGNMENT_TYPE_LABEL[assignment.assignmentType]} · {resolveHolderName(assignment)}
+                {resolveHolderDepartment(assignment) !== '-' && ` · ${resolveHolderDepartment(assignment)}`}
+                {resolveHolderPhone(assignment) !== '-' && ` · ${resolveHolderPhone(assignment)}`}
               </p>
             </div>
             {!assignment.returnedDate && (

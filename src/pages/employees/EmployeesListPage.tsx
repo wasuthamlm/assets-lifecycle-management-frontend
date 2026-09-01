@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { translateRoleName } from '@/lib/roleLabels'
 import { getErrorMessage } from '@/lib/errorMessage'
@@ -297,10 +298,14 @@ export function EmployeesListPage() {
   // (ดู UsersController) ส่วนกำหนดสิทธิ์ต้อง rbac.manage แยกต่างหากเหมือนเดิม ไม่งั้น HR ที่เห็นแค่ employee.view_all
   // จะยิง request ไปชน 403 โดยไม่จำเป็น
   const canViewUsers = hasPermission('user.view_all')
+  const canViewEmployees = hasPermission('employee.view_all')
   const canManageRbac = hasPermission('rbac.manage')
   const canPreRegister = hasPermission('employee.create') && hasPermission('user.create') && canManageRbac
 
-  const { data: employees = [], isLoading, isError, refetch } = useEmployeesQuery()
+  // route เข้าได้ด้วย employee.view_all หรือ user.view_all อย่างใดอย่างหนึ่ง (ดู router.tsx) แต่รายการ
+  // พนักงานหลักของหน้านี้ต้องการ employee.view_all เจาะจง — role ที่มีแค่ user.view_all จะเข้าหน้าได้
+  // แต่ไม่มีสิทธิ์เห็นรายการนี้ ต้องกันไม่ให้ยิง request ที่รู้อยู่แล้วว่าจะโดน 403 แล้วโชว์เหตุผลตรงๆ แทน
+  const { data: employees = [], isLoading, isError, refetch } = useEmployeesQuery({ enabled: canViewEmployees })
   const { data: users = [] } = useUsersQuery({ enabled: canViewUsers })
   const { data: roles = [] } = useRolesQuery({ enabled: canManageRbac })
   const [search, setSearch] = useState('')
@@ -413,14 +418,18 @@ export function EmployeesListPage() {
       </div>
       <Card className="p-0">
         <div className="p-4">
-          <DataTable
-            columns={columns}
-            rows={filtered}
-            rowKey={(e) => e.employeeId}
-            isLoading={isLoading}
-            isError={isError}
-            onRetry={refetch}
-          />
+          {canViewEmployees ? (
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(e) => e.employeeId}
+              isLoading={isLoading}
+              isError={isError}
+              onRetry={refetch}
+            />
+          ) : (
+            <EmptyState icon={Lock} message="คุณไม่มีสิทธิ์ดูรายชื่อพนักงาน (ต้องมีสิทธิ์ employee.view_all)" />
+          )}
         </div>
       </Card>
 

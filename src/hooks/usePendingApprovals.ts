@@ -6,8 +6,10 @@ import type { Requisition } from '@/api/types/requisition.types'
 
 export function usePendingApprovals() {
   const currentUser = useAuthStore((s) => s.user)
-  const { hasPermission } = usePermission()
-  const canApprove = hasPermission('requisition.approve') && !!currentUser?.employeeId
+  const { hasAllPermissions } = usePermission()
+  // ต้องมีทั้ง requisition.approve และ requisition.view_all — GET /requisitions?status=pending
+  // ที่ query ด้านล่างเรียก ฝั่ง backend ต้องการ view_all เสมอ ไม่ใช่แค่ approve (requisitions.controller.ts)
+  const canApprove = hasAllPermissions(['requisition.approve', 'requisition.view_all']) && !!currentUser?.employeeId
   // กรอง status=pending ที่ฝั่ง server ไว้ก่อน — ไม่ต้องโหลดใบขอที่จบไปแล้วทั้งหมดมาทิ้ง
   // เหลือแค่กรอง "ตาที่รออนุมัติอยู่เป็นของฉันไหม" ต่อฝั่ง client เพราะ backend ยังไม่มี filter ระดับนั้น
   const { data, isLoading } = useRequisitionsQuery(

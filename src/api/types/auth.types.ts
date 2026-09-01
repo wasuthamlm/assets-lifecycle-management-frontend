@@ -52,6 +52,7 @@ export interface CurrentUser {
     fullName: string
     position: string | null
     email: string | null
+    phone: string | null
     department: { departmentId: number; departmentName: string } | null
   } | null
 }
