@@ -904,7 +904,7 @@ function ProfileTab() {
           </div>
         </div>
 
-        <dl className="grid grid-cols-2 gap-4 text-sm">
+        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-slate-400">ชื่อผู้ใช้</dt>
             <dd className="text-slate-700 dark:text-slate-200">{user.username}</dd>

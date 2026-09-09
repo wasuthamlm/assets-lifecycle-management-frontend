@@ -1,14 +1,16 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
+import type { Paginated } from '../types/common.types'
 import type {
   CreatePurchaseOrderDto,
   PurchaseOrder,
+  QueryPurchaseOrderDto,
   UpdatePurchaseOrderStatusDto,
 } from '../types/purchase-order.types'
 
 export const purchaseOrdersService = {
-  async list(): Promise<PurchaseOrder[]> {
-    const { data } = await apiClient.get<PurchaseOrder[]>(ENDPOINTS.purchaseOrders.base)
+  async list(query: QueryPurchaseOrderDto = {}): Promise<Paginated<PurchaseOrder>> {
+    const { data } = await apiClient.get<Paginated<PurchaseOrder>>(ENDPOINTS.purchaseOrders.base, { params: query })
     return data
   },
   async get(id: number): Promise<PurchaseOrder> {

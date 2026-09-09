@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { useWarrantiesByAssetQuery, useCreateWarrantyMutation } from '@/hooks/useWarranty'
+import { useWarrantiesByAssetQuery, useCreateWarrantyMutation, useExpiringWarrantiesQuery } from '@/hooks/useWarranty'
 import { useVendorsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -47,6 +47,12 @@ export function WarrantySearchPage() {
     refetch,
   } = useWarrantiesByAssetQuery(assetId ?? 0)
   const create = useCreateWarrantyMutation()
+  const {
+    data: expiringWarranties = [],
+    isLoading: isExpiringLoading,
+    isError: isExpiringError,
+    refetch: refetchExpiring,
+  } = useExpiringWarrantiesQuery()
 
   const {
     register,
@@ -75,6 +81,28 @@ export function WarrantySearchPage() {
     { key: 'start', header: 'เริ่มคุ้มครอง', render: (w) => formatThaiDate(w.startDate) },
     { key: 'end', header: 'สิ้นสุด', render: (w) => formatThaiDate(w.endDate) },
     { key: 'status', header: 'สถานะ', render: (w) => <WarrantyStatusPill status={w.status} /> },
+  ]
+
+  function daysRemaining(endDate: string): number {
+    return Math.ceil((new Date(endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  }
+
+  const expiringColumns: DataTableColumn<Warranty>[] = [
+    { key: 'asset', header: 'ทรัพย์สิน', render: (w) => w.asset?.assetName ?? `#${w.assetId}` },
+    { key: 'vendor', header: 'ผู้รับประกัน', render: (w) => w.vendor?.vendorName ?? '-' },
+    { key: 'end', header: 'วันหมดอายุ', render: (w) => formatThaiDate(w.endDate) },
+    {
+      key: 'remaining',
+      header: 'เหลืออีก',
+      render: (w) => {
+        const days = daysRemaining(w.endDate)
+        return (
+          <span className={days <= 7 ? 'font-medium text-red-600 dark:text-red-400' : undefined}>
+            {days <= 0 ? 'หมดอายุแล้ว' : `${days} วัน`}
+          </span>
+        )
+      },
+    },
   ]
 
   function toggleAddForm() {
@@ -158,7 +186,23 @@ export function WarrantySearchPage() {
           </div>
         </Card>
       ) : (
-        <p className="text-sm text-slate-400">กรุณาเลือกทรัพย์สินเพื่อดูประวัติการรับประกัน</p>
+        <Card className="p-0">
+          <div className="flex items-center justify-between p-4 pb-0">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">ประกันใกล้หมดอายุ (30 วันข้างหน้า)</h3>
+          </div>
+          <div className="p-4">
+            <DataTable
+              columns={expiringColumns}
+              rows={expiringWarranties}
+              rowKey={(w) => w.warrantyId}
+              isLoading={isExpiringLoading}
+              isError={isExpiringError}
+              onRetry={refetchExpiring}
+              onRowClick={(w) => navigate(`/warranty/${w.warrantyId}`)}
+              emptyMessage="ไม่มีประกันที่ใกล้หมดอายุใน 30 วันข้างหน้า"
+            />
+          </div>
+        </Card>
       )}
     </div>
   )

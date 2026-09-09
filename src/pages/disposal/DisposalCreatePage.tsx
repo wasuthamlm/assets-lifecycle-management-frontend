@@ -1,17 +1,20 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateDisposalMutation } from '@/hooks/useDisposal'
-import { useAssetsQuery } from '@/hooks/useAssets'
+import { useAssetQuery } from '@/hooks/useAssets'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { BackLink } from '@/components/ui/BackLink'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { AssetCombobox } from '@/components/assets/AssetCombobox'
 import { DisposalMethod } from '@/api/types/common.types'
 import { DISPOSAL_METHOD_LABEL } from '@/lib/constants'
 import { optionalNonNegativeNumber } from '@/lib/zodHelpers'
@@ -32,11 +35,11 @@ export function DisposalCreatePage() {
   usePageTitle('บันทึกการจำหน่ายทิ้ง')
   const navigate = useNavigate()
   const create = useCreateDisposalMutation()
-  const { data: assetsPage } = useAssetsQuery({ limit: 100 })
-  const assets = assetsPage?.data ?? []
+  const [pendingValues, setPendingValues] = useState<FormValues | null>(null)
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormInput, unknown, FormValues>({
@@ -46,13 +49,24 @@ export function DisposalCreatePage() {
     },
   })
 
+  const { data: pendingAsset } = useAssetQuery(pendingValues?.assetId ?? 0)
+
   function onSubmit(values: FormValues) {
-    create.mutate(values, {
+    setPendingValues(values)
+  }
+
+  function confirmSubmit() {
+    if (!pendingValues) return
+    create.mutate(pendingValues, {
       onSuccess: (disposal) => {
         toast.success('บันทึกการจำหน่ายทิ้งเรียบร้อยแล้ว')
+        setPendingValues(null)
         navigate(`/disposal/${disposal.disposalId}`)
       },
-      onError: (error) => toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ')),
+      onError: (error) => {
+        toast.error(getErrorMessage(error, 'บันทึกไม่สำเร็จ'))
+        setPendingValues(null)
+      },
     })
   }
 
@@ -64,14 +78,13 @@ export function DisposalCreatePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ทรัพย์สิน</label>
-            <Select {...register('assetId')}>
-              <option value="">เลือกทรัพย์สิน</option>
-              {assets.map((a) => (
-                <option key={a.assetId} value={a.assetId}>
-                  {a.assetName}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="assetId"
+              control={control}
+              render={({ field }) => (
+                <AssetCombobox value={(field.value as number) || undefined} onChange={(assetId) => field.onChange(assetId ?? '')} />
+              )}
+            />
             {errors.assetId && <p className="mt-1 text-xs text-red-600">{errors.assetId.message}</p>}
           </div>
           <div>
@@ -105,6 +118,16 @@ export function DisposalCreatePage() {
         </Button>
       </form>
       </Card>
+
+      <ConfirmDialog
+        open={!!pendingValues}
+        title="บันทึกการจำหน่ายทิ้ง"
+        description={`บันทึกการจำหน่ายทิ้งทรัพย์สิน "${pendingAsset?.assetName ?? ''}" ด้วยวิธี "${pendingValues ? DISPOSAL_METHOD_LABEL[pendingValues.disposalMethod] : ''}" ใช่หรือไม่? การบันทึกนี้ไม่สามารถย้อนกลับได้`}
+        confirmLabel="บันทึกการจำหน่ายทิ้ง"
+        isLoading={create.isPending}
+        onConfirm={confirmSubmit}
+        onCancel={() => setPendingValues(null)}
+      />
     </div>
   )
 }

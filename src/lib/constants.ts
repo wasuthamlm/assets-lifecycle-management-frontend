@@ -36,6 +36,16 @@ export const PO_STATUS_LABEL: Record<PoStatus, string> = {
   [PoStatus.CANCELLED]: 'ยกเลิก',
 }
 
+// ต้องตรงกับ PO_STATUS_TRANSITIONS ฝั่ง backend เป๊ะๆ (purchasing.service.ts) — ใช้กรอง dropdown ไม่ให้
+// เลือกสถานะย้อนกลับ/ข้ามขั้นที่ backend จะปฏิเสธอยู่แล้ว แทนที่จะปล่อยให้เลือกได้ทุกค่าแล้วโดน 400 ทีหลัง
+export const PO_STATUS_TRANSITIONS: Record<PoStatus, PoStatus[]> = {
+  [PoStatus.DRAFT]: [PoStatus.ORDERED, PoStatus.CANCELLED],
+  [PoStatus.ORDERED]: [PoStatus.PARTIALLY_RECEIVED, PoStatus.RECEIVED, PoStatus.CANCELLED],
+  [PoStatus.PARTIALLY_RECEIVED]: [PoStatus.RECEIVED, PoStatus.CANCELLED],
+  [PoStatus.RECEIVED]: [],
+  [PoStatus.CANCELLED]: [],
+}
+
 export const REQUEST_TYPE_LABEL: Record<RequestType, string> = {
   [RequestType.WITHDRAW]: 'เบิก',
   [RequestType.BORROW]: 'ยืม',

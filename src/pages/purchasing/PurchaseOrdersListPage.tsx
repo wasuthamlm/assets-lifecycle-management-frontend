@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { usePurchaseOrdersQuery } from '@/hooks/usePurchaseOrders'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -22,27 +23,28 @@ export function PurchaseOrdersListPage() {
   usePageTitle('ใบสั่งซื้อ')
   const navigate = useNavigate()
   const { hasPermission } = usePermission()
-  const { data: orders = [], isLoading, isError, refetch } = usePurchaseOrdersQuery()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
 
-  const filtered = orders.filter(
-    (po) =>
-      (po.poNo.toLowerCase().includes(search.toLowerCase()) ||
-        (po.vendor?.vendorName ?? '').toLowerCase().includes(search.toLowerCase())) &&
-      (!status || po.status === status),
-  )
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const { data, isLoading, isError, refetch } = usePurchaseOrdersQuery({
+    search: debouncedSearch || undefined,
+    status: (status || undefined) as PoStatus | undefined,
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, status])
 
   function handleSearchChange(value: string) {
     setSearch(value)
-    setPage(1)
   }
 
   function handleStatusChange(value: string) {
     setStatus(value)
-    setPage(1)
   }
 
   const columns: DataTableColumn<PurchaseOrder>[] = [
@@ -85,7 +87,7 @@ export function PurchaseOrdersListPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={pageRows}
+            rows={data?.data ?? []}
             rowKey={(po) => po.poId}
             isLoading={isLoading}
             isError={isError}
@@ -101,7 +103,7 @@ export function PurchaseOrdersListPage() {
             }
           />
         </div>
-        <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}
       </Card>
     </div>
   )

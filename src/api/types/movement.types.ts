@@ -27,3 +27,12 @@ export interface Movement {
   notes: string | null
   createdAt: string
 }
+
+export interface QueryMovementDto {
+  search?: string
+  movementType?: MovementType
+  dateFrom?: string
+  dateTo?: string
+  page?: number
+  limit?: number
+}

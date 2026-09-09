@@ -8,14 +8,14 @@ import { RequisitionByPersonCard } from '@/components/dashboard/RequisitionByPer
 import { Spinner } from '@/components/ui/Spinner'
 import { BreakdownCard } from './BreakdownCard'
 import { ASSET_STATUS_LABEL, PO_STATUS_LABEL } from '@/lib/constants'
-import { formatCurrency, formatNumber } from '@/lib/formatters'
+import { formatCurrency } from '@/lib/formatters'
 import type { AssetStatus, PoStatus } from '@/api/types/common.types'
 
 export function ReportsPage() {
   usePageTitle('รายงาน')
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary()
   const { data: assetsPage, isLoading: assetsLoading } = useAssetsQuery({ limit: 500 })
-  const { data: purchaseOrders = [], isLoading: poLoading } = usePurchaseOrdersQuery()
+  const { data: purchaseOrdersPage, isLoading: poLoading } = usePurchaseOrdersQuery({ limit: 500 })
 
   if (summaryLoading || assetsLoading || poLoading || !summary) {
     return (
@@ -26,6 +26,7 @@ export function ReportsPage() {
   }
 
   const assets = assetsPage?.data ?? []
+  const purchaseOrders = purchaseOrdersPage?.data ?? []
 
   const assetsByStatus = Object.entries(
     assets.reduce<Record<string, number>>((acc, a) => {
@@ -64,10 +65,15 @@ export function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="ทรัพย์สินทั้งหมด" value={formatNumber(summary.totalAssets)} icon={FileText} />
-        <StatCard label="มูลค่ารวม" value={`${formatCurrency(summary.totalAssetValue)} บาท`} icon={Wallet} />
-        <StatCard label="ใบสั่งซื้อทั้งหมด" value={formatNumber(purchaseOrders.length)} icon={ShoppingCart} />
-        <StatCard label="รอดำเนินการ" value={formatNumber(summary.requisitions.pending)} icon={Clock} />
+        <StatCard label="ทรัพย์สินทั้งหมด" value={summary.totalAssets} icon={FileText} />
+        <StatCard
+          label="มูลค่ารวม"
+          value={summary.totalAssetValue}
+          format={(v) => `${formatCurrency(v)} บาท`}
+          icon={Wallet}
+        />
+        <StatCard label="ใบสั่งซื้อทั้งหมด" value={purchaseOrders.length} icon={ShoppingCart} />
+        <StatCard label="รอดำเนินการ" value={summary.requisitions.pending} icon={Clock} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

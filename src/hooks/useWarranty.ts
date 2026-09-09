@@ -2,6 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { warrantyService } from '@/api/services/warranty.service'
 import type { CreateWarrantyDto, RenewWarrantyDto } from '@/api/types/warranty.types'
 
+export function useExpiringWarrantiesQuery(withinDays?: number) {
+  return useQuery({
+    queryKey: ['warranties', 'expiring', withinDays],
+    queryFn: () => warrantyService.expiring(withinDays),
+  })
+}
+
 export function useWarrantiesByAssetQuery(assetId: number) {
   return useQuery({
     queryKey: ['warranties', 'asset', assetId],

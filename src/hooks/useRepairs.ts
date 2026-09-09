@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { repairsService } from '@/api/services/repairs.service'
-import type { CreateRepairDto, UpdateRepairStatusDto } from '@/api/types/repair.types'
+import type { CreateRepairDto, QueryRepairDto, UpdateRepairStatusDto } from '@/api/types/repair.types'
 
-export function useRepairsQuery() {
+export function useRepairsQuery(query: QueryRepairDto = {}) {
   return useQuery({
-    queryKey: ['repairs'],
-    queryFn: () => repairsService.list(),
+    queryKey: ['repairs', query],
+    queryFn: () => repairsService.list(query),
+    placeholderData: keepPreviousData,
   })
 }
 

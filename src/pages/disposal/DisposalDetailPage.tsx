@@ -37,7 +37,7 @@ export function DisposalDetailPage() {
         <p className="text-sm text-slate-500 dark:text-slate-400">{DISPOSAL_METHOD_LABEL[disposal.disposalMethod]}</p>
       </div>
 
-      <dl className="grid grid-cols-2 gap-4 text-sm">
+      <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-slate-400">วันที่จำหน่าย</dt>
           <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(disposal.disposalDate)}</dd>

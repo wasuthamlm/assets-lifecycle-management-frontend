@@ -1,6 +1,7 @@
 import { ThemeToggle } from './ThemeToggle'
 import { Breadcrumbs } from './Breadcrumbs'
 import { NotificationBell } from './NotificationBell'
+import { AccountMenu } from './AccountMenu'
 import { usePageTitleContext } from '@/hooks/usePageTitle'
 
 export function Topbar() {
@@ -15,6 +16,7 @@ export function Topbar() {
       <div className="flex shrink-0 items-center gap-3">
         <NotificationBell />
         <ThemeToggle />
+        <AccountMenu />
       </div>
     </header>
   )

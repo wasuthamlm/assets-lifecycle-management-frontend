@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useRepairsQuery } from '@/hooks/useRepairs'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -20,24 +21,28 @@ const PAGE_SIZE = 20
 export function RepairsListPage() {
   usePageTitle('ซ่อมบำรุง')
   const navigate = useNavigate()
-  const { data: repairs = [], isLoading, isError, refetch } = useRepairsQuery()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
 
-  const filtered = repairs.filter(
-    (r) => (r.asset?.assetName ?? '').toLowerCase().includes(search.toLowerCase()) && (!status || r.status === status),
-  )
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const { data, isLoading, isError, refetch } = useRepairsQuery({
+    search: debouncedSearch || undefined,
+    status: (status || undefined) as RepairStatus | undefined,
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, status])
 
   function handleSearchChange(value: string) {
     setSearch(value)
-    setPage(1)
   }
 
   function handleStatusChange(value: string) {
     setStatus(value)
-    setPage(1)
   }
 
   const columns: DataTableColumn<Repair>[] = [
@@ -80,7 +85,7 @@ export function RepairsListPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={pageRows}
+            rows={data?.data ?? []}
             rowKey={(r) => r.repairId}
             isLoading={isLoading}
             isError={isError}
@@ -96,7 +101,7 @@ export function RepairsListPage() {
             }
           />
         </div>
-        <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}
       </Card>
     </div>
   )

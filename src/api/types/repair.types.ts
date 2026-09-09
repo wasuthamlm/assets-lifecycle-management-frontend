@@ -17,6 +17,13 @@ export interface Repair {
   createdAt: string
 }
 
+export interface QueryRepairDto {
+  search?: string
+  status?: RepairStatus
+  page?: number
+  limit?: number
+}
+
 export interface CreateRepairDto {
   assetId: number
   problemDescription?: string

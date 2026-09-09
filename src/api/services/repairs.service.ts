@@ -1,10 +1,11 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { CreateRepairDto, Repair, UpdateRepairStatusDto } from '../types/repair.types'
+import type { Paginated } from '../types/common.types'
+import type { CreateRepairDto, QueryRepairDto, Repair, UpdateRepairStatusDto } from '../types/repair.types'
 
 export const repairsService = {
-  async list(): Promise<Repair[]> {
-    const { data } = await apiClient.get<Repair[]>(ENDPOINTS.repairs.base)
+  async list(query: QueryRepairDto = {}): Promise<Paginated<Repair>> {
+    const { data } = await apiClient.get<Paginated<Repair>>(ENDPOINTS.repairs.base, { params: query })
     return data
   },
   async get(id: number): Promise<Repair> {

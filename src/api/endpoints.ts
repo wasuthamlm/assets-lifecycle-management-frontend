@@ -72,6 +72,7 @@ export const ENDPOINTS = {
   },
   warranty: {
     base: '/warranties',
+    expiring: '/warranties/expiring',
     byId: (id: number) => `/warranties/${id}`,
     byAsset: (assetId: number) => `/warranties/asset/${assetId}`,
     renew: (id: number) => `/warranties/${id}/renew`,

@@ -23,6 +23,7 @@ export interface Assignment {
   returnedDate: string | null
   receivedBy: number | null
   returnCondition: ReturnCondition | null
+  isLateReturn: boolean
   notes: string | null
   createdAt: string
   // holderId เป็น polymorphic FK — ต้องเลือก field ชื่อที่ตรงกับ holderType เอาเอง (ดู resolveHolderName)

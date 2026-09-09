@@ -10,9 +10,10 @@ import { Spinner } from '@/components/ui/Spinner'
 import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { PoStatusPill } from '@/components/ui/StatusPill'
 import { PoStatus } from '@/api/types/common.types'
-import { PO_STATUS_LABEL } from '@/lib/constants'
+import { PO_STATUS_LABEL, PO_STATUS_TRANSITIONS } from '@/lib/constants'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
 
@@ -24,6 +25,7 @@ export function PurchaseOrderDetailPage() {
   const updateStatus = useUpdatePurchaseOrderStatusMutation(poId)
   const { hasPermission } = usePermission()
   const [nextStatus, setNextStatus] = useState<PoStatus | ''>('')
+  const [confirmingStatus, setConfirmingStatus] = useState<PoStatus | ''>('')
 
   if (isLoading) {
     return (
@@ -38,12 +40,18 @@ export function PurchaseOrderDetailPage() {
 
   function handleUpdateStatus() {
     if (!nextStatus) return
+    setConfirmingStatus(nextStatus)
+  }
+
+  function confirmUpdateStatus() {
+    if (!confirmingStatus) return
     updateStatus.mutate(
-      { status: nextStatus },
+      { status: confirmingStatus },
       {
         onSuccess: () => {
           toast.success('อัปเดตสถานะเรียบร้อยแล้ว')
           setNextStatus('')
+          setConfirmingStatus('')
         },
         onError: (error) => toast.error(getErrorMessage(error, 'อัปเดตไม่สำเร็จ')),
       },
@@ -63,7 +71,7 @@ export function PurchaseOrderDetailPage() {
             <PoStatusPill status={po.status} />
           </div>
 
-          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <dl className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div>
               <dt className="text-slate-400">วันที่สั่งซื้อ</dt>
               <dd className="text-slate-700 dark:text-slate-200">{po.orderDate ? formatThaiDate(po.orderDate) : '-'}</dd>
@@ -105,7 +113,7 @@ export function PurchaseOrderDetailPage() {
             <div className="flex items-center gap-2">
               <Select value={nextStatus} onChange={(e) => setNextStatus(e.target.value as PoStatus)} className="max-w-xs">
                 <option value="">เลือกสถานะใหม่</option>
-                {Object.values(PoStatus).map((s) => (
+                {(PO_STATUS_TRANSITIONS[po.status] ?? []).map((s) => (
                   <option key={s} value={s}>
                     {PO_STATUS_LABEL[s]}
                   </option>
@@ -118,6 +126,20 @@ export function PurchaseOrderDetailPage() {
           </Section>
         )}
       </DetailSheet>
+
+      <ConfirmDialog
+        open={!!confirmingStatus}
+        title="เปลี่ยนสถานะใบสั่งซื้อ"
+        description={
+          confirmingStatus === PoStatus.CANCELLED
+            ? `ยกเลิกใบสั่งซื้อ "${po.poNo}" ใช่หรือไม่? การยกเลิกนี้ไม่สามารถย้อนกลับได้`
+            : `เปลี่ยนสถานะใบสั่งซื้อ "${po.poNo}" เป็น "${confirmingStatus ? PO_STATUS_LABEL[confirmingStatus] : ''}" ใช่หรือไม่?`
+        }
+        confirmLabel={confirmingStatus === PoStatus.CANCELLED ? 'ยกเลิกใบสั่งซื้อ' : 'ยืนยัน'}
+        isLoading={updateStatus.isPending}
+        onConfirm={confirmUpdateStatus}
+        onCancel={() => setConfirmingStatus('')}
+      />
     </div>
   )
 }

@@ -135,9 +135,14 @@ export function AssignmentsListPage() {
       key: 'returned',
       header: 'สถานะ',
       render: (a) =>
-        a.returnedDate
-          ? `คืนแล้ว (${a.returnCondition ? RETURN_CONDITION_LABEL[a.returnCondition] : '-'}) — ${formatThaiDate(a.returnedDate)}`
-          : 'ยังไม่คืน',
+        a.returnedDate ? (
+          <span className={cn(a.isLateReturn && 'font-medium text-red-600 dark:text-red-400')}>
+            {`คืนแล้ว (${a.returnCondition ? RETURN_CONDITION_LABEL[a.returnCondition] : '-'}) — ${formatThaiDate(a.returnedDate)}`}
+            {a.isLateReturn && ' (คืนล่าช้า)'}
+          </span>
+        ) : (
+          'ยังไม่คืน'
+        ),
     },
     {
       key: 'action',

@@ -73,12 +73,13 @@ export function DataTable<T>({
           </tbody>
         ) : (
           <tbody>
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <tr
                 key={rowKey(row)}
                 onClick={() => onRowClick?.(row)}
+                style={{ animationDelay: `${Math.min(i, 10) * 25}ms` }}
                 className={
-                  'border-b border-slate-50 last:border-0 dark:border-slate-800/40 ' +
+                  'animate-fade-slide-in border-b border-slate-50 last:border-0 even:bg-slate-50/60 dark:border-slate-800/40 dark:even:bg-slate-800/20 ' +
                   (onRowClick
                     ? 'cursor-pointer transition-colors duration-150 hover:bg-brand-50/40 dark:hover:bg-brand-500/5'
                     : '')

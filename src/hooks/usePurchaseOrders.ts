@@ -1,11 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { purchaseOrdersService } from '@/api/services/purchase-orders.service'
-import type { CreatePurchaseOrderDto, UpdatePurchaseOrderStatusDto } from '@/api/types/purchase-order.types'
+import type {
+  CreatePurchaseOrderDto,
+  QueryPurchaseOrderDto,
+  UpdatePurchaseOrderStatusDto,
+} from '@/api/types/purchase-order.types'
 
-export function usePurchaseOrdersQuery() {
+export function usePurchaseOrdersQuery(query: QueryPurchaseOrderDto = {}) {
   return useQuery({
-    queryKey: ['purchase-orders'],
-    queryFn: () => purchaseOrdersService.list(),
+    queryKey: ['purchase-orders', query],
+    queryFn: () => purchaseOrdersService.list(query),
+    placeholderData: keepPreviousData,
   })
 }
 

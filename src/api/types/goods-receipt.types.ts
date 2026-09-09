@@ -22,7 +22,15 @@ export interface GoodsReceipt {
   location?: { locationId: number; locationName: string } | null
   notes: string | null
   items: GoodsReceiptItem[]
+  /** เฉพาะ list endpoint ที่ paginate — นับจำนวนผ่าน loadRelationCountAndMap ไม่ join items เต็มมาด้วย (ดู backend) */
+  itemCount?: number
   createdAt: string
+}
+
+export interface QueryGoodsReceiptDto {
+  search?: string
+  page?: number
+  limit?: number
 }
 
 export interface GoodsReceiptItemAssetInput {

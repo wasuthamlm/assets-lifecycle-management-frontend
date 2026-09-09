@@ -13,6 +13,12 @@ export interface Disposal {
   createdAt: string
 }
 
+export interface QueryDisposalDto {
+  search?: string
+  page?: number
+  limit?: number
+}
+
 export interface CreateDisposalDto {
   assetId: number
   disposalMethod: DisposalMethod

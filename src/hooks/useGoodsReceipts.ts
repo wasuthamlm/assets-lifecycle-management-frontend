@@ -1,11 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { goodsReceiptsService } from '@/api/services/goods-receipts.service'
-import type { CreateGoodsReceiptDto } from '@/api/types/goods-receipt.types'
+import type { CreateGoodsReceiptDto, QueryGoodsReceiptDto } from '@/api/types/goods-receipt.types'
 
-export function useGoodsReceiptsQuery() {
+export function useGoodsReceiptsQuery(query: QueryGoodsReceiptDto = {}) {
   return useQuery({
-    queryKey: ['goods-receipts'],
-    queryFn: () => goodsReceiptsService.list(),
+    queryKey: ['goods-receipts', query],
+    queryFn: () => goodsReceiptsService.list(query),
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -27,6 +27,13 @@ export interface PurchaseOrder {
   updatedAt: string | null
 }
 
+export interface QueryPurchaseOrderDto {
+  search?: string
+  status?: PoStatus
+  page?: number
+  limit?: number
+}
+
 export interface CreatePurchaseOrderItemDto {
   categoryId?: number
   itemDescription: string

@@ -1,9 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { disposalService } from '@/api/services/disposal.service'
-import type { CreateDisposalDto } from '@/api/types/disposal.types'
+import type { CreateDisposalDto, QueryDisposalDto } from '@/api/types/disposal.types'
 
-export function useDisposalsQuery() {
-  return useQuery({ queryKey: ['disposals'], queryFn: () => disposalService.list() })
+export function useDisposalsQuery(query: QueryDisposalDto = {}) {
+  return useQuery({
+    queryKey: ['disposals', query],
+    queryFn: () => disposalService.list(query),
+    placeholderData: keepPreviousData,
+  })
 }
 
 export function useDisposalQuery(id: number) {

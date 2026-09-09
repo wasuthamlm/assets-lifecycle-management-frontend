@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -7,6 +8,8 @@ type Size = 'sm' | 'md'
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: Size
+  /** Shows a spinning icon and disables the button — for async actions (form submit, mutation in flight). */
+  loading?: boolean
 }
 
 const variantClasses: Record<Variant, string> = {
@@ -22,9 +25,10 @@ const sizeClasses: Record<Size, string> = {
   md: 'h-10 px-4 text-sm',
 }
 
-export function Button({ className, variant = 'primary', size = 'md', ...props }: ButtonProps) {
+export function Button({ className, variant = 'primary', size = 'md', loading = false, disabled, children, ...props }: ButtonProps) {
   return (
     <button
+      disabled={disabled || loading}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-[background-color,box-shadow,transform] duration-200 ease-out active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900',
@@ -33,6 +37,9 @@ export function Button({ className, variant = 'primary', size = 'md', ...props }
         className,
       )}
       {...props}
-    />
+    >
+      {loading && <Loader2 size={size === 'sm' ? 14 : 16} className="animate-spin" />}
+      {children}
+    </button>
   )
 }

@@ -1,8 +1,11 @@
 import { Component, type ReactNode } from 'react'
 import { Button } from './ui/Button'
+import { cn } from '@/lib/utils'
 
 interface ErrorBoundaryProps {
   children: ReactNode
+  /** 'full' (default) = fills the viewport, for the app-level boundary. 'inline' = fills its container, for a route-level boundary nested inside the layout shell. */
+  variant?: 'full' | 'inline'
 }
 
 interface ErrorBoundaryState {
@@ -22,8 +25,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.hasError) {
+      const isInline = this.props.variant === 'inline'
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-4 text-center dark:bg-slate-950">
+        <div
+          className={cn(
+            'flex flex-col items-center justify-center gap-4 px-4 text-center',
+            isInline ? 'min-h-[400px]' : 'min-h-screen bg-slate-50 dark:bg-slate-950',
+          )}
+        >
           <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">เกิดข้อผิดพลาดที่ไม่คาดคิด</p>
           <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
             กรุณาลองโหลดหน้าใหม่อีกครั้ง หากยังพบปัญหาโปรดติดต่อผู้ดูแลระบบ

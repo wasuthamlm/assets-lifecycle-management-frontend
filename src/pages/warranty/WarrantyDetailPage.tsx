@@ -79,7 +79,7 @@ export function WarrantyDetailPage() {
           <WarrantyStatusPill status={warranty.status} />
         </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+        <dl className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-slate-400">วันที่เริ่มคุ้มครอง</dt>
             <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(warranty.startDate)}</dd>

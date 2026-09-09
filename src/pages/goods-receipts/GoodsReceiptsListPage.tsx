@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useGoodsReceiptsQuery } from '@/hooks/useGoodsReceipts'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -16,27 +17,29 @@ const PAGE_SIZE = 20
 export function GoodsReceiptsListPage() {
   usePageTitle('รับเข้าสินค้า')
   const navigate = useNavigate()
-  const { data: receipts = [], isLoading, isError, refetch } = useGoodsReceiptsQuery()
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [page, setPage] = useState(1)
 
-  const filtered = receipts.filter(
-    (r) =>
-      r.receiptNo.toLowerCase().includes(search.toLowerCase()) ||
-      (r.purchaseOrder?.poNo ?? '').toLowerCase().includes(search.toLowerCase()),
-  )
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const { data, isLoading, isError, refetch } = useGoodsReceiptsQuery({
+    search: debouncedSearch || undefined,
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
 
   function handleSearchChange(value: string) {
     setSearch(value)
-    setPage(1)
   }
 
   const columns: DataTableColumn<GoodsReceipt>[] = [
     { key: 'no', header: 'เลขที่ใบรับของ', render: (r) => <span className="font-medium">{r.receiptNo}</span> },
     { key: 'po', header: 'ใบสั่งซื้ออ้างอิง', render: (r) => r.purchaseOrder?.poNo ?? '-' },
     { key: 'location', header: 'สถานที่รับเข้า', render: (r) => r.location?.locationName ?? '-' },
-    { key: 'items', header: 'จำนวนรายการ', render: (r) => r.items?.length ?? 0 },
+    { key: 'items', header: 'จำนวนรายการ', render: (r) => r.itemCount ?? r.items?.length ?? 0 },
     { key: 'date', header: 'วันที่รับของ', render: (r) => (r.receiptDate ? formatThaiDate(r.receiptDate) : '-') },
   ]
 
@@ -58,7 +61,7 @@ export function GoodsReceiptsListPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={pageRows}
+            rows={data?.data ?? []}
             rowKey={(r) => r.receiptId}
             isLoading={isLoading}
             isError={isError}
@@ -74,7 +77,7 @@ export function GoodsReceiptsListPage() {
             }
           />
         </div>
-        <Pagination page={page} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}
       </Card>
     </div>
   )

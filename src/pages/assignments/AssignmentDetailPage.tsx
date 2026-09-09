@@ -59,7 +59,7 @@ export function AssignmentDetailPage() {
       label: 'รับคืน',
       timestamp: assignment.returnedDate ? formatThaiDate(assignment.returnedDate) : undefined,
       description: assignment.returnedDate
-        ? `สภาพเมื่อคืน: ${assignment.returnCondition ? RETURN_CONDITION_LABEL[assignment.returnCondition] : '-'}`
+        ? `สภาพเมื่อคืน: ${assignment.returnCondition ? RETURN_CONDITION_LABEL[assignment.returnCondition] : '-'}${assignment.isLateReturn ? ' (คืนล่าช้ากว่ากำหนด)' : ''}`
         : assignment.dueDate
           ? `กำหนดคืน: ${formatThaiDate(assignment.dueDate)}`
           : undefined,

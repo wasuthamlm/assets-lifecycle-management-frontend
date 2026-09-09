@@ -43,7 +43,10 @@ interface GoodsReceiptFormProps {
 export function GoodsReceiptForm({ onSubmit, isSubmitting }: GoodsReceiptFormProps) {
   const { data: locations = [] } = useLocationsQuery()
   const { data: categories = [] } = useAssetCategoriesQuery()
-  const { data: purchaseOrders = [] } = usePurchaseOrdersQuery()
+  // ต้องดึงให้ครอบคลุมพอสมควร (ไม่ใช่แค่หน้าแรก 20 รายการ) เพราะใช้เป็น dropdown เลือก PO ที่จะรับของอ้างอิง
+  // ไม่ใช่ list แบบแบ่งหน้าเหมือน PurchaseOrdersListPage.tsx
+  const { data: purchaseOrdersPage } = usePurchaseOrdersQuery({ limit: 200 })
+  const purchaseOrders = purchaseOrdersPage?.data ?? []
 
   const {
     register,

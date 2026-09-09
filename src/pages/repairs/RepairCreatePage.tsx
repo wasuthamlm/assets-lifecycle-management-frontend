@@ -1,17 +1,17 @@
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateRepairMutation } from '@/hooks/useRepairs'
-import { useAssetsQuery } from '@/hooks/useAssets'
 import { useVendorsQuery } from '@/hooks/useMasterData'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { BackLink } from '@/components/ui/BackLink'
+import { AssetCombobox } from '@/components/assets/AssetCombobox'
 import { optionalPositiveInt } from '@/lib/zodHelpers'
 import { getErrorMessage } from '@/lib/errorMessage'
 
@@ -28,12 +28,11 @@ export function RepairCreatePage() {
   usePageTitle('แจ้งซ่อม')
   const navigate = useNavigate()
   const create = useCreateRepairMutation()
-  const { data: assetsPage } = useAssetsQuery({ limit: 100 })
-  const assets = assetsPage?.data ?? []
   const { data: vendors = [] } = useVendorsQuery()
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormInput, unknown, FormValues>({
@@ -58,14 +57,13 @@ export function RepairCreatePage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ทรัพย์สิน</label>
-            <Select {...register('assetId')}>
-              <option value="">เลือกทรัพย์สิน</option>
-              {assets.map((a) => (
-                <option key={a.assetId} value={a.assetId}>
-                  {a.assetName}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="assetId"
+              control={control}
+              render={({ field }) => (
+                <AssetCombobox value={(field.value as number) || undefined} onChange={(assetId) => field.onChange(assetId ?? '')} />
+              )}
+            />
             {errors.assetId && <p className="mt-1 text-xs text-red-600">{errors.assetId.message}</p>}
           </div>
 

@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { RepairStatusPill } from '@/components/ui/StatusPill'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { RepairResult, RepairStatus } from '@/api/types/common.types'
@@ -31,6 +32,7 @@ export function RepairDetailPage() {
   const [result, setResult] = useState<RepairResult | ''>('')
   const [repairCost, setRepairCost] = useState('')
   const [notes, setNotes] = useState('')
+  const [confirmingClose, setConfirmingClose] = useState(false)
 
   if (isLoading) {
     return (
@@ -45,9 +47,19 @@ export function RepairDetailPage() {
 
   function handleUpdate() {
     if (!status) return
+    // ปิดงานซ่อมเป็นสถานะสุดท้าย เปลี่ยนกลับไม่ได้ (repair.update ถูกซ่อนไปแล้วเมื่อ status = closed)
+    // จึงต้องให้ยืนยันก่อน ต่างจากการเปลี่ยนสถานะระหว่างทางอื่นๆ ที่เป็นแค่ progress update ปกติ
+    if (status === RepairStatus.CLOSED) {
+      setConfirmingClose(true)
+      return
+    }
+    submitUpdate()
+  }
+
+  function submitUpdate() {
     updateStatus.mutate(
       {
-        status,
+        status: status as RepairStatus,
         result: result || undefined,
         repairCost: repairCost ? Number(repairCost) : undefined,
         notes: notes || undefined,
@@ -59,8 +71,12 @@ export function RepairDetailPage() {
           setResult('')
           setRepairCost('')
           setNotes('')
+          setConfirmingClose(false)
         },
-        onError: (error) => toast.error(getErrorMessage(error, 'อัปเดตไม่สำเร็จ')),
+        onError: (error) => {
+          toast.error(getErrorMessage(error, 'อัปเดตไม่สำเร็จ'))
+          setConfirmingClose(false)
+        },
       },
     )
   }
@@ -108,7 +124,7 @@ export function RepairDetailPage() {
             <RepairStatusPill status={repair.status} />
           </div>
 
-          <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <dl className="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             {repair.repairCost != null && (
               <div>
                 <dt className="text-slate-400">ค่าใช้จ่าย</dt>
@@ -185,6 +201,16 @@ export function RepairDetailPage() {
         </Section>
         )}
       </DetailSheet>
+
+      <ConfirmDialog
+        open={confirmingClose}
+        title="ปิดงานซ่อม"
+        description="ปิดงานซ่อมนี้ใช่หรือไม่? หลังปิดงานแล้วจะไม่สามารถแก้ไขสถานะกลับมาได้อีก"
+        confirmLabel="ปิดงานซ่อม"
+        isLoading={updateStatus.isPending}
+        onConfirm={submitUpdate}
+        onCancel={() => setConfirmingClose(false)}
+      />
     </div>
   )
 }

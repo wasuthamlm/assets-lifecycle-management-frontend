@@ -5,6 +5,7 @@ import { PendingPermissionsPlaceholder } from '@/components/layout/PendingPermis
 import { PageTitleProvider } from '@/hooks/usePageTitle'
 import { useNotificationsStream } from '@/hooks/useNotifications'
 import { useAuthStore } from '@/stores/auth.store'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export function AppLayout() {
   const location = useLocation()
@@ -23,7 +24,9 @@ export function AppLayout() {
           <Topbar />
           <main className="flex-1 overflow-y-auto p-6">
             <div key={location.pathname} className="animate-fade-slide-in">
-              {pendingPermissions ? <PendingPermissionsPlaceholder /> : <Outlet />}
+              <ErrorBoundary variant="inline">
+                {pendingPermissions ? <PendingPermissionsPlaceholder /> : <Outlet />}
+              </ErrorBoundary>
             </div>
           </main>
         </div>

@@ -3,6 +3,8 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { DashboardSummary } from '@/api/types/dashboard.types'
 
+// ต้องเป็น hex ตรงๆ เพราะ recharts fill รับ CSS class ไม่ได้ — ค่านี้จงใจให้ตรงกับ brand-600 / emerald-500
+// ใน tailwind.config.js ถ้าเปลี่ยนโทนสีแบรนด์ทีหลัง ต้องแก้ตรงนี้คู่กันด้วย
 const COLORS = ['#2563eb', '#22c55e']
 
 export function DocumentTypeDonutChart({ summary }: { summary: DashboardSummary }) {
