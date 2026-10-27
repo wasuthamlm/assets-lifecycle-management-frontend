@@ -7,7 +7,8 @@ export interface Asset {
   category?: {
     categoryId: number
     categoryName: string
-    parent?: { categoryId: number; categoryName: string } | null
+    requiresHrRequest?: boolean
+    parent?: { categoryId: number; categoryName: string; requiresHrRequest?: boolean } | null
   } | null
   assetName: string
   serialNumber: string | null

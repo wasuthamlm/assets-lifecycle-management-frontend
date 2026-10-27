@@ -16,3 +16,12 @@ export function formatThaiDate(date: string | Date): string {
   const buddhistYear = d.getFullYear() + 543
   return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${buddhistYear}`
 }
+
+// ชื่อผู้ขอเบิก + ผู้รับ (ถ้า HR เบิกให้คนอื่น) สำหรับคอลัมน์ "ผู้ขอเบิก" ในตาราง
+export function requesterLabel(r: {
+  requestedByEmployee?: { fullName: string } | null
+  requestedForEmployee?: { fullName: string } | null
+}): string {
+  const requester = r.requestedByEmployee?.fullName ?? '-'
+  return r.requestedForEmployee ? `${requester} → ${r.requestedForEmployee.fullName}` : requester
+}

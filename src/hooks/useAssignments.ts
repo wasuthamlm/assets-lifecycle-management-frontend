@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assignmentsService } from '@/api/services/assignments.service'
 import type { IssueAssetDto, ReturnAssetDto } from '@/api/types/assignment.types'
 
@@ -10,10 +10,20 @@ export function useAssignmentsByAssetQuery(assetId: number | undefined) {
   })
 }
 
-export function usePendingReturnsQuery() {
+/** ประวัติการเบิก-จ่าย/รับคืนทั้งหมดของทุกคน ล่าสุดก่อน (ต้องมี assignment.view_all) */
+export function useAssignmentHistoryQuery(page: number, limit: number) {
+  return useQuery({
+    queryKey: ['assignments', 'history', page, limit],
+    queryFn: () => assignmentsService.history({ page, limit }),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function usePendingReturnsQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['assignments', 'pending-returns'],
     queryFn: () => assignmentsService.listPendingReturns(),
+    enabled: options?.enabled ?? true,
   })
 }
 
@@ -41,6 +51,7 @@ export function useIssueAssetMutation() {
     onSuccess: (assignment) => {
       queryClient.invalidateQueries({ queryKey: ['assignments', 'asset', assignment.assetId] })
       queryClient.invalidateQueries({ queryKey: ['assignments', 'pending-returns'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments', 'history'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
     },
   })
@@ -54,6 +65,7 @@ export function useReturnAssetMutation(id: number) {
       queryClient.invalidateQueries({ queryKey: ['assignments', 'asset', assignment.assetId] })
       queryClient.invalidateQueries({ queryKey: ['assignments', id] })
       queryClient.invalidateQueries({ queryKey: ['assignments', 'pending-returns'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments', 'history'] })
       queryClient.invalidateQueries({ queryKey: ['assets'] })
     },
   })

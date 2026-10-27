@@ -12,8 +12,9 @@ interface ModalProps {
   variant?: 'center' | 'drawer'
   /** 'dim' (default) = darken the page behind the modal. 'none' = keep the page fully visible, just float the panel on top. */
   overlay?: 'dim' | 'none'
-  /** 'md' (default, 28rem) = ฟอร์มทั่วไป. 'xl' (~850px) = เนื้อหาที่กว้างกว่า เช่น เอกสารตัวอย่างขนาด A4 */
-  size?: 'md' | 'xl'
+  /** 'md' (default, 28rem) = ฟอร์มทั่วไป. 'xl' (~850px) = เนื้อหาที่กว้างกว่า.
+   *  'a4' = กว้างพอดีกระดาษ A4 (210mm + padding ของ body) สำหรับตัวอย่างเอกสาร */
+  size?: 'md' | 'xl' | 'a4'
 }
 
 const EXIT_DURATION_MS = 150
@@ -94,8 +95,13 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
         tabIndex={-1}
         className={cn(
           'flex w-full flex-col bg-white shadow-2xl outline-none dark:bg-slate-900',
-          isDrawer ? 'h-full rounded-l-2xl' : 'max-h-[85vh] rounded-2xl',
-          !isDrawer && (size === 'xl' ? 'max-w-[min(850px,90vw)]' : 'max-w-md'),
+          isDrawer ? 'h-full rounded-l-2xl' : cn('rounded-2xl', size === 'a4' ? 'max-h-[92vh]' : 'max-h-[85vh]'),
+          !isDrawer &&
+            (size === 'a4'
+              ? 'max-w-[min(calc(210mm+3rem),calc(100vw-2rem))]'
+              : size === 'xl'
+                ? 'max-w-[min(850px,90vw)]'
+                : 'max-w-md'),
           open ? (isDrawer ? 'animate-drawer-in' : 'animate-sheet-in') : isDrawer ? 'animate-drawer-out' : 'animate-sheet-out',
         )}
       >

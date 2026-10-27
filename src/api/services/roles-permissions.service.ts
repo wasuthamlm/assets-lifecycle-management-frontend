@@ -1,6 +1,13 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type { AssignPermissionsDto, CreateRoleDto, Permission, Role } from '../types/roles-permissions.types'
+import type {
+  AssignPermissionsDto,
+  CreateRoleDto,
+  Permission,
+  Role,
+  RolePreassignment,
+  UpsertRolePreassignmentDto,
+} from '../types/roles-permissions.types'
 
 export const rolesPermissionsService = {
   async roles(): Promise<Role[]> {
@@ -18,5 +25,16 @@ export const rolesPermissionsService = {
   async assignPermissionsToRole(roleId: number, dto: AssignPermissionsDto): Promise<Role> {
     const { data } = await apiClient.put<Role>(ENDPOINTS.rolesPermissions.rolePermissions(roleId), dto)
     return data
+  },
+  async preassignments(): Promise<RolePreassignment[]> {
+    const { data } = await apiClient.get<RolePreassignment[]>(ENDPOINTS.rolesPermissions.preassignments)
+    return data
+  },
+  async upsertPreassignment(dto: UpsertRolePreassignmentDto): Promise<RolePreassignment> {
+    const { data } = await apiClient.put<RolePreassignment>(ENDPOINTS.rolesPermissions.preassignments, dto)
+    return data
+  },
+  async deletePreassignment(id: number): Promise<void> {
+    await apiClient.delete(ENDPOINTS.rolesPermissions.preassignmentById(id))
   },
 }

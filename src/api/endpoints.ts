@@ -32,7 +32,6 @@ export const ENDPOINTS = {
     byId: (id: number) => `/employees/${id}`,
     directory: '/employees/directory',
     roles: (id: number) => `/employees/${id}/roles`,
-    preRegister: '/employees/pre-register',
   },
   departments: {
     base: '/departments',
@@ -56,6 +55,7 @@ export const ENDPOINTS = {
   assignments: {
     base: '/assignments',
     issue: '/assignments/issue',
+    history: '/assignments/history',
     return: (id: number) => `/assignments/${id}/return`,
     mine: '/assignments/mine',
     byAsset: (assetId: number) => `/assignments/asset/${assetId}`,
@@ -106,6 +106,8 @@ export const ENDPOINTS = {
     roles: '/roles',
     permissions: '/permissions',
     rolePermissions: (id: number) => `/roles/${id}/permissions`,
+    preassignments: '/role-preassignments',
+    preassignmentById: (id: number) => `/role-preassignments/${id}`,
   },
   attachments: {
     base: '/attachments',

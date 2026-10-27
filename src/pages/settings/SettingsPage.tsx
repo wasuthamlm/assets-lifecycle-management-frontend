@@ -363,6 +363,7 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
   const [name, setName] = useState(category.categoryName)
   const [assetType, setAssetType] = useState(category.assetType ?? '')
   const [parentCategoryId, setParentCategoryId] = useState(category.parentCategoryId ? String(category.parentCategoryId) : '')
+  const [requiresHr, setRequiresHr] = useState(category.requiresHrRequest)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const updateMutation = useUpdateAssetCategoryMutation(category.categoryId)
   const deleteMutation = useDeleteAssetCategoryMutation()
@@ -371,6 +372,7 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
     setName(category.categoryName)
     setAssetType(category.assetType ?? '')
     setParentCategoryId(category.parentCategoryId ? String(category.parentCategoryId) : '')
+    setRequiresHr(category.requiresHrRequest)
     setEditing(true)
   }
 
@@ -380,7 +382,12 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
       return
     }
     updateMutation.mutate(
-      { categoryName: name.trim(), assetType: assetType.trim() || undefined, parentCategoryId: parentCategoryId ? Number(parentCategoryId) : undefined },
+      {
+        categoryName: name.trim(),
+        assetType: assetType.trim() || undefined,
+        parentCategoryId: parentCategoryId ? Number(parentCategoryId) : undefined,
+        requiresHrRequest: requiresHr,
+      },
       {
         onSuccess: () => {
           toast.success('บันทึกแล้ว')
@@ -418,6 +425,15 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
             ))}
           </Select>
         </div>
+        <label className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 dark:bg-slate-900">
+          <span>
+            <span className="block text-sm text-slate-700 dark:text-slate-200">ต้องให้ HR เบิก/ยืมให้</span>
+            <span className="block text-xs text-slate-400">
+              พนักงานทั่วไปเลือกทรัพย์สินหมวดนี้เองไม่ได้ (เช่น notebook / tablet) — มีผลกับหมวดย่อยทั้งหมดด้วย
+            </span>
+          </span>
+          <Switch checked={requiresHr} onChange={setRequiresHr} />
+        </label>
         <div className="flex justify-end gap-1.5">
           <Button type="button" variant="secondary" onClick={() => setEditing(false)}>
             ยกเลิก
@@ -443,6 +459,11 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
             <p className={cn('truncate', isChild ? 'text-sm text-slate-700 dark:text-slate-200' : 'font-medium text-slate-800 dark:text-slate-100')}>
               {category.categoryName}
               {!!childCount && <span className="ml-1.5 text-xs font-normal text-slate-400">({childCount} หมวดย่อย)</span>}
+              {category.requiresHrRequest && (
+                <span className="ml-1.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                  HR เบิกให้
+                </span>
+              )}
             </p>
             {category.assetType && <p className="truncate text-xs text-slate-400">{category.assetType}</p>}
           </div>
@@ -451,7 +472,14 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
         <div className="flex min-w-0 items-center gap-2">
           {isChild && <CornerDownRight size={14} className="shrink-0 text-slate-300 dark:text-slate-600" />}
           <div className="min-w-0">
-            <p className="truncate text-sm text-slate-700 dark:text-slate-200">{category.categoryName}</p>
+            <p className="truncate text-sm text-slate-700 dark:text-slate-200">
+              {category.categoryName}
+              {category.requiresHrRequest && (
+              <span className="ml-1.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                HR เบิกให้
+              </span>
+            )}
+            </p>
             {category.assetType && <p className="truncate text-xs text-slate-400">{category.assetType}</p>}
           </div>
         </div>

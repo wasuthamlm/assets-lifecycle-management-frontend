@@ -1,39 +1,43 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Copy, ShieldCheck, UserPlus, Lock } from 'lucide-react'
-import { useEmployeesQuery, usePreRegisterEmployeeMutation, useAssignEmployeeRolesMutation } from '@/hooks/useEmployees'
+import { Pencil, ShieldCheck, Trash2, UserPlus, Lock } from 'lucide-react'
+import { useEmployeesQuery, useAssignEmployeeRolesMutation } from '@/hooks/useEmployees'
 import { useUsersQuery } from '@/hooks/useUsers'
-import { useRolesQuery } from '@/hooks/useRolesPermissions'
-import { useDepartmentsQuery } from '@/hooks/useMasterData'
+import {
+  useDeleteRolePreassignmentMutation,
+  useRolePreassignmentsQuery,
+  useRolesQuery,
+  useUpsertRolePreassignmentMutation,
+} from '@/hooks/useRolesPermissions'
 import { usePermission } from '@/hooks/usePermission'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useAuthStore } from '@/stores/auth.store'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { translateRoleName } from '@/lib/roleLabels'
 import { getErrorMessage } from '@/lib/errorMessage'
 import { cn } from '@/lib/utils'
-import type { Employee, PreRegisterEmployeeResult } from '@/api/types/employee.types'
-import type { Role } from '@/api/types/roles-permissions.types'
+import type { Employee } from '@/api/types/employee.types'
+import type { Role, RolePreassignment } from '@/api/types/roles-permissions.types'
 import type { User } from '@/api/types/user.types'
 
-function PreRegisterEmployeeModal({ onClose }: { onClose: () => void }) {
-  const { data: roles = [] } = useRolesQuery()
-  const { data: departments = [] } = useDepartmentsQuery()
-  const preRegisterMutation = usePreRegisterEmployeeMutation()
+interface PreassignRolesModalProps {
+  initial: RolePreassignment | null
+  roles: Role[]
+  onClose: () => void
+}
 
-  const [employeeCode, setEmployeeCode] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [departmentId, setDepartmentId] = useState('')
-  const [position, setPosition] = useState('')
-  const [selectedRoleIds, setSelectedRoleIds] = useState<Set<number>>(new Set())
-  const [result, setResult] = useState<PreRegisterEmployeeResult | null>(null)
+// กำหนด role ล่วงหน้าให้อีเมลบริษัท — ไม่สร้างบัญชี/ไม่ส่งรหัสผ่าน แค่จำไว้ว่าพออีเมลนี้ login ผ่าน Microsoft
+// ครั้งแรกจะได้ role อะไร (ดู backend RolePreassignmentsService) แก้ไขคือส่งอีเมลเดิมซ้ำ (upsert)
+function PreassignRolesModal({ initial, roles, onClose }: PreassignRolesModalProps) {
+  const upsertMutation = useUpsertRolePreassignmentMutation()
+  const [email, setEmail] = useState(initial?.email ?? '')
+  const [selectedRoleIds, setSelectedRoleIds] = useState<Set<number>>(new Set(initial?.roleIds ?? []))
 
   function toggleRole(roleId: number) {
     setSelectedRoleIds((prev) => {
@@ -45,100 +49,36 @@ function PreRegisterEmployeeModal({ onClose }: { onClose: () => void }) {
   }
 
   function handleSubmit() {
-    if (!employeeCode.trim() || !fullName.trim() || !email.trim() || selectedRoleIds.size === 0) {
-      toast.error('กรอกรหัสพนักงาน ชื่อ-นามสกุล อีเมล และเลือกอย่างน้อย 1 role')
+    if (!email.trim() || selectedRoleIds.size === 0) {
+      toast.error('กรอกอีเมล และเลือกอย่างน้อย 1 role')
       return
     }
-    preRegisterMutation.mutate(
+    upsertMutation.mutate(
+      { email: email.trim(), roleIds: Array.from(selectedRoleIds) },
       {
-        employeeCode: employeeCode.trim(),
-        fullName: fullName.trim(),
-        email: email.trim(),
-        departmentId: departmentId ? Number(departmentId) : undefined,
-        position: position.trim() || undefined,
-        roleIds: Array.from(selectedRoleIds),
-      },
-      {
-        onSuccess: (data) => {
-          toast.success('ลงทะเบียนพนักงานเรียบร้อยแล้ว')
-          setResult(data)
+        onSuccess: () => {
+          toast.success('บันทึกสิทธิ์ล่วงหน้าเรียบร้อยแล้ว')
+          onClose()
         },
         onError: (e) => toast.error(getErrorMessage(e, 'บันทึกไม่สำเร็จ')),
       },
     )
   }
 
-  function copyCredentials() {
-    if (!result) return
-    navigator.clipboard.writeText(`Username: ${result.user.username}\nรหัสผ่านชั่วคราว: ${result.tempPassword}`)
-    toast.success('คัดลอกแล้ว')
-  }
-
-  if (result) {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          สร้างบัญชีให้ <span className="font-medium text-slate-700 dark:text-slate-200">{result.employee.fullName}</span> เรียบร้อยแล้ว
-          และส่งข้อมูลนี้ไปที่ {result.user.email} ให้แล้ว (ถ้าระบบตั้งค่า SMTP ไว้)
-        </p>
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800/60">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Username</span>
-            <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{result.user.username}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">รหัสผ่านชั่วคราว</span>
-            <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{result.tempPassword}</span>
-          </div>
-        </div>
-        <p className="text-xs text-slate-400">ผู้ใช้จะถูกบังคับให้เปลี่ยนรหัสผ่านทันทีตอน login ครั้งแรก — โปรดคัดลอกไว้เผื่ออีเมลส่งไม่ถึง</p>
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <Button type="button" variant="secondary" onClick={copyCredentials}>
-            <Copy size={14} /> คัดลอก
-          </Button>
-          <Button type="button" onClick={onClose}>
-            เสร็จสิ้น
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        เมื่ออีเมลนี้ login ผ่าน Microsoft ครั้งแรก จะได้รับ role ที่เลือกไว้อัตโนมัติ — ไม่มีการสร้างบัญชีหรือส่งรหัสผ่าน
+      </p>
       <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">รหัสพนักงาน</label>
-        <Input value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} placeholder="EMP-0010" />
-      </div>
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">ชื่อ-นามสกุล</label>
-        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="สมชาย ใจดี" />
-      </div>
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">อีเมล (ใช้เป็น username สำหรับ login ด้วย)</label>
+        <label className="text-xs font-medium text-slate-500 dark:text-slate-400">อีเมลบริษัท</label>
         <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="somchai.j@millimedthailand.com"
+          disabled={!!initial}
         />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400">แผนก (ไม่บังคับ)</label>
-          <Select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-            <option value="">ไม่ระบุ</option>
-            {departments.map((d) => (
-              <option key={d.departmentId} value={d.departmentId}>
-                {d.departmentName}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-500 dark:text-slate-400">ตำแหน่ง (ไม่บังคับ)</label>
-          <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Staff" />
-        </div>
       </div>
 
       <div className="space-y-2">
@@ -176,8 +116,8 @@ function PreRegisterEmployeeModal({ onClose }: { onClose: () => void }) {
         <Button type="button" variant="secondary" onClick={onClose}>
           ยกเลิก
         </Button>
-        <Button type="button" onClick={handleSubmit} disabled={preRegisterMutation.isPending}>
-          {preRegisterMutation.isPending ? 'กำลังสร้าง...' : 'สร้างบัญชี'}
+        <Button type="button" onClick={handleSubmit} disabled={upsertMutation.isPending}>
+          {upsertMutation.isPending ? 'กำลังบันทึก...' : 'บันทึก'}
         </Button>
       </div>
     </div>
@@ -192,7 +132,7 @@ interface AssignEmployeeRolesModalProps {
 }
 
 // กำหนดบทบาทผูกกับ employee_id ตรงๆ (ดู RolesPermissionsService.assignRolesToEmployee) ไม่ต้องพึ่ง user account
-// เลย — พนักงานที่ยังไม่มีบัญชี login (เช่น เพิ่งสร้างแบบยังไม่ pre-register) ก็กำหนดสิทธิ์ล่วงหน้าได้เหมือนกัน
+// เลย — พนักงานที่ยังไม่มีบัญชี login ก็กำหนดสิทธิ์ได้เหมือนกัน (คนที่ยังไม่มีข้อมูลพนักงานเลยใช้ PreassignRolesModal แทน)
 function AssignEmployeeRolesModal({ employee, currentRoleIds, roles, onClose }: AssignEmployeeRolesModalProps) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set(currentRoleIds))
   const assignMutation = useAssignEmployeeRolesMutation()
@@ -300,7 +240,6 @@ export function EmployeesListPage() {
   const canViewUsers = hasPermission('user.view_all')
   const canViewEmployees = hasPermission('employee.view_all')
   const canManageRbac = hasPermission('rbac.manage')
-  const canPreRegister = hasPermission('employee.create') && hasPermission('user.create') && canManageRbac
 
   // route เข้าได้ด้วย employee.view_all หรือ user.view_all อย่างใดอย่างหนึ่ง (ดู router.tsx) แต่รายการ
   // พนักงานหลักของหน้านี้ต้องการ employee.view_all เจาะจง — role ที่มีแค่ user.view_all จะเข้าหน้าได้
@@ -309,7 +248,12 @@ export function EmployeesListPage() {
   const { data: users = [] } = useUsersQuery({ enabled: canViewUsers })
   const { data: roles = [] } = useRolesQuery({ enabled: canManageRbac })
   const [search, setSearch] = useState('')
-  const [showPreRegister, setShowPreRegister] = useState(false)
+  const { data: preassignments = [] } = useRolePreassignmentsQuery({ enabled: canManageRbac })
+  const deletePreassignmentMutation = useDeleteRolePreassignmentMutation()
+  // undefined = ปิด, null = เพิ่มใหม่, object = แก้ไขรายการเดิม
+  const [editingPreassignment, setEditingPreassignment] = useState<RolePreassignment | null | undefined>(undefined)
+  const [deletingPreassignment, setDeletingPreassignment] = useState<RolePreassignment | null>(null)
+  const roleNameById = useMemo(() => new Map(roles.map((r) => [r.roleId, r.roleName])), [roles])
   const [managingEmployee, setManagingEmployee] = useState<Employee | null>(null)
 
   const usersByEmployeeId = useMemo(() => {
@@ -410,9 +354,9 @@ export function EmployeesListPage() {
           placeholder="ค้นหารหัสพนักงาน, ชื่อ, username, อีเมล..."
           className="max-w-xs"
         />
-        {canPreRegister && (
-          <Button onClick={() => setShowPreRegister(true)}>
-            <UserPlus size={16} /> เพิ่มพนักงานล่วงหน้า
+        {canManageRbac && (
+          <Button onClick={() => setEditingPreassignment(null)}>
+            <UserPlus size={16} /> กำหนดสิทธิ์ล่วงหน้า
           </Button>
         )}
       </div>
@@ -433,9 +377,77 @@ export function EmployeesListPage() {
         </div>
       </Card>
 
-      <Modal open={showPreRegister} onClose={() => setShowPreRegister(false)} title="เพิ่มพนักงานล่วงหน้า" overlay="dim">
-        {showPreRegister && <PreRegisterEmployeeModal onClose={() => setShowPreRegister(false)} />}
+      {canManageRbac && preassignments.length > 0 && (
+        <Card className="p-0">
+          <div className="space-y-3 p-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">กำหนดสิทธิ์ล่วงหน้า (รอเข้าสู่ระบบครั้งแรก)</p>
+              <p className="text-xs text-slate-400">รายการจะหายไปเองเมื่ออีเมลนั้น login ผ่าน Microsoft และได้รับ role แล้ว</p>
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {preassignments.map((p) => (
+                <div key={p.rolePreassignmentId} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{p.email}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.roleIds.map((roleId) => {
+                        const roleName = roleNameById.get(roleId)
+                        return (
+                          <span
+                            key={roleId}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                          >
+                            {roleName ? translateRoleName(roleName) : roleId}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{new Date(p.createdAt).toLocaleDateString('th-TH')}</span>
+                    <Button size="sm" variant="secondary" onClick={() => setEditingPreassignment(p)}>
+                      <Pencil size={14} /> แก้ไข
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => setDeletingPreassignment(p)}>
+                      <Trash2 size={14} /> ลบ
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Modal
+        open={editingPreassignment !== undefined}
+        onClose={() => setEditingPreassignment(undefined)}
+        title={editingPreassignment ? 'แก้ไขสิทธิ์ล่วงหน้า' : 'กำหนดสิทธิ์ล่วงหน้า'}
+        overlay="dim"
+      >
+        {editingPreassignment !== undefined && (
+          <PreassignRolesModal initial={editingPreassignment} roles={roles} onClose={() => setEditingPreassignment(undefined)} />
+        )}
       </Modal>
+
+      <ConfirmDialog
+        open={!!deletingPreassignment}
+        title="ลบสิทธิ์ล่วงหน้า"
+        description={`ลบการกำหนดสิทธิ์ล่วงหน้าของ ${deletingPreassignment?.email ?? ''}? เมื่อ login ครั้งแรกจะยังไม่มี role จนกว่าผู้ดูแลจะกำหนดให้`}
+        confirmLabel="ลบ"
+        isLoading={deletePreassignmentMutation.isPending}
+        onCancel={() => setDeletingPreassignment(null)}
+        onConfirm={() => {
+          if (!deletingPreassignment) return
+          deletePreassignmentMutation.mutate(deletingPreassignment.rolePreassignmentId, {
+            onSuccess: () => {
+              toast.success('ลบเรียบร้อยแล้ว')
+              setDeletingPreassignment(null)
+            },
+            onError: (e) => toast.error(getErrorMessage(e, 'ลบไม่สำเร็จ')),
+          })
+        }}
+      />
 
       <Modal open={!!managingEmployee} onClose={() => setManagingEmployee(null)} title="กำหนดสิทธิ์" overlay="none">
         {managingEmployee && (

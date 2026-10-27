@@ -13,7 +13,7 @@ import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { Pagination } from '@/components/ui/Pagination'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { APPROVAL_STATUS_LABEL, REQUEST_TYPE_LABEL } from '@/lib/constants'
-import { formatThaiDate } from '@/lib/formatters'
+import { formatThaiDate, requesterLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { ApprovalStatus, RequestType } from '@/api/types/common.types'
 import type { Requisition } from '@/api/types/requisition.types'
@@ -51,7 +51,7 @@ export function RequisitionsListPage() {
     { key: 'no', header: 'เลขที่เอกสาร', render: (r) => <span className="font-medium">{r.requisitionNo}</span> },
     ...(mineOnly
       ? []
-      : [{ key: 'requester', header: 'ผู้ขอเบิก', render: (r: Requisition) => r.requestedByEmployee?.fullName ?? '-' }]),
+      : [{ key: 'requester', header: 'ผู้ขอเบิก', render: (r: Requisition) => requesterLabel(r) }]),
     { key: 'type', header: 'ประเภท', render: (r) => REQUEST_TYPE_LABEL[r.requestType] },
     {
       key: 'items',

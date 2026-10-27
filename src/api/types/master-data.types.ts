@@ -3,12 +3,15 @@ export interface AssetCategory {
   categoryName: string
   assetType: string | null
   parentCategoryId: number | null
+  // true = พนักงานทั่วไปเบิก/ยืมเองไม่ได้ ต้องให้ HR ทำรายการให้ (เช่น notebook / tablet) — ดู requiresHrRequest()
+  requiresHrRequest: boolean
 }
 
 export interface CreateAssetCategoryDto {
   categoryName: string
   assetType?: string
   parentCategoryId?: number
+  requiresHrRequest?: boolean
 }
 
 export type UpdateAssetCategoryDto = Partial<CreateAssetCategoryDto>

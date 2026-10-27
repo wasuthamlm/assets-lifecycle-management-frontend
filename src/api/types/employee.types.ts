@@ -41,18 +41,3 @@ export interface CreateEmployeeDto {
   email?: string
   phone?: string
 }
-
-export interface PreRegisterEmployeeDto {
-  employeeCode: string
-  fullName: string
-  email: string
-  departmentId?: number
-  position?: string
-  roleIds: number[]
-}
-
-export interface PreRegisterEmployeeResult {
-  employee: Employee
-  user: { userId: number; username: string; email: string | null }
-  tempPassword: string
-}

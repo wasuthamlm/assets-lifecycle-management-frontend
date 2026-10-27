@@ -48,3 +48,27 @@
     }
   }
 }
+
+/* สำเนาเอกสารสำหรับพิมพ์ (HandoverDocumentPreview) — ซ่อนบนจอ ตอนพิมพ์ให้เหลือแค่แผ่นนี้แผ่นเดียว */
+.print-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  html,
+  body {
+    background: white !important;
+  }
+  body > *:not(.print-root) {
+    display: none !important;
+  }
+  .print-root {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

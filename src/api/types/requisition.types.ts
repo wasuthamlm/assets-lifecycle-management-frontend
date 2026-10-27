@@ -52,6 +52,9 @@ export interface Requisition {
     position?: string | null
     department?: { departmentName: string } | null
   } | null
+  // ผู้รับทรัพย์สินเมื่อ HR เบิกให้คนอื่น — null = ผู้ขอเบิกรับเอง
+  requestedFor: number | null
+  requestedForEmployee?: Requisition['requestedByEmployee']
   requestType: RequestType
   overallStatus: ApprovalStatus
   dueDate: string | null
@@ -75,6 +78,14 @@ export interface CreateRequisitionDto {
   dueDate?: string
   reason?: string
   onBehalfOfEmployeeId?: number
+  /** เบิกให้พนักงานใหม่ที่ยังไม่มีในระบบ — ห้ามส่งพร้อม onBehalfOfEmployeeId */
+  newEmployee?: {
+    employeeCode: string
+    fullName: string
+    departmentId?: number
+    position?: string
+    email?: string
+  }
   employeeNameEn?: string
   startDate?: string
   position?: string
@@ -82,7 +93,8 @@ export interface CreateRequisitionDto {
   contactPhone?: string
   accessories?: Partial<RequisitionDocumentAccessories>
   items: RequisitionItemInput[]
-  approverIds: number[]
+  /** ต้องเป็น IT Admin — ไม่ต้องส่งถ้า IT Admin เป็นผู้ขอ/ผู้รับเอง (backend อนุมัติให้อัตโนมัติ) */
+  approverIds?: number[]
 }
 
 export interface ApproveRequisitionDto {

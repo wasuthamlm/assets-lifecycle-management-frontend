@@ -78,8 +78,13 @@ function parseOptions(children: React.ReactNode): ParsedOption[] {
 // รายการยาวเกินไปเลื่อนหาไม่จบ — เกินจำนวนนี้ค่อยโชว์ช่องค้นหาให้พิมพ์กรองแทน
 const SEARCH_THRESHOLD = 8
 
-export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
-  ({ className, children, value, onChange, defaultValue, onBlur, ...props }, ref) => {
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  // บังคับโชว์ช่องค้นหาเสมอ แม้ตัวเลือกจะยังไม่เกิน SEARCH_THRESHOLD (เช่นรายชื่อพนักงานที่จะเพิ่มขึ้นเรื่อยๆ)
+  searchable?: boolean
+}
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className, children, value, onChange, defaultValue, onBlur, searchable, ...props }, ref) => {
     const [open, setOpen] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
     const [query, setQuery] = useState('')
@@ -105,7 +110,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
 
     // Options shown in dropdown (exclude empty-value placeholder from list)
     const dropdownOptions = options.filter((o) => o.value !== '')
-    const showSearch = dropdownOptions.length > SEARCH_THRESHOLD
+    const showSearch = searchable || dropdownOptions.length > SEARCH_THRESHOLD
 
     // Distinct chip categories in first-seen order, with a count each — only shown
     // when the caller actually tagged options via data-chip and there's more than one

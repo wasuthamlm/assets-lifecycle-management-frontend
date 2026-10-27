@@ -79,9 +79,9 @@ export const REPAIR_RESULT_LABEL: Record<RepairResult, string> = {
 }
 
 export const ASSIGNMENT_TYPE_LABEL: Record<AssignmentType, string> = {
-  [AssignmentType.PERMANENT]: 'ถาวร',
-  [AssignmentType.TEMPORARY_LOAN]: 'ยืมชั่วคราว',
-  [AssignmentType.REPLACEMENT]: 'ทดแทน',
+  [AssignmentType.PERMANENT]: 'เบิกใช้ประจำ',
+  [AssignmentType.TEMPORARY_LOAN]: 'ยืม (มีกำหนดคืน)',
+  [AssignmentType.REPLACEMENT]: 'เครื่องทดแทน',
 }
 
 export const HOLDER_TYPE_LABEL: Record<HolderType, string> = {

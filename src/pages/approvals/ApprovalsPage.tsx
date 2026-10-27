@@ -7,7 +7,7 @@ import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useAuthStore } from '@/stores/auth.store'
 import { REQUEST_TYPE_LABEL } from '@/lib/constants'
-import { formatThaiDate } from '@/lib/formatters'
+import { formatThaiDate, requesterLabel } from '@/lib/formatters'
 import type { Requisition } from '@/api/types/requisition.types'
 
 export function ApprovalsPage() {
@@ -18,7 +18,7 @@ export function ApprovalsPage() {
 
   const columns: DataTableColumn<Requisition>[] = [
     { key: 'no', header: 'เลขที่เอกสาร', render: (r) => <span className="font-medium">{r.requisitionNo}</span> },
-    { key: 'requester', header: 'ผู้ขอเบิก', render: (r) => r.requestedByEmployee?.fullName ?? '-' },
+    { key: 'requester', header: 'ผู้ขอเบิก', render: (r) => requesterLabel(r) },
     { key: 'type', header: 'ประเภท', render: (r) => REQUEST_TYPE_LABEL[r.requestType] },
     { key: 'items', header: 'จำนวนรายการ', render: (r) => `${r.items.length} รายการ` },
     { key: 'status', header: 'สถานะ', render: (r) => <ApprovalStatusPill status={r.overallStatus} /> },

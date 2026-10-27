@@ -116,7 +116,8 @@ export const router = createBrowserRouter([
           },
 
           {
-            element: <PermissionRoute permission="assignment.return" />,
+            // ดูประวัติทั้งหมดได้เฉพาะ hr / it_admin (assignment.view_all) — ปุ่มรับคืน/เบิก-จ่ายเช็คสิทธิ์แยกในหน้าเอง
+            element: <PermissionRoute permission="assignment.view_all" />,
             children: [
               { path: '/assignments', element: <AssignmentsListPage /> },
               { path: '/assignments/:id', element: <AssignmentDetailPage /> },
@@ -169,7 +170,8 @@ export const router = createBrowserRouter([
           },
 
           {
-            element: <PermissionRoute permission="asset.view" excludeRoles={['employee']} />,
+            // HR ไม่เกี่ยวกับงานประกันทรัพย์สิน — ซ่อนให้ตรงกับเมนู "ประกัน" ใน navConfig
+            element: <PermissionRoute permission="asset.view" excludeRoles={['employee', 'hr']} />,
             children: [
               { path: '/warranty', element: <WarrantySearchPage /> },
               { path: '/warranty/:id', element: <WarrantyDetailPage /> },

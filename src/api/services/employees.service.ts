@@ -1,12 +1,6 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
-import type {
-  CreateEmployeeDto,
-  Employee,
-  EmployeeDirectoryEntry,
-  PreRegisterEmployeeDto,
-  PreRegisterEmployeeResult,
-} from '../types/employee.types'
+import type { CreateEmployeeDto, Employee, EmployeeDirectoryEntry } from '../types/employee.types'
 import type { AssignRolesDto } from '../types/roles-permissions.types'
 
 export const employeesService = {
@@ -27,10 +21,5 @@ export const employeesService = {
 
   async assignRoles(employeeId: number, dto: AssignRolesDto): Promise<void> {
     await apiClient.put(ENDPOINTS.employees.roles(employeeId), dto)
-  },
-
-  async preRegister(dto: PreRegisterEmployeeDto): Promise<PreRegisterEmployeeResult> {
-    const { data } = await apiClient.post<PreRegisterEmployeeResult>(ENDPOINTS.employees.preRegister, dto)
-    return data
   },
 }

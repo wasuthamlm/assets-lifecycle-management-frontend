@@ -79,6 +79,9 @@ export function CompleteProfilePage() {
             <p className="text-sm text-slate-500 dark:text-slate-400">
               บัญชี {user?.email ?? user?.username} ยังไม่มีข้อมูลพนักงานในระบบ กรุณากรอกก่อนใช้งานต่อ
             </p>
+            <p className="mt-1 text-xs text-slate-400">
+              ถ้า HR เคยเบิกอุปกรณ์ให้คุณไว้แล้ว ให้กรอกรหัสพนักงานและชื่อ-นามสกุลให้ตรงกับที่ HR แจ้ง ระบบจะผูกข้อมูลเดิมให้
+            </p>
           </div>
         </div>
         <Card>

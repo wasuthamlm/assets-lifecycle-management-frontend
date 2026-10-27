@@ -1,6 +1,7 @@
 import { apiClient } from '../client'
 import { ENDPOINTS } from '../endpoints'
 import type { Assignment, IssueAssetDto, ReturnAssetDto } from '../types/assignment.types'
+import type { Paginated } from '../types/common.types'
 
 export const assignmentsService = {
   async issue(dto: IssueAssetDto): Promise<Assignment> {
@@ -13,6 +14,10 @@ export const assignmentsService = {
   },
   async listByAsset(assetId: number): Promise<Assignment[]> {
     const { data } = await apiClient.get<Assignment[]>(ENDPOINTS.assignments.byAsset(assetId))
+    return data
+  },
+  async history(params: { page?: number; limit?: number }): Promise<Paginated<Assignment>> {
+    const { data } = await apiClient.get<Paginated<Assignment>>(ENDPOINTS.assignments.history, { params })
     return data
   },
   async listPendingReturns(): Promise<Assignment[]> {

@@ -7,6 +7,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { useAssetsQuery } from '@/hooks/useAssets'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
+  useAssignmentHistoryQuery,
   useAssignmentsByAssetQuery,
   useIssueAssetMutation,
   usePendingReturnsQuery,
@@ -18,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { AssetStatusPill } from '@/components/ui/StatusPill'
-import { EmptyState } from '@/components/ui/EmptyState'
+import { Pagination } from '@/components/ui/Pagination'
 import { IssueAssetForm } from '@/components/assignments/IssueAssetForm'
 import { ReturnAssetForm } from '@/components/assignments/ReturnAssetForm'
 import { ASSIGNMENT_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
@@ -28,13 +29,17 @@ import { cn } from '@/lib/utils'
 import { resolveHolderName, resolveHolderDepartment, resolveHolderPhone } from '@/lib/holder'
 import type { Assignment, IssueAssetDto, ReturnAssetDto } from '@/api/types/assignment.types'
 
+const HISTORY_PAGE_SIZE = 20
+
 export function AssignmentsListPage() {
   usePageTitle('การเบิก-จ่าย/รับคืน')
   const navigate = useNavigate()
-  // route นี้เข้าได้ด้วย assignment.return เท่านั้น (จำเป็นสำหรับดูคิว "รอรับคืน") แต่ปุ่ม "เบิก-จ่าย"
-  // ยิง POST /assignments/issue ซึ่งต้องการ assignment.issue แยกต่างหาก — role ที่มีแค่ return ต้องไม่เห็นปุ่มนี้
+  // route นี้เข้าได้ด้วย assignment.view_all (hr / it_admin) — ดูประวัติได้อย่างเดียว ส่วนคิว "รอรับคืน" + ปุ่มรับคืน
+  // ต้องมี assignment.return และปุ่ม "เบิก-จ่าย" ต้องมี assignment.issue แยกต่างหาก (HR ไม่มีทั้งคู่ จึงไม่เห็น)
   const { hasPermission } = usePermission()
   const canIssue = hasPermission('assignment.issue')
+  const canReturn = hasPermission('assignment.return')
+  const [historyPage, setHistoryPage] = useState(1)
   const [assetSearch, setAssetSearch] = useState('')
   const debouncedAssetSearch = useDebouncedValue(assetSearch, 300)
   const [selectedAssetId, setSelectedAssetId] = useState<number | null>(null)
@@ -56,7 +61,13 @@ export function AssignmentsListPage() {
     isLoading: pendingLoading,
     isError: pendingError,
     refetch: refetchPending,
-  } = usePendingReturnsQuery()
+  } = usePendingReturnsQuery({ enabled: canReturn })
+  const {
+    data: history,
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch: refetchHistory,
+  } = useAssignmentHistoryQuery(historyPage, HISTORY_PAGE_SIZE)
   const issueMutation = useIssueAssetMutation()
   const returnMutation = useReturnAssetMutation(returningId ?? 0)
 
@@ -124,6 +135,55 @@ export function AssignmentsListPage() {
     },
   ]
 
+  const returnColumn: DataTableColumn<Assignment> = {
+    key: 'action',
+    header: '',
+    render: (a) =>
+      !a.returnedDate ? (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            setReturningId(a.assignmentId)
+          }}
+        >
+          <RotateCcw size={14} /> รับคืน
+        </Button>
+      ) : null,
+  }
+
+  const historyColumns: DataTableColumn<Assignment>[] = [
+    {
+      key: 'asset',
+      header: 'ทรัพย์สิน',
+      render: (a) => (a.asset ? a.asset.assetName : `#${a.assetId}`),
+    },
+    { key: 'serial', header: 'S/N', render: (a) => a.asset?.serialNumber ?? '-' },
+    { key: 'type', header: 'ประเภท', render: (a) => ASSIGNMENT_TYPE_LABEL[a.assignmentType] },
+    { key: 'holderName', header: 'ชื่อผู้ถือครอง', render: (a) => resolveHolderName(a) },
+    { key: 'holderDepartment', header: 'แผนก', render: (a) => resolveHolderDepartment(a) },
+    { key: 'issued', header: 'วันที่เบิก-จ่าย', render: (a) => formatThaiDate(a.issuedDate) },
+    { key: 'due', header: 'กำหนดคืน', render: (a) => (a.dueDate ? formatThaiDate(a.dueDate) : '-') },
+    {
+      key: 'returned',
+      header: 'สถานะ',
+      render: (a) =>
+        a.returnedDate ? (
+          <span className={cn(a.isLateReturn && 'font-medium text-red-600 dark:text-red-400')}>
+            {`คืนแล้ว — ${formatThaiDate(a.returnedDate)}`}
+            {a.isLateReturn && ' (คืนล่าช้า)'}
+          </span>
+        ) : (
+          <span className={cn(isOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
+            {isOverdue(a) ? 'ยังไม่คืน (เกินกำหนด)' : 'ยังไม่คืน'}
+          </span>
+        ),
+    },
+    { key: 'issuedBy', header: 'ผู้เบิกจ่าย', render: (a) => a.issuedByEmployee?.fullName ?? '-' },
+    ...(canReturn ? [returnColumn] : []),
+  ]
+
   const columns: DataTableColumn<Assignment>[] = [
     { key: 'type', header: 'ประเภท', render: (a) => ASSIGNMENT_TYPE_LABEL[a.assignmentType] },
     { key: 'holderName', header: 'ชื่อผู้ถือครอง', render: (a) => resolveHolderName(a) },
@@ -144,49 +204,37 @@ export function AssignmentsListPage() {
           'ยังไม่คืน'
         ),
     },
-    {
-      key: 'action',
-      header: '',
-      render: (a) =>
-        !a.returnedDate ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              setReturningId(a.assignmentId)
-            }}
-          >
-            <RotateCcw size={14} /> รับคืน
-          </Button>
-        ) : null,
-    },
+    ...(canReturn ? [returnColumn] : []),
   ]
 
   return (
     <div className="space-y-4">
-      <Card className="p-0">
-        <div className="flex items-center justify-between p-4 pb-0">
-          <p className="font-semibold text-slate-800 dark:text-slate-100">
-            รอรับคืน {pendingReturns.length > 0 && `(${pendingReturns.length})`}
-          </p>
-        </div>
-        <div className="p-4">
-          <DataTable
-            columns={pendingColumns}
-            rows={pendingReturns}
-            rowKey={(a) => a.assignmentId}
-            isLoading={pendingLoading}
-            isError={pendingError}
-            onRetry={refetchPending}
-            onRowClick={(a) => navigate(`/assignments/${a.assignmentId}`)}
-            emptyMessage="ไม่มีทรัพย์สินที่รอรับคืนตอนนี้"
-          />
-        </div>
-      </Card>
+      {canReturn && (
+        <Card className="p-0">
+          <div className="flex items-center justify-between p-4 pb-0">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">
+              รอรับคืน {pendingReturns.length > 0 && `(${pendingReturns.length})`}
+            </p>
+          </div>
+          <div className="p-4">
+            <DataTable
+              columns={pendingColumns}
+              rows={pendingReturns}
+              rowKey={(a) => a.assignmentId}
+              isLoading={pendingLoading}
+              isError={pendingError}
+              onRetry={refetchPending}
+              onRowClick={(a) => navigate(`/assignments/${a.assignmentId}`)}
+              emptyMessage="ไม่มีทรัพย์สินที่รอรับคืนตอนนี้"
+            />
+          </div>
+        </Card>
+      )}
 
       <Card>
-        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ค้นหาทรัพย์สิน</label>
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+          ค้นหาทรัพย์สิน (ดูประวัติรายเครื่อง{canIssue && ' / เบิก-จ่าย'})
+        </label>
         <Input
           value={assetSearch}
           onChange={(e) => {
@@ -249,9 +297,29 @@ export function AssignmentsListPage() {
         </Card>
       )}
 
+      {/* ยังไม่ได้เลือกทรัพย์สิน — แสดงประวัติทั้งหมดของทุกคนเลย ไม่ต้องค้นหาก่อน */}
       {!selectedAsset && (
-        <Card>
-          <EmptyState message="ค้นหาและเลือกทรัพย์สินเพื่อดูประวัติการเบิก-จ่าย/รับคืน" />
+        <Card className="p-0">
+          <div className="flex items-center justify-between p-4 pb-0">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">
+              ประวัติการเบิก-จ่าย/รับคืนทั้งหมด {history && history.total > 0 && `(${history.total})`}
+            </p>
+          </div>
+          <div className="p-4">
+            <DataTable
+              columns={historyColumns}
+              rows={history?.data ?? []}
+              rowKey={(a) => a.assignmentId}
+              isLoading={historyLoading}
+              isError={historyError}
+              onRetry={refetchHistory}
+              onRowClick={(a) => navigate(`/assignments/${a.assignmentId}`)}
+              emptyMessage="ยังไม่มีประวัติการเบิก-จ่าย"
+            />
+          </div>
+          {history && (
+            <Pagination page={historyPage} totalItems={history.total} pageSize={HISTORY_PAGE_SIZE} onPageChange={setHistoryPage} />
+          )}
         </Card>
       )}
 

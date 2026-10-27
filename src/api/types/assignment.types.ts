@@ -7,6 +7,7 @@ export interface Assignment {
     assetId: number
     assetNo: string
     assetName: string
+    serialNumber?: string | null
     currentStatus?: AssetStatus | null
     warrantyExpireDate?: string | null
     category?: { categoryId: number; categoryName: string } | null

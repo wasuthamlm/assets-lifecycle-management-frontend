@@ -7,11 +7,13 @@ export const PERMISSION_LABELS_TH: Record<string, string> = {
   'requisition.view_own': 'ดูใบขอเบิก/ยืมของตนเอง',
   'requisition.create': 'สร้างใบขอเบิก/ยืม',
   'requisition.approve': 'อนุมัติใบขอเบิก/ยืม',
+  'requisition.create_on_behalf': 'เบิก/ยืมให้พนักงานคนอื่น',
 
   'asset.view': 'ดูทรัพย์สิน',
   'asset.create': 'เพิ่มทรัพย์สินใหม่',
 
   'assignment.return': 'เบิก-จ่าย/รับคืนทรัพย์สิน',
+  'assignment.view_all': 'ดูประวัติการเบิก-จ่าย/รับคืนทั้งหมด',
 
   'po.view': 'ดูใบสั่งซื้อ',
   'po.create': 'สร้างใบสั่งซื้อ',

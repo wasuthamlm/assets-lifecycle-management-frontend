@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { employeesService } from '@/api/services/employees.service'
 import type { AssignRolesDto } from '@/api/types/roles-permissions.types'
-import type { CreateEmployeeDto, PreRegisterEmployeeDto } from '@/api/types/employee.types'
+import type { CreateEmployeeDto } from '@/api/types/employee.types'
 
 export function useEmployeesQuery(options?: { enabled?: boolean }) {
   return useQuery({
@@ -38,17 +38,6 @@ export function useCreateEmployeeMutation() {
     mutationFn: (dto: CreateEmployeeDto) => employeesService.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
-    },
-  })
-}
-
-export function usePreRegisterEmployeeMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (dto: PreRegisterEmployeeDto) => employeesService.preRegister(dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] })
-      queryClient.invalidateQueries({ queryKey: ['users'] })
     },
   })
 }

@@ -48,6 +48,8 @@ export function useCreateRequisitionMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['requisitions'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      // เบิกให้พนักงานใหม่จะสร้างข้อมูลพนักงานใหม่ไปด้วย (CreateRequisitionDto.newEmployee)
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
     },
   })
 }

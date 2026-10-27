@@ -1,5 +1,6 @@
 import { RequestType } from '@/api/types/common.types'
 import { formatThaiDate } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 export interface AssetHandoverDocumentItem {
   seq: number
@@ -24,7 +25,6 @@ export interface AssetHandoverDocumentProps {
   requestType: RequestType
   documentDate: string | Date
   employeeName: string
-  employeeNameEn?: string | null
   startDate?: string | null
   position?: string | null
   department?: string | null
@@ -32,13 +32,16 @@ export interface AssetHandoverDocumentProps {
   contactPhone?: string | null
   items: AssetHandoverDocumentItem[]
   accessories?: AssetHandoverDocumentAccessories | null
+  /** ผู้ทำรายการเบิก — ใส่เฉพาะตอน HR เบิกแทนคนอื่น (ผู้ขอ ≠ ผู้รับ) เบิกให้ตัวเองไม่ต้องใส่ */
+  requestedByName?: string | null
+  className?: string
 }
 
 function Checkbox({ checked, label }: { checked?: boolean; label: string }) {
   return (
     <span className="mr-4 inline-flex items-center gap-1.5">
       <span
-        className={`flex h-4 w-4 items-center justify-center border text-[10px] leading-none ${checked ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-transparent'}`}
+        className={`flex h-[18px] w-[18px] items-center justify-center border text-[11px] leading-none ${checked ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-transparent'}`}
       >
         ✓
       </span>
@@ -59,7 +62,6 @@ export function AssetHandoverDocument({
   requestType,
   documentDate,
   employeeName,
-  employeeNameEn,
   startDate,
   position,
   department,
@@ -67,60 +69,64 @@ export function AssetHandoverDocument({
   contactPhone,
   items,
   accessories,
+  requestedByName,
+  className,
 }: AssetHandoverDocumentProps) {
   const rows = items.length > 0 ? items : [{ seq: 1, name: '', brand: '', model: '', serialNumber: '', note: '' }]
 
   return (
-    <div className="min-h-[297mm] w-[210mm] max-w-none bg-white p-12 text-slate-900 shadow-xl">
-      <h2 className="text-center text-lg font-bold">ใบส่งมอบ - ส่งคืน ทรัพย์สินของบริษัท</h2>
-      <p className="text-center text-base font-semibold">{companyName}</p>
-      <p className="mt-3 text-right text-sm">วันที่ {formatThaiDate(documentDate)}</p>
+    <div className={cn('min-h-[297mm] w-[210mm] max-w-none bg-white px-10 py-8 text-slate-900 shadow-xl', className)}>
+      <h2 className="text-center text-xl font-bold">ใบส่งมอบ - ส่งคืน ทรัพย์สินของบริษัท</h2>
+      {/* วันที่ชิดขวาบนบรรทัดเดียวกับชื่อบริษัท ประหยัดที่ให้เอกสารจบใน A4 แผ่นเดียว */}
+      <div className="relative">
+        <p className="text-center text-lg font-semibold">{companyName}</p>
+        <p className="absolute bottom-0 right-0 text-base">วันที่ {formatThaiDate(documentDate)}</p>
+      </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-y-1.5 text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-y-1 text-base">
         <div>ชื่อ-นามสกุล ผู้รับทรัพย์สิน : {employeeName}</div>
         <div>เบอร์ติดต่อ : {contactPhone || '-'}</div>
-        <div>ชื่อ-นามสกุล ผู้รับทรัพย์สิน (ภาษาอังกฤษ) : {employeeNameEn || '-'}</div>
-        <div />
         <div>
           วันที่เริ่มงาน : {startDate ? formatThaiDate(startDate) : '-'} ตำแหน่ง : {position || '-'}
         </div>
         <div>ฝ่าย : {department || '-'}</div>
-        <div className="col-span-2">รหัสพนักงาน : {employeeCode || '-'}</div>
-        <div className="col-span-2">
+        <div>รหัสพนักงาน : {employeeCode || '-'}</div>
+        <div>
           เลขที่เอกสาร : {requisitionNo} ({requestType === RequestType.BORROW ? 'ยืม' : 'เบิก'})
         </div>
+        {requestedByName && <div className="col-span-2">ผู้ทำรายการเบิก : {requestedByName}</div>}
       </div>
 
-      <p className="mt-4 text-sm underline decoration-slate-400 underline-offset-2">
+      <p className="mt-3 text-base underline decoration-slate-400 underline-offset-2">
         รายการทรัพย์สินที่บริษัทให้ไว้เพื่อใช้ในการทำงานให้แก่บริษัท ซึ่งถือเป็นรายการทรัพย์สินที่พนักงานต้องรับผิดชอบในระหว่างการทำงาน
       </p>
 
-      <table className="mt-2 w-full border-collapse text-sm">
+      <table className="mt-2 w-full border-collapse text-base">
         <thead>
           <tr className="bg-slate-50">
-            <th className="border border-slate-300 px-2 py-1.5">ลำดับที่</th>
-            <th className="border border-slate-300 px-2 py-1.5">รายการ</th>
-            <th className="border border-slate-300 px-2 py-1.5">ยี่ห้อ</th>
-            <th className="border border-slate-300 px-2 py-1.5">รุ่น</th>
-            <th className="border border-slate-300 px-2 py-1.5">หมายเลขเครื่อง</th>
-            <th className="border border-slate-300 px-2 py-1.5">หมายเหตุ</th>
+            <th className="border border-slate-300 px-2 py-1">ลำดับที่</th>
+            <th className="border border-slate-300 px-2 py-1">รายการ</th>
+            <th className="border border-slate-300 px-2 py-1">ยี่ห้อ</th>
+            <th className="border border-slate-300 px-2 py-1">รุ่น</th>
+            <th className="border border-slate-300 px-2 py-1">หมายเลขเครื่อง</th>
+            <th className="border border-slate-300 px-2 py-1">หมายเหตุ</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((item) => (
             <tr key={item.seq}>
-              <td className="border border-slate-300 px-2 py-1.5 text-center">{item.seq}</td>
-              <td className="border border-slate-300 px-2 py-1.5">{item.name}</td>
-              <td className="border border-slate-300 px-2 py-1.5">{item.brand || '-'}</td>
-              <td className="border border-slate-300 px-2 py-1.5">{item.model || '-'}</td>
-              <td className="border border-slate-300 px-2 py-1.5">{item.serialNumber || '-'}</td>
-              <td className="border border-slate-300 px-2 py-1.5">{item.note}</td>
+              <td className="border border-slate-300 px-2 py-1 text-center">{item.seq}</td>
+              <td className="border border-slate-300 px-2 py-1">{item.name}</td>
+              <td className="border border-slate-300 px-2 py-1">{item.brand || '-'}</td>
+              <td className="border border-slate-300 px-2 py-1">{item.model || '-'}</td>
+              <td className="border border-slate-300 px-2 py-1">{item.serialNumber || '-'}</td>
+              <td className="border border-slate-300 px-2 py-1">{item.note}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="mt-2 flex flex-wrap items-center text-sm">
+      <div className="mt-2 flex flex-wrap items-center text-base">
         <span className="mr-3 font-medium">อุปกรณ์ต่อพ่วง :</span>
         <Checkbox checked={accessories?.adapter} label="Adapter" />
         <Checkbox checked={accessories?.mouse} label="Mouse" />
@@ -129,13 +135,13 @@ export function AssetHandoverDocument({
         <Checkbox checked={!!accessories?.other} label={`อื่นๆ ${accessories?.other || ''}`} />
       </div>
 
-      <div className="mt-4 text-xs leading-relaxed">
+      <div className="mt-3 text-sm leading-normal">
         <p className="underline decoration-slate-400 underline-offset-2">ข้อกำหนดการรักษาและใช้ทรัพย์สินของบริษัท</p>
-        <ol className="mt-1 list-decimal space-y-1 pl-4">
+        <ol className="mt-1 list-decimal space-y-0.5 pl-4">
           <li>พนักงานจะต้องใช้งานและดูแลทรัพย์สินของบริษัทอย่างเหมาะสม ไม่ให้เกิดการชำรุดเสียหาย หรือสูญหาย หากเกิดความเสียหายจากการใช้งานพนักงานจะต้องรับผิดชอบและชดใช้ทุกกรณี</li>
           <li>
             กรณีทรัพย์สินประเภทอุปกรณ์อิเล็กทรอนิกส์ หรือเครื่องมือสื่อสารใดๆ
-            <ol className="mt-1 list-[lower-alpha] space-y-1 pl-4">
+            <ol className="mt-1 list-[lower-alpha] space-y-0.5 pl-4">
               <li>หากพนักงานประสงค์จะติดตั้งโปรแกรมเพิ่มเติมต้องแจ้งให้ฝ่าย IT เป็นผู้ดำเนินการให้</li>
               <li>
                 พนักงานจะต้องรักษาและดูแลข้อมูลที่อยู่ภายในอุปกรณ์ หากเกิดความเสียหายจากการใช้งาน
@@ -154,7 +160,7 @@ export function AssetHandoverDocument({
         </ol>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 border border-slate-300 text-xs">
+      <div className="mt-4 grid grid-cols-2 border border-slate-300 text-sm">
         <div className="border-r border-slate-300 p-3">
           <p className="font-semibold">ช่องสำหรับรับมอบทรัพย์สิน</p>
           <p className="mt-2 font-medium">พนักงาน/ผู้รับมอบทรัพย์สิน :</p>
@@ -163,21 +169,21 @@ export function AssetHandoverDocument({
             และปฏิบัติตามข้อกำหนดการรักษาและใช้ทรัพย์สินของบริษัทอย่างเคร่งครัด
           </p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ) {employeeName}</p>
-          <p className="mt-4 font-medium">ผู้ส่งมอบทรัพย์สิน :</p>
+          <p className="mt-3 font-medium">ผู้ส่งมอบทรัพย์สิน :</p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ)</p>
-          <p className="mt-4 font-medium">พยาน : ฝ่ายบุคคล</p>
+          <p className="mt-3 font-medium">พยาน : ฝ่ายบุคคล</p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ)</p>
         </div>
         <div className="p-3">
           <p className="font-semibold">ช่องสำหรับส่งคืนทรัพย์สิน</p>
           <p className="mt-2 font-medium">พนักงาน/ผู้ส่งคืนทรัพย์สิน :</p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ)</p>
-          <p className="mt-4 font-medium">สภาพทรัพย์สินที่ส่งคืน</p>
+          <p className="mt-3 font-medium">สภาพทรัพย์สินที่ส่งคืน</p>
           <p className="mt-1">{'☐'} ใช้งานได้, สภาพสมบูรณ์, อุปกรณ์ต่อพ่วงครบ (ถ้ามี)</p>
           <p>{'☐'} ชำรุด, ใช้งานไม่ได้, สูญหาย, อุปกรณ์ไม่ครบ</p>
-          <p className="mt-4 font-medium">ผู้ตรวจรับคืนทรัพย์สิน :</p>
+          <p className="mt-3 font-medium">ผู้ตรวจรับคืนทรัพย์สิน :</p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ)</p>
-          <p className="mt-4 font-medium">พยาน : ฝ่ายบุคคล</p>
+          <p className="mt-3 font-medium">พยาน : ฝ่ายบุคคล</p>
           <p className="mt-8 border-t border-dotted border-slate-400 pt-1">(ลงลายมือชื่อ)</p>
         </div>
       </div>

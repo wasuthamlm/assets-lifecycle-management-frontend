@@ -29,3 +29,16 @@ export interface AssignPermissionsDto {
 export interface AssignRolesDto {
   roleIds: number[]
 }
+
+/** role ที่กำหนดไว้ล่วงหน้าให้อีเมลบริษัท — ได้อัตโนมัติเมื่ออีเมลนี้ login ผ่าน Microsoft ครั้งแรก (ไม่มีการสร้างบัญชี) */
+export interface RolePreassignment {
+  rolePreassignmentId: number
+  email: string
+  roleIds: number[]
+  createdAt: string
+}
+
+export interface UpsertRolePreassignmentDto {
+  email: string
+  roleIds: number[]
+}

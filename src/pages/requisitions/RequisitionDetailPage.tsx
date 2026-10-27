@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { FileText } from 'lucide-react'
+import { FileText, Printer } from 'lucide-react'
 import { useRequisitionQuery } from '@/hooks/useRequisitions'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { DetailSheet, Section } from '@/components/ui/Section'
@@ -12,7 +12,7 @@ import { DetailErrorState } from '@/components/ui/DetailErrorState'
 import { ApprovalStatusPill } from '@/components/ui/StatusPill'
 import { Timeline, type TimelineStep } from '@/components/ui/Timeline'
 import { ApprovalActionPanel } from '@/components/requisitions/ApprovalActionPanel'
-import { AssetHandoverDocument } from '@/components/requisitions/AssetHandoverDocument'
+import { HandoverDocumentPreview } from '@/components/requisitions/HandoverDocumentPreview'
 import { RequisitionAttachmentsPanel } from '@/components/attachments/RequisitionAttachmentsPanel'
 import { useAuthStore } from '@/stores/auth.store'
 import { ApprovalStatus } from '@/api/types/common.types'
@@ -38,6 +38,8 @@ export function RequisitionDetailPage() {
     return <DetailErrorState error={error} onRetry={refetch} notFoundMessage="ไม่พบใบขอเบิก/ยืมนี้" />
   }
 
+  // เอกสารส่งมอบเป็นของผู้รับทรัพย์สิน — HR เบิกให้คนอื่นจะใช้ข้อมูลผู้รับ ไม่ใช่ HR (ตรงกับ backend template)
+  const recipient = requisition.requestedForEmployee ?? requisition.requestedByEmployee
   const sortedApprovals = [...requisition.approvals].sort((a, b) => a.approvalLevel - b.approvalLevel)
   const pendingApproval = sortedApprovals.find((a) => a.status === ApprovalStatus.PENDING)
   const isMyTurn = !!currentUser?.employeeId && pendingApproval?.approverId === currentUser.employeeId
@@ -66,6 +68,7 @@ export function RequisitionDetailPage() {
               <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">{requisition.requisitionNo}</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {REQUEST_TYPE_LABEL[requisition.requestType]} · โดย {requisition.requestedByEmployee?.fullName ?? '-'}
+                {requisition.requestedForEmployee && <> · เบิกให้ {requisition.requestedForEmployee.fullName}</>}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -122,30 +125,36 @@ export function RequisitionDetailPage() {
         )}
       </DetailSheet>
 
-      <Modal open={showDocument} onClose={() => setShowDocument(false)} title="ใบส่งมอบ-ส่งคืนทรัพย์สิน" size="xl">
-        <div className="overflow-x-auto rounded-xl bg-slate-100 p-6 dark:bg-slate-950/40 sm:p-10">
-          <div className="mx-auto">
-            <AssetHandoverDocument
-              requisitionNo={requisition.requisitionNo}
-              requestType={requisition.requestType}
-              documentDate={requisition.createdAt}
-              employeeName={requisition.requestedByEmployee?.fullName ?? '-'}
-              employeeNameEn={requisition.documentInfo?.employeeNameEn}
-              startDate={requisition.documentInfo?.startDate}
-              position={requisition.documentInfo?.position ?? requisition.requestedByEmployee?.position}
-              department={requisition.documentInfo?.department ?? requisition.requestedByEmployee?.department?.departmentName}
-              employeeCode={requisition.requestedByEmployee?.employeeCode}
-              contactPhone={requisition.documentInfo?.contactPhone}
-              accessories={requisition.documentInfo?.accessories}
-              items={requisition.items.map((item, idx) => ({
-                seq: idx + 1,
-                name: item.asset?.assetName ?? item.stockItem?.itemName ?? '-',
-                brand: item.asset?.brand ?? '',
-                model: item.asset?.model ?? '',
-                serialNumber: item.asset?.serialNumber ?? '',
-                note: item.note ?? item.asset?.notes ?? '',
-              }))}
-            />
+      <Modal open={showDocument} onClose={() => setShowDocument(false)} title="ใบส่งมอบ-ส่งคืนทรัพย์สิน" size="a4">
+        <div className="space-y-4">
+          <HandoverDocumentPreview
+            requisitionNo={requisition.requisitionNo}
+            requestType={requisition.requestType}
+            documentDate={requisition.createdAt}
+            employeeName={recipient?.fullName ?? '-'}
+            startDate={requisition.documentInfo?.startDate}
+            position={requisition.documentInfo?.position ?? recipient?.position}
+            department={requisition.documentInfo?.department ?? recipient?.department?.departmentName}
+            employeeCode={recipient?.employeeCode}
+            contactPhone={requisition.documentInfo?.contactPhone}
+            accessories={requisition.documentInfo?.accessories}
+            requestedByName={requisition.requestedForEmployee ? requisition.requestedByEmployee?.fullName : undefined}
+            items={requisition.items.map((item, idx) => ({
+              seq: idx + 1,
+              name: item.asset?.assetName ?? item.stockItem?.itemName ?? '-',
+              brand: item.asset?.brand ?? '',
+              model: item.asset?.model ?? '',
+              serialNumber: item.asset?.serialNumber ?? '',
+              note: item.note ?? item.asset?.notes ?? '',
+            }))}
+          />
+          <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+            <Button type="button" variant="secondary" onClick={() => setShowDocument(false)}>
+              ปิด
+            </Button>
+            <Button type="button" onClick={() => window.print()}>
+              <Printer size={16} /> พิมพ์เอกสาร
+            </Button>
           </div>
         </div>
       </Modal>

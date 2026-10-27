@@ -5,6 +5,7 @@ import { RotateCcw } from 'lucide-react'
 import { useAssignmentQuery, useReturnAssetMutation } from '@/hooks/useAssignments'
 import { useAssetQuery } from '@/hooks/useAssets'
 import { usePageTitle } from '@/hooks/usePageTitle'
+import { usePermission } from '@/hooks/usePermission'
 import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
@@ -27,6 +28,8 @@ export function AssignmentDetailPage() {
   const { data: asset } = useAssetQuery(assignment?.assetId ?? 0)
   const returnMutation = useReturnAssetMutation(assignmentId)
   const [returnOpen, setReturnOpen] = useState(false)
+  // HR เข้าหน้านี้ได้ (assignment.view_all) แต่รับคืนไม่ได้ — ปุ่มรับคืนต้องมี assignment.return
+  const canReturn = usePermission().hasPermission('assignment.return')
 
   if (isLoading) {
     return (
@@ -83,7 +86,7 @@ export function AssignmentDetailPage() {
                 {resolveHolderPhone(assignment) !== '-' && ` · ${resolveHolderPhone(assignment)}`}
               </p>
             </div>
-            {!assignment.returnedDate && (
+            {!assignment.returnedDate && canReturn && (
               <Button size="sm" onClick={() => setReturnOpen(true)}>
                 <RotateCcw size={14} /> รับคืน
               </Button>
