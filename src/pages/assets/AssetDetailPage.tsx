@@ -1,8 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAssetQuery } from '@/hooks/useAssets'
 import { useWarrantiesByAssetQuery } from '@/hooks/useWarranty'
+import { useAssignmentsByAssetQuery } from '@/hooks/useAssignments'
 import { usePageTitle } from '@/hooks/usePageTitle'
-import { DetailSheet } from '@/components/ui/Section'
+import { usePermission } from '@/hooks/usePermission'
+import { DetailSheet, Section } from '@/components/ui/Section'
 import { BackLink } from '@/components/ui/BackLink'
 import { Spinner } from '@/components/ui/Spinner'
 import { DetailErrorState } from '@/components/ui/DetailErrorState'
@@ -10,26 +12,11 @@ import { Button } from '@/components/ui/Button'
 import { AssetStatusPill } from '@/components/ui/StatusPill'
 import { AttachmentsPanel } from '@/components/attachments/AttachmentsPanel'
 import { formatCurrency, formatThaiDate } from '@/lib/formatters'
-import { HolderType, WarrantyStatus } from '@/api/types/common.types'
-import type { Asset } from '@/api/types/asset.types'
-
-// currentHolderId เป็น polymorphic FK — ต้องเลือก field ชื่อที่ตรงกับ currentHolderType เอาเอง
-// (ดูคอมเมนต์ resolveHolder ฝั่ง backend, asset.entity.ts)
-function resolveHolderName(asset: Asset): string | null {
-  if (!asset.holder) return null
-  switch (asset.currentHolderType) {
-    case HolderType.EMPLOYEE:
-      return asset.holder.fullName ?? null
-    case HolderType.DEPARTMENT:
-      return asset.holder.departmentName ?? null
-    case HolderType.LOCATION:
-      return asset.holder.locationName ?? null
-    case HolderType.VENDOR:
-      return asset.holder.vendorName ?? null
-    default:
-      return null
-  }
-}
+import { ASSIGNMENT_TYPE_LABEL } from '@/lib/constants'
+import { cn } from '@/lib/utils'
+import { isAssignmentOverdue } from '@/lib/assignment'
+import { resolveAssetHolderName, resolveHolderDepartment, resolveHolderName, resolveHolderPhone } from '@/lib/holder'
+import { WarrantyStatus } from '@/api/types/common.types'
 
 export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -38,6 +25,10 @@ export function AssetDetailPage() {
   const navigate = useNavigate()
   const { data: asset, isLoading, isError, error, refetch } = useAssetQuery(assetId)
   const { data: warranties = [] } = useWarrantiesByAssetQuery(assetId)
+  // backend เรียง issuedDate DESC มาแล้ว — ตัวแรกคือการเบิก/ยืมครั้งล่าสุด
+  const { data: assignments = [] } = useAssignmentsByAssetQuery(assetId)
+  // หน้า /assignments/:id ต้องมี assignment.view_all — ไม่มีสิทธิ์ก็ไม่โชว์ลิงก์
+  const canViewAssignment = usePermission().hasPermission('assignment.view_all')
 
   if (isLoading) {
     return (
@@ -51,7 +42,9 @@ export function AssetDetailPage() {
   }
 
   const renewableWarranty = warranties.find((w) => w.status !== WarrantyStatus.RENEWED)
-  const holderName = resolveHolderName(asset)
+  const holderName = resolveAssetHolderName(asset)
+  const latestAssignment = assignments[0]
+  const isLatestOverdue = !!latestAssignment && isAssignmentOverdue(latestAssignment)
 
   return (
     <div>
@@ -125,6 +118,65 @@ export function AssetDetailPage() {
             <dd className="text-slate-700 dark:text-slate-200">{asset.notes || '-'}</dd>
           </div>
         </dl>
+
+        {latestAssignment && (
+          <Section
+            title="ผู้ถือครองล่าสุด"
+            action={
+              canViewAssignment && (
+                <Button variant="secondary" size="sm" onClick={() => navigate(`/assignments/${latestAssignment.assignmentId}`)}>
+                  ดูรายละเอียด
+                </Button>
+              )
+            }
+          >
+            <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-slate-400">ชื่อผู้ถือครอง</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{resolveHolderName(latestAssignment)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">แผนก</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{resolveHolderDepartment(latestAssignment)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">เบอร์โทร</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{resolveHolderPhone(latestAssignment)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">ประเภท</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{ASSIGNMENT_TYPE_LABEL[latestAssignment.assignmentType]}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">วันที่เบิก-จ่าย</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{formatThaiDate(latestAssignment.issuedDate)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">ผู้เบิกจ่าย</dt>
+                <dd className="text-slate-700 dark:text-slate-200">{latestAssignment.issuedByEmployee?.fullName ?? '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">กำหนดคืน</dt>
+                <dd className={cn('text-slate-700 dark:text-slate-200', isLatestOverdue && 'font-medium text-red-600 dark:text-red-400')}>
+                  {latestAssignment.dueDate ? formatThaiDate(latestAssignment.dueDate) : '-'}
+                  {isLatestOverdue && ' (เกินกำหนด)'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-400">สถานะ</dt>
+                <dd
+                  className={cn(
+                    'text-slate-700 dark:text-slate-200',
+                    latestAssignment.isLateReturn && 'font-medium text-red-600 dark:text-red-400',
+                  )}
+                >
+                  {latestAssignment.returnedDate ? `คืนแล้ว — ${formatThaiDate(latestAssignment.returnedDate)}` : 'ยังไม่คืน'}
+                  {latestAssignment.returnedDate && latestAssignment.isLateReturn && ' (คืนล่าช้า)'}
+                </dd>
+              </div>
+            </dl>
+          </Section>
+        )}
 
         <div className="mt-4">
           {renewableWarranty ? (

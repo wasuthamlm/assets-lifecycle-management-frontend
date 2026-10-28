@@ -26,6 +26,7 @@ import { ASSIGNMENT_TYPE_LABEL, RETURN_CONDITION_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
 import { cn } from '@/lib/utils'
+import { isAssignmentOverdue } from '@/lib/assignment'
 import { resolveHolderName, resolveHolderDepartment, resolveHolderPhone } from '@/lib/holder'
 import type { Assignment, IssueAssetDto, ReturnAssetDto } from '@/api/types/assignment.types'
 
@@ -91,8 +92,6 @@ export function AssignmentsListPage() {
     })
   }
 
-  const isOverdue = (a: Assignment) => !!a.dueDate && new Date(a.dueDate) < new Date()
-
   const pendingColumns: DataTableColumn<Assignment>[] = [
     {
       key: 'asset',
@@ -108,9 +107,9 @@ export function AssignmentsListPage() {
       header: 'กำหนดคืน',
       render: (a) =>
         a.dueDate ? (
-          <span className={cn(isOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
+          <span className={cn(isAssignmentOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
             {formatThaiDate(a.dueDate)}
-            {isOverdue(a) && ' (เกินกำหนด)'}
+            {isAssignmentOverdue(a) && ' (เกินกำหนด)'}
           </span>
         ) : (
           '-'
@@ -175,8 +174,8 @@ export function AssignmentsListPage() {
             {a.isLateReturn && ' (คืนล่าช้า)'}
           </span>
         ) : (
-          <span className={cn(isOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
-            {isOverdue(a) ? 'ยังไม่คืน (เกินกำหนด)' : 'ยังไม่คืน'}
+          <span className={cn(isAssignmentOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
+            {isAssignmentOverdue(a) ? 'ยังไม่คืน (เกินกำหนด)' : 'ยังไม่คืน'}
           </span>
         ),
     },

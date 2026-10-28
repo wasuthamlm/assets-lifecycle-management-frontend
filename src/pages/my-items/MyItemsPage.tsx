@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { ASSIGNMENT_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { isAssignmentOverdue } from '@/lib/assignment'
 import type { Assignment } from '@/api/types/assignment.types'
 
 export function MyItemsPage() {
@@ -22,8 +23,6 @@ export function MyItemsPage() {
   const { data, isLoading, isError, refetch } = useMyAssignmentsQuery()
   const myItems = data ?? []
 
-  const isOverdue = (a: Assignment) => !!a.dueDate && !a.returnedDate && new Date(a.dueDate) < new Date()
-
   const columns: DataTableColumn<Assignment>[] = [
     { key: 'name', header: 'ชื่อทรัพย์สิน', render: (a) => <span className="font-medium">{a.asset?.assetName ?? `#${a.assetId}`}</span> },
     { key: 'category', header: 'หมวดหมู่', render: (a) => a.asset?.category?.categoryName ?? '-' },
@@ -35,9 +34,9 @@ export function MyItemsPage() {
       header: 'กำหนดคืน',
       render: (a) =>
         a.dueDate ? (
-          <span className={cn(isOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
+          <span className={cn(isAssignmentOverdue(a) && 'font-medium text-red-600 dark:text-red-400')}>
             {formatThaiDate(a.dueDate)}
-            {isOverdue(a) && ' (เกินกำหนด)'}
+            {isAssignmentOverdue(a) && ' (เกินกำหนด)'}
           </span>
         ) : (
           '-'

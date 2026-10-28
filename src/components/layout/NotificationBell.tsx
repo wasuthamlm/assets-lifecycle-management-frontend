@@ -10,16 +10,20 @@ import {
   useUnreadCountQuery,
 } from '@/hooks/useNotifications'
 import { useUiStore } from '@/stores/ui.store'
+import { usePermission } from '@/hooks/usePermission'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatThaiDate } from '@/lib/formatters'
 import type { AppNotification } from '@/api/types/notification.types'
 
 // referenceType ต้องครอบทุกค่าที่ NotificationsService.notify() ส่งมาจริง (ดู requisitions/warranty-expiry.cron
 // ฝั่ง backend) — ค่าไหนไม่มี mapping ตรงนี้ กดแล้วจะไม่ไปไหนเลยแบบเงียบ ๆ
-const REFERENCE_ROUTE: Record<string, (id: number) => string> = {
+const REFERENCE_ROUTE: Record<string, (id: number, can: (code: string) => boolean) => string | undefined> = {
   requisition: (id) => `/requisitions/${id}`,
   warranty: (id) => `/warranty/${id}`,
-  assignment: (id) => `/assignments/${id}`,
+  // /assignments/:id ต้องมี assignment.view_all — ผู้ถือครองทั่วไป (แจ้งเตือนได้รับของ/รับคืน/เลยกำหนด)
+  // ไม่มีสิทธิ์นี้ จะโดนเด้งออก จึงพาไปหน้ารายการของฉันแทน
+  assignment: (id, can) => (can('assignment.view_all') ? `/assignments/${id}` : '/my-items'),
+  repair: (id, can) => (can('repair.view') ? `/repairs/${id}` : undefined),
 }
 
 // employee_profile_completed กับ permissions_updated ใช้ referenceType='employee' เหมือนกัน (ดู
@@ -27,16 +31,17 @@ const REFERENCE_ROUTE: Record<string, (id: number) => string> = {
 // audience: อันแรกส่งหา admin (ควรพาไปหน้ารายชื่อพนักงานเพื่อกำหนดสิทธิ์ต่อ — ยังไม่มีหน้ารายละเอียดรายตัว
 // ดู router.tsx) ส่วนอันหลังส่งหาตัวพนักงานเอง (พนักงานทั่วไปส่วนมากไม่มีสิทธิ์เข้า /employees จะโดนเด้งออก
 // เปล่าประโยชน์) จึงต้องแยกด้วย type ไม่ใช่ referenceType อย่างเดียว
-function routeFor(n: AppNotification): string | undefined {
+function routeFor(n: AppNotification, can: (code: string) => boolean): string | undefined {
   if (n.type === 'employee_profile_completed') return '/employees'
   const buildRoute = n.referenceType ? REFERENCE_ROUTE[n.referenceType] : undefined
-  return buildRoute && n.referenceId ? buildRoute(n.referenceId) : undefined
+  return buildRoute && n.referenceId ? buildRoute(n.referenceId, can) : undefined
 }
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const { hasPermission } = usePermission()
 
   const { data: unreadCount = 0 } = useUnreadCountQuery()
   const { data: notifications = [], isLoading } = useNotificationsQuery(open)
@@ -58,7 +63,7 @@ export function NotificationBell() {
   function handleClickNotification(n: AppNotification) {
     if (!n.isRead) markRead.mutate(n.notificationId)
     setOpen(false)
-    const route = routeFor(n)
+    const route = routeFor(n, hasPermission)
     if (route) navigate(route)
   }
 

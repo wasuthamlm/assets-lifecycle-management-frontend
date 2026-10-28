@@ -73,6 +73,25 @@ export function useNotificationsStream() {
           queryClient.invalidateQueries({ queryKey: ['users'] })
           queryClient.invalidateQueries({ queryKey: ['employees'] })
         }
+
+        // ตาราง/หน้ารายละเอียดที่เปิดค้างอยู่ต้องเห็นของใหม่ทันทีที่แจ้งเตือนเด้ง ไม่ใช่แค่ badge —
+        // เช่น IT Admin เปิดหน้าใบขอค้างไว้ แล้วมีใบใหม่รออนุมัติเข้ามา
+        if (notification.type.startsWith('requisition_')) {
+          queryClient.invalidateQueries({ queryKey: ['requisitions'] })
+          queryClient.invalidateQueries({ queryKey: ['assignments'] })
+          queryClient.invalidateQueries({ queryKey: ['assets'] })
+        }
+        if (notification.type.startsWith('assignment_')) {
+          queryClient.invalidateQueries({ queryKey: ['assignments'] })
+          queryClient.invalidateQueries({ queryKey: ['assets'] })
+        }
+        if (notification.type.startsWith('repair_')) {
+          queryClient.invalidateQueries({ queryKey: ['repairs'] })
+          queryClient.invalidateQueries({ queryKey: ['assets'] })
+        }
+        if (notification.type === 'warranty_expiring') {
+          queryClient.invalidateQueries({ queryKey: ['warranties'] })
+        }
       } catch {
         // payload แปลก ๆ ก็ไม่ต้องทำอะไรต่อ — invalidate ไปแล้วด้านบน badge ก็จะอัปเดตถูกอยู่ดี
       }

@@ -6,6 +6,10 @@ export type NotificationType =
   | 'assignment_overdue'
   | 'employee_profile_completed'
   | 'permissions_updated'
+  | 'repair_reported'
+  | 'repair_status_updated'
+  | 'assignment_issued'
+  | 'assignment_returned'
 
 export interface AppNotification {
   notificationId: number
