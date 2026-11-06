@@ -15,6 +15,8 @@ export interface Repair {
   repairCost: number | null
   notes: string | null
   createdAt: string
+  /** ticket แจ้งปัญหาที่กด "ส่งซ่อม" แล้วได้งานซ่อมนี้ — null = IT บันทึกงานซ่อมเอง */
+  ticket?: { ticketId: number; ticketNo: string; subject: string } | null
 }
 
 export interface QueryRepairDto {

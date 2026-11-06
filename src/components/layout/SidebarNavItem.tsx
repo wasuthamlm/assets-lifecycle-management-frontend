@@ -1,18 +1,21 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import type { NavItem } from './navConfig'
 import { cn } from '@/lib/utils'
 
 export function SidebarNavItem({ item, collapsed, badgeCount }: { item: NavItem; collapsed: boolean; badgeCount?: number }) {
   const Icon = item.icon
   const showBadge = !!badgeCount && badgeCount > 0
+  const { pathname } = useLocation()
+  const inActivePaths = item.activePaths?.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? false
 
   return (
     <NavLink
       to={item.href}
+      end={item.end}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-[background-color,color,transform] duration-200 ease-out',
-          isActive
+          isActive || inActivePaths
             ? 'bg-brand-500/90 text-white shadow-sm'
             : 'text-slate-300 hover:translate-x-0.5 hover:bg-white/5 hover:text-white',
         )

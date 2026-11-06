@@ -14,8 +14,8 @@ export function AuthLayout() {
             <FileText size={22} />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">ระบบทรัพย์สิน IT</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">IT Asset Lifecycle Management</p>
+            <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">ระบบทรัพย์สิน และ Support ด้าน IT</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">IT Asset &amp; Support Management</p>
           </div>
         </div>
         <Outlet />

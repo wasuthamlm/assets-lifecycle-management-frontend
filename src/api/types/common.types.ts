@@ -67,6 +67,30 @@ export enum RepairStatus {
   CLOSED = 'closed',
 }
 
+export enum TicketStatus {
+  OPEN = 'open',
+  IN_PROGRESS = 'in_progress',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed',
+  CANCELLED = 'cancelled',
+}
+
+export enum TicketCategory {
+  HARDWARE = 'hardware',
+  ACCESSORY = 'accessory',
+  SOFTWARE = 'software',
+  NETWORK = 'network',
+  ACCOUNT = 'account',
+  OTHER = 'other',
+}
+
+export enum TicketPriority {
+  LOW = 'low',
+  NORMAL = 'normal',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
+
 export enum RepairResult {
   FIXED = 'fixed',
   UNREPAIRABLE = 'unrepairable',

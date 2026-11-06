@@ -24,6 +24,7 @@ const REFERENCE_ROUTE: Record<string, (id: number, can: (code: string) => boolea
   // ไม่มีสิทธิ์นี้ จะโดนเด้งออก จึงพาไปหน้ารายการของฉันแทน
   assignment: (id, can) => (can('assignment.view_all') ? `/assignments/${id}` : '/my-items'),
   repair: (id, can) => (can('repair.view') ? `/repairs/${id}` : undefined),
+  support_ticket: (id) => `/support-tickets/${id}`,
 }
 
 // employee_profile_completed กับ permissions_updated ใช้ referenceType='employee' เหมือนกัน (ดู

@@ -25,7 +25,7 @@ type FormValues = z.output<typeof formSchema>
 type FormInput = z.input<typeof formSchema>
 
 export function RepairCreatePage() {
-  usePageTitle('แจ้งซ่อม')
+  usePageTitle('บันทึกงานซ่อม')
   const navigate = useNavigate()
   const create = useCreateRepairMutation()
   const { data: vendors = [] } = useVendorsQuery()
@@ -54,6 +54,10 @@ export function RepairCreatePage() {
       <BackLink />
       <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          ใช้เมื่อ IT พบของเสียเองโดยไม่มีผู้แจ้ง เช่น ตอนตรวจสต๊อก — ถ้าผู้ใช้แจ้งปัญหาเข้ามา ให้เปิด ticket นั้นแล้วกด "ส่งซ่อม" แทน
+          เพื่อให้ผู้แจ้งได้รับแจ้งเตือนเมื่อซ่อมเสร็จ
+        </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ทรัพย์สิน</label>
@@ -86,7 +90,7 @@ export function RepairCreatePage() {
         </div>
 
         <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? 'กำลังบันทึก...' : 'แจ้งซ่อม'}
+          {create.isPending ? 'กำลังบันทึก...' : 'บันทึกงานซ่อม'}
         </Button>
       </form>
       </Card>

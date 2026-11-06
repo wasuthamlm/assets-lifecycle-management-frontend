@@ -6,6 +6,8 @@ import { SidebarNavItem } from './SidebarNavItem'
 import { SidebarUserFooter } from './SidebarUserFooter'
 import { usePermission } from '@/hooks/usePermission'
 import { usePendingApprovals } from '@/hooks/usePendingApprovals'
+import { useSupportTicketsQuery } from '@/hooks/useSupportTickets'
+import { TicketStatus } from '@/api/types/common.types'
 import { useAuthStore } from '@/stores/auth.store'
 import { useUiStore } from '@/stores/ui.store'
 import { cn } from '@/lib/utils'
@@ -20,6 +22,14 @@ export function Sidebar() {
   const location = useLocation()
   const [createOpen, setCreateOpen] = useState(true)
   const { pendingForMe } = usePendingApprovals()
+  // ticket ที่ยังไม่มีใครรับงาน — แสดงเฉพาะคนทำ support (ticket.manage) hr ดูได้แต่ไม่ได้เป็นคนรับงานจึงไม่ต้องเห็นตัวเลข
+  // query key เดียวกับตัวนับใน SupportTabs (แชร์ cache) และอัปเดตสดผ่าน SSE "change" ของ topic support_ticket
+  const { data: openTickets } = useSupportTicketsQuery({ status: TicketStatus.OPEN, limit: 1 }, hasPermission('ticket.manage'))
+
+  const badgeCounts: Record<string, number | undefined> = {
+    '/approvals': pendingForMe.length,
+    '/support-tickets': openTickets?.total,
+  }
 
   function isVisible(item: NavItem) {
     if (item.permission) {
@@ -50,8 +60,9 @@ export function Sidebar() {
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">ระบบทรัพย์สิน IT</p>
-            <p className="truncate text-xs text-slate-400">IT Asset Lifecycle</p>
+            {/* ชื่อไทยยาวเกินบรรทัดเดียวของ sidebar w-64 — ให้ขึ้น 2 บรรทัดแทนการตัดท้ายเป็น ... */}
+            <p className="line-clamp-2 text-sm font-semibold leading-snug text-white">ทรัพย์สิน และ แจ้งปัญหา IT</p>
+            <p className="truncate text-xs text-slate-400">IT Asset &amp; Support</p>
           </div>
         )}
       </div>
@@ -106,18 +117,22 @@ export function Sidebar() {
           </div>
         )}
 
-        {NAV_GROUPS.map((group, idx) => {
+        {NAV_GROUPS.map((group) => {
           const items = group.items.filter(isVisible)
           if (items.length === 0) return null
           return (
-            <div key={idx} className="pt-2">
-              <div className="my-2 border-t border-white/10" />
+            <div key={group.label} className="pt-2">
+              {collapsed ? (
+                <div className="my-2 border-t border-white/10" />
+              ) : (
+                <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</p>
+              )}
               {items.map((item) => (
                 <SidebarNavItem
                   key={item.href}
                   item={item}
                   collapsed={collapsed}
-                  badgeCount={item.href === '/approvals' ? pendingForMe.length : undefined}
+                  badgeCount={badgeCounts[item.href]}
                 />
               ))}
             </div>

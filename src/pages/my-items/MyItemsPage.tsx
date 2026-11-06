@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { MessageSquareWarning } from 'lucide-react'
 import { useMyAssignmentsQuery } from '@/hooks/useAssignments'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { Card } from '@/components/ui/Card'
@@ -7,6 +8,8 @@ import { AssetStatusPill } from '@/components/ui/StatusPill'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { useAuthStore } from '@/stores/auth.store'
+import { usePermission } from '@/hooks/usePermission'
+import { Button } from '@/components/ui/Button'
 import { ASSIGNMENT_TYPE_LABEL } from '@/lib/constants'
 import { formatThaiDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -17,6 +20,7 @@ export function MyItemsPage() {
   usePageTitle('รายการของฉัน')
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.user)
+  const { hasPermission } = usePermission()
 
   // ดึงตรงจาก GET /assignments/mine — ไม่ใช่ดึง asset ทั้งหมดมากรองเอง (แบบเดิมตัดข้อมูลทิ้งได้
   // เมื่อทรัพย์สินที่มีคนถือครองทั่วบริษัทเกิน limit ของ query) และรู้ error จริงเมื่อไม่มีสิทธิ์ asset.view
@@ -42,6 +46,27 @@ export function MyItemsPage() {
           '-'
         ),
     },
+    ...(hasPermission('ticket.create')
+      ? [
+          {
+            key: 'report',
+            header: '',
+            render: (a: Assignment) => (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  // แถวทั้งแถวกดแล้วไปหน้าทรัพย์สิน — ปุ่มนี้ต้องไม่ trigger onRowClick ด้วย
+                  e.stopPropagation()
+                  navigate(`/support-tickets/new?assetId=${a.assetId}`)
+                }}
+              >
+                <MessageSquareWarning size={16} /> แจ้งปัญหา
+              </Button>
+            ),
+          },
+        ]
+      : []),
   ]
 
   if (!currentUser?.employeeId) {

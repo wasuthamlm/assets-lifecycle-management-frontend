@@ -10,6 +10,9 @@ import {
   RepairStatus,
   RequestType,
   ReturnCondition,
+  TicketCategory,
+  TicketPriority,
+  TicketStatus,
   WarrantyStatus,
 } from '@/api/types/common.types'
 
@@ -76,6 +79,31 @@ export const REPAIR_RESULT_LABEL: Record<RepairResult, string> = {
   [RepairResult.FIXED]: 'ซ่อมสำเร็จ',
   [RepairResult.UNREPAIRABLE]: 'ซ่อมไม่ได้',
   [RepairResult.WAITING_PARTS]: 'รออะไหล่',
+}
+
+// ตรงกับ TICKET_STATUS_LABEL ฝั่ง backend (ข้อความแจ้งเตือน)
+export const TICKET_STATUS_LABEL: Record<TicketStatus, string> = {
+  [TicketStatus.OPEN]: 'รอดำเนินการ',
+  [TicketStatus.IN_PROGRESS]: 'กำลังดำเนินการ',
+  [TicketStatus.RESOLVED]: 'แก้ไขแล้ว',
+  [TicketStatus.CLOSED]: 'ปิดงาน',
+  [TicketStatus.CANCELLED]: 'ยกเลิก',
+}
+
+export const TICKET_CATEGORY_LABEL: Record<TicketCategory, string> = {
+  [TicketCategory.HARDWARE]: 'ฮาร์ดแวร์',
+  [TicketCategory.ACCESSORY]: 'อุปกรณ์เสริม',
+  [TicketCategory.SOFTWARE]: 'ซอฟต์แวร์',
+  [TicketCategory.NETWORK]: 'เครือข่าย/อินเทอร์เน็ต',
+  [TicketCategory.ACCOUNT]: 'บัญชี/รหัสผ่าน',
+  [TicketCategory.OTHER]: 'อื่นๆ',
+}
+
+export const TICKET_PRIORITY_LABEL: Record<TicketPriority, string> = {
+  [TicketPriority.LOW]: 'ต่ำ',
+  [TicketPriority.NORMAL]: 'ปกติ',
+  [TicketPriority.HIGH]: 'สูง',
+  [TicketPriority.URGENT]: 'ด่วนมาก',
 }
 
 export const ASSIGNMENT_TYPE_LABEL: Record<AssignmentType, string> = {

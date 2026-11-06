@@ -53,6 +53,7 @@ export interface CurrentUser {
     position: string | null
     email: string | null
     phone: string | null
-    department: { departmentId: number; departmentName: string } | null
+    /** parentDepartmentName = ฝ่าย (แผนกแม่) */
+    department: { departmentId: number; departmentName: string; parentDepartmentName?: string | null } | null
   } | null
 }

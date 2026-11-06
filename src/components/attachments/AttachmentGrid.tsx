@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn } from '@/lib/utils'
 import type { Attachment } from '@/api/types/attachment.types'
+import { ACCEPTED_ATTACHMENT_TYPES } from '@/lib/attachmentTypes'
 
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+const ACCEPTED_TYPES = ACCEPTED_ATTACHMENT_TYPES
 const ACCEPTED_TYPES_ATTR = ACCEPTED_TYPES.join(',')
 // Chromium บน Windows บางเครื่อง/บางเวอร์ชัน sniff File.type ไม่ได้ตอนลากไฟล์วาง (drag-and-drop) ทำให้ได้
 // file.type เป็นค่าว่าง '' ทั้งที่เลือกไฟล์เดียวกันผ่านไดอะล็อก <input type=file> แล้วได้ type ถูกต้องปกติ —

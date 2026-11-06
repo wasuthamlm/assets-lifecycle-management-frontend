@@ -1,10 +1,20 @@
 import { cn } from '@/lib/utils'
-import { ApprovalStatus, AssetStatus, PoStatus, RepairStatus, WarrantyStatus } from '@/api/types/common.types'
+import {
+  ApprovalStatus,
+  AssetStatus,
+  PoStatus,
+  RepairStatus,
+  TicketPriority,
+  TicketStatus,
+  WarrantyStatus,
+} from '@/api/types/common.types'
 import {
   APPROVAL_STATUS_LABEL,
   ASSET_STATUS_LABEL,
   PO_STATUS_LABEL,
   REPAIR_STATUS_LABEL,
+  TICKET_PRIORITY_LABEL,
+  TICKET_STATUS_LABEL,
   WARRANTY_STATUS_LABEL,
 } from '@/lib/constants'
 
@@ -45,6 +55,21 @@ const REPAIR_COLORS: Record<RepairStatus, string> = {
   [RepairStatus.CLOSED]: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
 }
 
+const TICKET_COLORS: Record<TicketStatus, string> = {
+  [TicketStatus.OPEN]: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  [TicketStatus.IN_PROGRESS]: 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300',
+  [TicketStatus.RESOLVED]: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  [TicketStatus.CLOSED]: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  [TicketStatus.CANCELLED]: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+}
+
+const TICKET_PRIORITY_COLORS: Record<TicketPriority, string> = {
+  [TicketPriority.LOW]: 'bg-transparent text-slate-500 ring-1 ring-inset ring-slate-200 dark:text-slate-400 dark:ring-slate-700',
+  [TicketPriority.NORMAL]: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  [TicketPriority.HIGH]: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400',
+  [TicketPriority.URGENT]: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+}
+
 function Pill({ className, children }: { className: string; children: string }) {
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium', className)}>
@@ -79,4 +104,12 @@ export function WarrantyStatusPill({ status }: { status: WarrantyStatus }) {
 
 export function RepairStatusPill({ status }: { status: RepairStatus }) {
   return <Pill className={REPAIR_COLORS[status]}>{REPAIR_STATUS_LABEL[status]}</Pill>
+}
+
+export function TicketStatusPill({ status }: { status: TicketStatus }) {
+  return <Pill className={TICKET_COLORS[status]}>{TICKET_STATUS_LABEL[status]}</Pill>
+}
+
+export function TicketPriorityPill({ priority }: { priority: TicketPriority }) {
+  return <Pill className={TICKET_PRIORITY_COLORS[priority]}>{TICKET_PRIORITY_LABEL[priority]}</Pill>
 }

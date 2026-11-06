@@ -5,6 +5,7 @@ import { useRepairsQuery } from '@/hooks/useRepairs'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { Card } from '@/components/ui/Card'
+import { SupportTabs } from '@/components/support/SupportTabs'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -19,7 +20,7 @@ import type { Repair } from '@/api/types/repair.types'
 const PAGE_SIZE = 20
 
 export function RepairsListPage() {
-  usePageTitle('ซ่อมบำรุง')
+  usePageTitle('แจ้งปัญหากับ IT')
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
@@ -52,6 +53,16 @@ export function RepairsListPage() {
       render: (r) => <span className="font-medium">{r.asset?.assetName ?? '-'}</span>,
     },
     { key: 'problem', header: 'ปัญหา', render: (r) => r.problemDescription ?? '-' },
+    {
+      key: 'origin',
+      header: 'ที่มา',
+      render: (r) =>
+        r.ticket ? (
+          <span className="whitespace-nowrap font-medium text-brand-600 dark:text-brand-400">{r.ticket.ticketNo}</span>
+        ) : (
+          <span className="whitespace-nowrap text-slate-400">IT บันทึกเอง</span>
+        ),
+    },
     { key: 'vendor', header: 'ผู้รับซ่อม', render: (r) => r.vendor?.vendorName ?? 'ซ่อมภายใน' },
     { key: 'status', header: 'สถานะ', render: (r) => <RepairStatusPill status={r.status} /> },
     { key: 'date', header: 'วันที่แจ้งซ่อม', render: (r) => formatThaiDate(r.createdAt) },
@@ -59,6 +70,8 @@ export function RepairsListPage() {
 
   return (
     <div className="space-y-4">
+      <SupportTabs current="repairs" />
+
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -76,8 +89,9 @@ export function RepairsListPage() {
             ))}
           </Select>
         </div>
-        <Button onClick={() => navigate('/repairs/new')}>
-          <Plus size={16} /> แจ้งซ่อมใหม่
+        {/* ปกติงานซ่อมเกิดจากกด "ส่งซ่อม" ใน ticket — ปุ่มนี้สำหรับกรณีที่ IT พบของเสียเองโดยไม่มีผู้แจ้ง */}
+        <Button variant="secondary" onClick={() => navigate('/repairs/new')}>
+          <Plus size={16} /> บันทึกงานซ่อม (ไม่มีผู้แจ้ง)
         </Button>
       </div>
 
@@ -91,11 +105,11 @@ export function RepairsListPage() {
             isError={isError}
             onRetry={refetch}
             onRowClick={(r) => navigate(`/repairs/${r.repairId}`)}
-            emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีรายการแจ้งซ่อม'}
+            emptyMessage={search || status ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีงานซ่อม'}
             emptyAction={
               !search && !status ? (
-                <Button size="sm" onClick={() => navigate('/repairs/new')}>
-                  <Plus size={16} /> แจ้งซ่อมใหม่
+                <Button size="sm" variant="secondary" onClick={() => navigate('/repairs/new')}>
+                  <Plus size={16} /> บันทึกงานซ่อม (ไม่มีผู้แจ้ง)
                 </Button>
               ) : undefined
             }

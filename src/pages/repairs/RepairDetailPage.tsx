@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { Inbox } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRepairQuery, useUpdateRepairStatusMutation } from '@/hooks/useRepairs'
 import { usePageTitle } from '@/hooks/usePageTitle'
@@ -113,6 +114,22 @@ export function RepairDetailPage() {
     <div>
       <BackLink />
       <DetailSheet>
+        {repair.ticket && (
+          <Link
+            to={`/support-tickets/${repair.ticket.ticketId}`}
+            className="flex items-start gap-3 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800 transition-colors duration-200 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-200 dark:hover:bg-brand-500/15"
+          >
+            <Inbox size={18} className="mt-0.5 shrink-0" />
+            <span>
+              <span className="font-medium">
+                มาจากเรื่องแจ้ง {repair.ticket.ticketNo} — {repair.ticket.subject}
+              </span>
+              <span className="block text-brand-700/80 dark:text-brand-300/80">
+                ปิดงานซ่อมแล้ว ticket นี้จะเปลี่ยนเป็น "แก้ไขแล้ว" และแจ้งผู้แจ้งอัตโนมัติ
+              </span>
+            </span>
+          </Link>
+        )}
         <Section>
           <div className="flex items-start justify-between">
             <div>

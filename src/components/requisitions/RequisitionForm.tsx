@@ -298,7 +298,7 @@ export function RequisitionForm({
   const requestType = watchedValues.requestType
   const docNo = useNextRequisitionNo(requestType)
 
-  // ใช้ตรวจว่ากรอกช่อง required ครบหรือยัง เพื่อ enable/disable ปุ่มดูตัวอย่าง — ไม่ใช่ validate เต็มรูปแบบ (ปล่อยให้ zodResolver ทำตอน submit)
+  // ใช้ตรวจว่ากรอกช่อง required ครบหรือยัง เพื่อ enable/disable ปุ่มดูตัวอย่างและปุ่มบันทึก — ไม่ใช่ validate เต็มรูปแบบ (ปล่อยให้ zodResolver ทำตอน submit)
   const requesterMode = watchedValues.requesterMode ?? 'self'
   function changeRequesterMode(mode: RequesterMode) {
     setValue('requesterMode', mode)
@@ -629,7 +629,7 @@ export function RequisitionForm({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="secondary"
@@ -638,9 +638,10 @@ export function RequisitionForm({
         >
           <Eye size={16} /> ดูตัวอย่างเอกสาร
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !isFormComplete}>
           {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกคำขอ'}
         </Button>
+        {!isFormComplete && <p className="text-sm text-slate-500 dark:text-slate-400">กรอกช่องที่มี * ให้ครบก่อน จึงจะบันทึกได้</p>}
       </div>
 
       <Modal open={!!previewValues} onClose={() => setPreviewValues(null)} title="ตัวอย่างใบส่งมอบ-ส่งคืนทรัพย์สิน" size="a4">

@@ -17,6 +17,13 @@ export function formatThaiDate(date: string | Date): string {
   return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${buddhistYear}`
 }
 
+export function formatThaiDateTime(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${formatThaiDate(d)} ${hh}:${mm} น.`
+}
+
 // ชื่อผู้ขอเบิก + ผู้รับ (ถ้า HR เบิกให้คนอื่น) สำหรับคอลัมน์ "ผู้ขอเบิก" ในตาราง
 export function requesterLabel(r: {
   requestedByEmployee?: { fullName: string } | null

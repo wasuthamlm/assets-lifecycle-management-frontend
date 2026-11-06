@@ -70,6 +70,15 @@ export const ENDPOINTS = {
     byId: (id: number) => `/repairs/${id}`,
     status: (id: number) => `/repairs/${id}/status`,
   },
+  supportTickets: {
+    base: '/support-tickets',
+    mine: '/support-tickets/mine',
+    byId: (id: number) => `/support-tickets/${id}`,
+    status: (id: number) => `/support-tickets/${id}/status`,
+    escalate: (id: number) => `/support-tickets/${id}/escalate-repair`,
+    attachments: (id: number) => `/support-tickets/${id}/attachments`,
+    attachmentById: (id: number, attachmentId: number) => `/support-tickets/${id}/attachments/${attachmentId}`,
+  },
   warranty: {
     base: '/warranties',
     expiring: '/warranties/expiring',

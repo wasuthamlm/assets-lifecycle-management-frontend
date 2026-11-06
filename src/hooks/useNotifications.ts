@@ -40,6 +40,13 @@ export function useMarkReadMutation() {
   })
 }
 
+// query ที่ต้อง refetch เมื่อ backend ยิง LiveChange มา (SSE event ชื่อ "change") — ต้องตรงกับ topic ใน
+// NotificationsService.publishChange ฝั่ง backend
+const LIVE_CHANGE_QUERY_KEYS: Record<string, string[][]> = {
+  support_ticket: [['support-tickets']],
+  repair: [['repairs'], ['assets']],
+}
+
 // เปิด SSE connection ไปยัง /notifications/stream ให้ badge/รายการแจ้งเตือนอัปเดตทันทีที่มีของใหม่
 // โดยไม่ต้องรอ poll — mount ที่ AppLayout (อยู่ตลอดช่วงที่ login อยู่ ปิดเองตอน logout/token หาย)
 export function useNotificationsStream() {
@@ -53,6 +60,33 @@ export function useNotificationsStream() {
     // (backend: JwtStrategy รองรับอ่าน token จาก query param นี้โดยเฉพาะ)
     const url = `${import.meta.env.VITE_API_BASE_URL}${ENDPOINTS.notifications.stream}?access_token=${encodeURIComponent(accessToken)}`
     const source = new EventSource(url)
+    let hasConnectedBefore = false
+
+    function invalidateLiveTopics() {
+      Object.values(LIVE_CHANGE_QUERY_KEYS)
+        .flat()
+        .forEach((queryKey) => queryClient.invalidateQueries({ queryKey }))
+    }
+
+    // EventSource ต่อใหม่เองเมื่อหลุด แต่ event ที่เกิดระหว่างหลุดหายไปแล้ว (server ไม่ได้เก็บไว้ส่งซ้ำ)
+    // → พอต่อติดอีกรอบให้ refetch ทุกอย่างที่ live อยู่ ไม่งั้นหน้าจอค้างข้อมูลเก่าจนกว่าจะมี event ถัดไป
+    source.onopen = () => {
+      if (hasConnectedBefore) {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        invalidateLiveTopics()
+      }
+      hasConnectedBefore = true
+    }
+
+    // ข้อมูลเปลี่ยนแต่ไม่ใช่แจ้งเตือนของเรา (เช่น IT อีกคนรับงาน ticket) — refetch เงียบๆ ไม่มี toast/เสียง
+    source.addEventListener('change', (event) => {
+      try {
+        const { topic } = JSON.parse((event as MessageEvent<string>).data) as { topic: string }
+        LIVE_CHANGE_QUERY_KEYS[topic]?.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }))
+      } catch {
+        // payload แปลก ๆ ก็ข้ามไป
+      }
+    })
 
     source.onmessage = (event) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
@@ -85,6 +119,9 @@ export function useNotificationsStream() {
           queryClient.invalidateQueries({ queryKey: ['assignments'] })
           queryClient.invalidateQueries({ queryKey: ['assets'] })
         }
+        if (notification.type.startsWith('ticket_')) {
+          queryClient.invalidateQueries({ queryKey: ['support-tickets'] })
+        }
         if (notification.type.startsWith('repair_')) {
           queryClient.invalidateQueries({ queryKey: ['repairs'] })
           queryClient.invalidateQueries({ queryKey: ['assets'] })
@@ -97,7 +134,7 @@ export function useNotificationsStream() {
       }
     }
 
-    // EventSource reconnect เองอัตโนมัติเมื่อหลุด ไม่ต้อง handle retry เอง
+    // EventSource reconnect เองอัตโนมัติเมื่อหลุด ไม่ต้อง handle retry เอง (catch-up อยู่ใน onopen ด้านบน)
     return () => source.close()
   }, [accessToken, queryClient])
 }

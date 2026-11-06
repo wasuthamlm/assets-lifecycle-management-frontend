@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight, Home } from 'lucide-react'
 import { usePageTitleContext } from '@/hooks/usePageTitle'
+import { usePermission } from '@/hooks/usePermission'
 
 const SEGMENT_LABELS: Record<string, string> = {
   assets: 'ทรัพย์สิน',
@@ -9,7 +10,9 @@ const SEGMENT_LABELS: Record<string, string> = {
   purchasing: 'ใบสั่งซื้อ',
   'goods-receipts': 'รับเข้าสินค้า',
   stock: 'คลังพัสดุสิ้นเปลือง',
-  repairs: 'ซ่อมบำรุง',
+  // /repairs เป็นแท็บ "งานซ่อมทรัพย์สิน" ของเมนูเดียวกับ /support-tickets (ดู SupportTabs)
+  repairs: 'แจ้งปัญหากับ IT',
+  'support-tickets': 'แจ้งปัญหากับ IT',
   warranty: 'ประกัน',
   disposal: 'จำหน่ายทิ้ง',
   movements: 'ประวัติการเคลื่อนไหว',
@@ -25,14 +28,22 @@ const SEGMENT_LABELS: Record<string, string> = {
 export function Breadcrumbs() {
   const location = useLocation()
   const { title } = usePageTitleContext()
+  const { hasPermission } = usePermission()
   const segments = location.pathname.split('/').filter(Boolean)
 
   if (segments.length === 0 || segments[0] === 'dashboard') return null
 
   const rootSegment = segments[0]
-  const rootLabel = SEGMENT_LABELS[rootSegment] ?? title
-  const rootHref = `/${rootSegment}`
-  const hasLeaf = segments.length > 1
+  let rootLabel = SEGMENT_LABELS[rootSegment] ?? title
+  let rootHref = `/${rootSegment}`
+  let hasLeaf = segments.length > 1
+  // /support-tickets (ทุก ticket) ต้องมี ticket.view_all — พนักงานทั่วไปให้ root ชี้ไปหน้าการแจ้งปัญหาของตัวเองแทน
+  // ไม่งั้นกด breadcrumb แล้วโดน PermissionRoute เด้งออก
+  if (rootSegment === 'support-tickets' && (!hasPermission('ticket.view_all') || segments[1] === 'mine')) {
+    rootLabel = 'การแจ้งปัญหาของฉัน'
+    rootHref = '/support-tickets/mine'
+    if (segments[1] === 'mine') hasLeaf = false
+  }
   const leafLabel = segments[1] === 'new' ? 'สร้างใหม่' : title
 
   return (

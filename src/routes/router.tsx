@@ -30,6 +30,10 @@ import { AssignmentDetailPage } from '@/pages/assignments/AssignmentDetailPage'
 import { RepairsListPage } from '@/pages/repairs/RepairsListPage'
 import { RepairCreatePage } from '@/pages/repairs/RepairCreatePage'
 import { RepairDetailPage } from '@/pages/repairs/RepairDetailPage'
+import { TicketCreatePage } from '@/pages/support-tickets/TicketCreatePage'
+import { MyTicketsPage } from '@/pages/support-tickets/MyTicketsPage'
+import { TicketsListPage } from '@/pages/support-tickets/TicketsListPage'
+import { TicketDetailPage } from '@/pages/support-tickets/TicketDetailPage'
 import { WarrantySearchPage } from '@/pages/warranty/WarrantySearchPage'
 import { WarrantyDetailPage } from '@/pages/warranty/WarrantyDetailPage'
 import { DisposalsListPage } from '@/pages/disposal/DisposalsListPage'
@@ -167,6 +171,25 @@ export const router = createBrowserRouter([
           {
             element: <PermissionRoute permission="repair.create" />,
             children: [{ path: '/repairs/new', element: <RepairCreatePage /> }],
+          },
+
+          // แจ้งปัญหา IT: employee = แจ้ง + ของตัวเอง, hr = ดูทั้งหมด (อ่านอย่างเดียว), it_admin = จัดการได้
+          {
+            element: <PermissionRoute permission="ticket.create" />,
+            children: [{ path: '/support-tickets/new', element: <TicketCreatePage /> }],
+          },
+          {
+            element: <PermissionRoute permission="ticket.view_own" />,
+            children: [{ path: '/support-tickets/mine', element: <MyTicketsPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="ticket.view_all" />,
+            children: [{ path: '/support-tickets', element: <TicketsListPage /> }],
+          },
+          {
+            // ความเป็นเจ้าของ ticket เช็คที่ backend (findOne) — ticket คนอื่นจะได้ 403 แล้ว DetailErrorState แสดงให้เอง
+            element: <PermissionRoute permission={['ticket.view_own', 'ticket.view_all']} />,
+            children: [{ path: '/support-tickets/:id', element: <TicketDetailPage /> }],
           },
 
           {

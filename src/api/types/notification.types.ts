@@ -10,6 +10,8 @@ export type NotificationType =
   | 'repair_status_updated'
   | 'assignment_issued'
   | 'assignment_returned'
+  | 'ticket_created'
+  | 'ticket_status_updated'
 
 export interface AppNotification {
   notificationId: number
