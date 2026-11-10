@@ -64,7 +64,7 @@ export function TicketsListPage() {
           <p className="font-medium text-slate-800 dark:text-slate-100">{t.subject}</p>
           <p className="text-xs text-slate-400">
             {TICKET_CATEGORY_LABEL[t.category]}
-            {t.asset ? ` · ${t.asset.assetNo}` : ''}
+            {t.asset ? ` · ${t.asset.assetNo}` : t.assetText ? ` · ${t.assetText}` : ''}
           </p>
         </div>
       ),

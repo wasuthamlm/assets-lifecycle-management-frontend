@@ -19,6 +19,8 @@ export interface SupportTicket {
   priority: TicketPriority
   assetId: number | null
   asset?: { assetId: number; assetNo: string; assetName: string } | null
+  /** ชื่ออุปกรณ์ที่ผู้แจ้งพิมพ์เอง (ไม่ได้เลือกจากของที่ถือ/ยืมอยู่) */
+  assetText: string | null
   assignmentId: number | null
   assignment?: {
     assignmentId: number
@@ -59,6 +61,7 @@ export interface CreateTicketDto {
   description?: string
   priority?: TicketPriority
   assetId?: number
+  assetText?: string
   locationId?: number
   locationDetail: string
   contactPhone?: string

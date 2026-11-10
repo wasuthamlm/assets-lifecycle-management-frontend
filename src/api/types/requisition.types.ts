@@ -80,7 +80,8 @@ export interface CreateRequisitionDto {
   onBehalfOfEmployeeId?: number
   /** เบิกให้พนักงานใหม่ที่ยังไม่มีในระบบ — ห้ามส่งพร้อม onBehalfOfEmployeeId */
   newEmployee?: {
-    employeeCode: string
+    /** ต้องมี employeeCode หรือ email อย่างน้อยหนึ่งอย่าง ไว้ผูกบัญชีตอนพนักงาน login ครั้งแรก */
+    employeeCode?: string
     fullName: string
     departmentId?: number
     position?: string

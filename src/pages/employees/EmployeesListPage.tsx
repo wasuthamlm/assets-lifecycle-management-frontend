@@ -267,14 +267,14 @@ export function EmployeesListPage() {
     const matchingUser = usersByEmployeeId.get(e.employeeId)
     return (
       e.fullName.toLowerCase().includes(q) ||
-      e.employeeCode.toLowerCase().includes(q) ||
+      (e.employeeCode?.toLowerCase().includes(q) ?? false) ||
       (matchingUser?.username.toLowerCase().includes(q) ?? false) ||
       (matchingUser?.email?.toLowerCase().includes(q) ?? false)
     )
   })
 
   const columns: DataTableColumn<Employee>[] = [
-    { key: 'code', header: 'รหัสพนักงาน', render: (e) => <span className="font-medium">{e.employeeCode}</span> },
+    { key: 'code', header: 'รหัสพนักงาน', render: (e) => <span className="font-medium">{e.employeeCode ?? '-'}</span> },
     { key: 'name', header: 'ชื่อ-นามสกุล', render: (e) => e.fullName },
     { key: 'department', header: 'แผนก', render: (e) => e.department?.departmentName ?? '-' },
     { key: 'position', header: 'ตำแหน่ง', render: (e) => e.position ?? '-' },
@@ -404,7 +404,7 @@ export function EmployeesListPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">{new Date(p.createdAt).toLocaleDateString('th-TH')}</span>
+                    <span className="text-xs text-slate-400">{new Date(p.createdAt).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}</span>
                     <Button size="sm" variant="secondary" onClick={() => setEditingPreassignment(p)}>
                       <Pencil size={14} /> แก้ไข
                     </Button>

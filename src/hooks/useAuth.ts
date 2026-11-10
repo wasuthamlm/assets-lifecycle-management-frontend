@@ -5,21 +5,35 @@ import { useAuthStore } from '@/stores/auth.store'
 import type {
   ChangePasswordDto,
   CompleteEmployeeProfileDto,
+  CurrentUser,
   ForgotPasswordDto,
   LoginDto,
   ResetPasswordDto,
   SsoExchangeDto,
 } from '@/api/types/auth.types'
 
+/** ใช้เทียบว่าสิทธิ์เปลี่ยนไหม — ไม่สนลำดับที่ backend ส่งมา */
+export function permissionSignature(user: Pick<CurrentUser, 'permissions' | 'roles'> | null | undefined) {
+  if (!user) return ''
+  return `${[...user.roles].sort().join(',')}|${[...user.permissions].sort().join(',')}`
+}
+
 export function useCurrentUser() {
   const accessToken = useAuthStore((s) => s.accessToken)
   const setUser = useAuthStore((s) => s.setUser)
+  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
+      const previous = useAuthStore.getState().user
       const user = await authService.me()
       setUser(user)
+      // admin เพิ่งเปลี่ยน role/สิทธิ์ของเรา — ข้อมูลทุกหน้าที่โหลดไว้ใต้สิทธิ์เดิม (รายการที่ scope ตาม view_all,
+      // หน้าที่เคยโดน 403) ยังค้างใน cache ต้อง refetch ทั้งหมด ไม่งั้นหน้าจอไม่เปลี่ยนจนกว่าจะกด refresh เอง
+      if (previous && permissionSignature(previous) !== permissionSignature(user)) {
+        queryClient.invalidateQueries({ predicate: (q) => !(q.queryKey[0] === 'auth' && q.queryKey[1] === 'me') })
+      }
       return user
     },
     enabled: !!accessToken,

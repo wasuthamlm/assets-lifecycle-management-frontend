@@ -113,7 +113,7 @@ export function MyTicketsPage() {
                     <p className="mt-2 font-medium text-slate-800 dark:text-slate-100">{t.subject}</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {[
-                        t.asset ? `${t.asset.assetNo} ${t.asset.assetName}` : null,
+                        t.asset ? `${t.asset.assetNo} ${t.asset.assetName}` : t.assetText || null,
                         formatTicketLocation(t) || null,
                         t.assignedToEmployee ? `ผู้รับงาน: ${t.assignedToEmployee.fullName}` : null,
                         formatThaiDateTime(t.createdAt),

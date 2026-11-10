@@ -16,7 +16,7 @@ export interface Movement {
   /** resolve แล้วเฉพาะตอน toHolderType เป็น employee (ใครเบิก/ยืมของไป) — ดู MovementsService.attachToHolderEmployee */
   toHolderEmployee?: {
     employeeId: number
-    employeeCode: string
+    employeeCode: string | null
     fullName: string
     department?: { departmentId: number; departmentName: string } | null
   } | null

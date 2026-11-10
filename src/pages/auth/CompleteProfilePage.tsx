@@ -25,12 +25,14 @@ export function CompleteProfilePage() {
   const [newDepartmentName, setNewDepartmentName] = useState('')
   const [position, setPosition] = useState('')
   const [confirmingNewDepartment, setConfirmingNewDepartment] = useState(false)
+  // backend ตอบ 409 เมื่อ HR สร้างข้อมูลชื่อนี้ไว้รอแล้ว แต่ไม่ได้กรอก/กรอกรหัสผิด — ต้องให้กรอกรหัสก่อน ไม่งั้นได้ข้อมูลซ้ำ
+  const [employeeCodeError, setEmployeeCodeError] = useState<string | null>(null)
 
   const isAddingNewDepartment = departmentId === NEW_DEPARTMENT_OPTION
 
   function validate() {
-    if (!employeeCode.trim() || !fullName.trim()) {
-      toast.error('กรอกรหัสพนักงานและชื่อ-นามสกุล')
+    if (!fullName.trim()) {
+      toast.error('กรอกชื่อ-นามสกุล')
       return false
     }
     if (isAddingNewDepartment && !newDepartmentName.trim()) {
@@ -53,7 +55,7 @@ export function CompleteProfilePage() {
   function submit() {
     completeProfile.mutate(
       {
-        employeeCode: employeeCode.trim(),
+        employeeCode: employeeCode.trim() || undefined,
         fullName: fullName.trim(),
         phone: phone.trim() || undefined,
         departmentId: !isAddingNewDepartment && departmentId ? Number(departmentId) : undefined,
@@ -62,7 +64,11 @@ export function CompleteProfilePage() {
       },
       {
         onSuccess: () => toast.success('บันทึกข้อมูลพนักงานเรียบร้อยแล้ว'),
-        onError: (e) => toast.error(getErrorMessage(e, 'บันทึกไม่สำเร็จ')),
+        onError: (e) => {
+          const message = getErrorMessage(e, 'บันทึกไม่สำเร็จ')
+          toast.error(message)
+          if (message.includes('รหัสพนักงาน')) setEmployeeCodeError(message)
+        },
       },
     )
   }
@@ -80,19 +86,28 @@ export function CompleteProfilePage() {
               บัญชี {user?.email ?? user?.username} ยังไม่มีข้อมูลพนักงานในระบบ กรุณากรอกก่อนใช้งานต่อ
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              ถ้า HR เคยเบิกอุปกรณ์ให้คุณไว้แล้ว ให้กรอกรหัสพนักงานและชื่อ-นามสกุลให้ตรงกับที่ HR แจ้ง ระบบจะผูกข้อมูลเดิมให้
+              ยังไม่ทราบรหัสพนักงานเว้นว่างไว้ได้ HR จะเติมให้ทีหลัง — แต่ถ้า HR เคยเบิกอุปกรณ์ให้คุณไว้แล้ว
+              ให้กรอกรหัสพนักงานและชื่อ-นามสกุลให้ตรงกับที่ HR แจ้ง ระบบจะผูกข้อมูลเดิมให้
             </p>
           </div>
         </div>
         <Card>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รหัสพนักงาน</label>
-              <Input value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} placeholder="EMP-0010" autoFocus />
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">รหัสพนักงาน (ไม่บังคับ)</label>
+              <Input
+                value={employeeCode}
+                onChange={(e) => {
+                  setEmployeeCode(e.target.value)
+                  setEmployeeCodeError(null)
+                }}
+                placeholder="EMP-0010"
+              />
+              {employeeCodeError && <p className="mt-1 text-xs text-red-600">{employeeCodeError}</p>}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">ชื่อ-นามสกุล</label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="สมชาย ใจดี" />
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="สมชาย ใจดี" autoFocus />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">เบอร์โทรศัพท์ (ไม่บังคับ)</label>

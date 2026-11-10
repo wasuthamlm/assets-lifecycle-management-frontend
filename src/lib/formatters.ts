@@ -11,17 +11,31 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat('th-TH').format(value)
 }
 
-export function formatThaiDate(date: string | Date): string {
+// แยกวัน/เวลาตามเวลาไทยเสมอ ไม่ขึ้นกับ timezone ที่ตั้งไว้ในเครื่องผู้ใช้
+const BANGKOK_PARTS = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Bangkok',
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  hourCycle: 'h23',
+})
+
+function bangkokParts(date: string | Date) {
   const d = typeof date === 'string' ? new Date(date) : date
-  const buddhistYear = d.getFullYear() + 543
-  return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${buddhistYear}`
+  const parts = Object.fromEntries(BANGKOK_PARTS.formatToParts(d).map((p) => [p.type, p.value]))
+  return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day), hour: parts.hour, minute: parts.minute }
+}
+
+export function formatThaiDate(date: string | Date): string {
+  const { year, month, day } = bangkokParts(date)
+  return `${day} ${THAI_MONTHS[month - 1]} ${year + 543}`
 }
 
 export function formatThaiDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const hh = String(d.getHours()).padStart(2, '0')
-  const mm = String(d.getMinutes()).padStart(2, '0')
-  return `${formatThaiDate(d)} ${hh}:${mm} น.`
+  const { hour, minute } = bangkokParts(date)
+  return `${formatThaiDate(date)} ${hour.padStart(2, '0')}:${minute.padStart(2, '0')} น.`
 }
 
 // ชื่อผู้ขอเบิก + ผู้รับ (ถ้า HR เบิกให้คนอื่น) สำหรับคอลัมน์ "ผู้ขอเบิก" ในตาราง

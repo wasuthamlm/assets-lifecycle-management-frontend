@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,16 +8,15 @@ import { ImagePlus, MapPin, X } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useCreateSupportTicketMutation } from '@/hooks/useSupportTickets'
 import { useMyAssignmentsQuery } from '@/hooks/useAssignments'
-import { useLocationsQuery } from '@/hooks/useMasterData'
 import { useAuthStore } from '@/stores/auth.store'
 import { supportTicketsService } from '@/api/services/support-tickets.service'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { BackLink } from '@/components/ui/BackLink'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { DeviceCombobox, type DeviceOption } from '@/components/support/DeviceCombobox'
 import { AssignmentType, TicketCategory, TicketPriority } from '@/api/types/common.types'
 import { TICKET_CATEGORY_LABEL, TICKET_PRIORITY_LABEL } from '@/lib/constants'
 import { TICKET_CATEGORY_ICON } from '@/lib/supportTicket'
@@ -29,8 +28,8 @@ import { cn } from '@/lib/utils'
 const formSchema = z.object({
   category: z.nativeEnum(TicketCategory, { message: 'กรุณาเลือกประเภทปัญหา' }),
   assetId: z.string().optional(),
-  locationId: z.string().optional(),
-  locationDetail: z.string().trim().min(1, 'กรุณาระบุชั้น/ห้อง เพื่อให้ทีม IT ไปถูกที่').max(200, 'ยาวได้ไม่เกิน 200 ตัวอักษร'),
+  assetText: z.string().trim().max(200, 'ยาวได้ไม่เกิน 200 ตัวอักษร').optional(),
+  locationDetail: z.string().trim().min(1, 'กรุณาระบุสถานที่ เพื่อให้ทีม IT ไปถูกที่').max(200, 'ยาวได้ไม่เกิน 200 ตัวอักษร'),
   subject: z.string().trim().min(1, 'กรุณากรอกเรื่องที่แจ้ง').max(200, 'ยาวได้ไม่เกิน 200 ตัวอักษร'),
   description: z.string().optional(),
   priority: z.nativeEnum(TicketPriority),
@@ -50,7 +49,6 @@ export function TicketCreatePage() {
   const employee = user?.employee
   const create = useCreateSupportTicketMutation()
   const { data: myAssignments = [] } = useMyAssignmentsQuery()
-  const { data: locations = [] } = useLocationsQuery()
   const [files, setFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
 
@@ -61,7 +59,6 @@ export function TicketCreatePage() {
     register,
     control,
     handleSubmit,
-    getValues,
     setValue,
     watch,
     formState: { errors },
@@ -72,23 +69,29 @@ export function TicketCreatePage() {
       assetId: presetAssetId,
       priority: TicketPriority.NORMAL,
       contactPhone: employee?.phone ?? '',
-      locationId: '',
+      assetText: '',
       locationDetail: '',
     },
   })
 
-  // เลือกอุปกรณ์แล้วเติมอาคาร/สถานที่จากตำแหน่งปัจจุบันของทรัพย์สินให้ — เฉพาะตอนผู้ใช้ยังไม่ได้เลือกเอง ไม่เขียนทับ
-  function prefillLocationFromAsset(assetId: string) {
-    if (!assetId || getValues('locationId')) return
-    const locationId = myAssignments.find((a) => String(a.assetId) === assetId)?.asset?.currentLocation?.locationId
-    if (locationId) setValue('locationId', String(locationId))
-  }
+  const deviceOptions = useMemo<DeviceOption[]>(
+    () =>
+      myAssignments.map((a) => ({
+        assetId: a.assetId,
+        label: `${a.asset?.assetNo ?? `#${a.assetId}`} · ${a.asset?.assetName ?? ''}`.trim(),
+        hint:
+          a.assignmentType === AssignmentType.TEMPORARY_LOAN
+            ? `ของยืม${a.dueDate ? ` · คืน ${formatThaiDate(a.dueDate)}` : ''}`
+            : undefined,
+      })),
+    [myAssignments],
+  )
 
-  // เปิดมาพร้อม ?assetId= แต่รายการของที่ถืออยู่โหลดทีหลัง — เติมสถานที่ตอนข้อมูลมาถึง
+  // เปิดมาพร้อม ?assetId= แต่รายการของที่ถืออยู่โหลดทีหลัง — เติมชื่ออุปกรณ์ในช่องตอนข้อมูลมาถึง
   useEffect(() => {
-    if (presetAssetId && myAssignments.length) prefillLocationFromAsset(presetAssetId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- อยากให้ทำครั้งเดียวตอนรายการโหลดเสร็จ
-  }, [myAssignments.length, presetAssetId])
+    const preset = deviceOptions.find((o) => String(o.assetId) === presetAssetId)
+    if (preset) setValue('assetText', preset.label)
+  }, [deviceOptions, presetAssetId, setValue])
 
   if (!user?.employeeId) {
     return <EmptyState message="บัญชีนี้ไม่ได้ผูกกับข้อมูลพนักงาน จึงแจ้งปัญหาไม่ได้" />
@@ -109,7 +112,7 @@ export function TicketCreatePage() {
         description: values.description || undefined,
         priority: values.priority,
         assetId: values.assetId ? Number(values.assetId) : undefined,
-        locationId: values.locationId ? Number(values.locationId) : undefined,
+        assetText: values.assetId ? undefined : values.assetText || undefined,
         locationDetail: values.locationDetail,
         contactPhone: values.contactPhone || undefined,
       },
@@ -134,7 +137,7 @@ export function TicketCreatePage() {
 
   const isSubmitting = create.isPending || isUploading
   // ช่องบังคับครบหรือยัง ไว้ disable ปุ่มส่ง — กฎอื่น (เช่นความยาว) ยังให้ zodResolver เช็คตอน submit
-  const [category, locationDetail, subject] = watch(['category', 'locationDetail', 'subject'])
+  const [category, locationDetail, subject, assetId, assetText] = watch(['category', 'locationDetail', 'subject', 'assetId', 'assetText'])
   const isFormComplete = !!category && !!locationDetail?.trim() && !!subject?.trim()
 
   return (
@@ -196,50 +199,32 @@ export function TicketCreatePage() {
           </section>
 
           <section>
-            <label htmlFor="assetId" className={LABEL}>
+            <label htmlFor="device" className={LABEL}>
               อุปกรณ์ที่มีปัญหา <span className="font-normal text-slate-400">(ไม่บังคับ)</span>
             </label>
-            <Select id="assetId" {...register('assetId', { onChange: (e) => prefillLocationFromAsset(e.target.value) })}>
-              <option value="">ไม่เกี่ยวกับอุปกรณ์ / ไม่ระบุ</option>
-              {myAssignments.map((a) => (
-                <option key={a.assignmentId} value={a.assetId}>
-                  {a.asset?.assetNo ?? `#${a.assetId}`} · {a.asset?.assetName ?? ''}
-                  {a.assignmentType === AssignmentType.TEMPORARY_LOAN
-                    ? ` (ยืม${a.dueDate ? ` · คืน ${formatThaiDate(a.dueDate)}` : ''})`
-                    : ''}
-                </option>
-              ))}
-            </Select>
-            <p className="mt-1 text-xs text-slate-400">แสดงเฉพาะทรัพย์สินที่คุณถือหรือยืมอยู่</p>
+            <DeviceCombobox
+              id="device"
+              options={deviceOptions}
+              assetId={assetId ? Number(assetId) : undefined}
+              text={assetText ?? ''}
+              onChange={(v) => {
+                setValue('assetId', v.assetId ? String(v.assetId) : '')
+                setValue('assetText', v.text, { shouldValidate: !!errors.assetText })
+              }}
+              placeholder={deviceOptions.length ? 'พิมพ์ชื่ออุปกรณ์ หรือเลือกจากของที่คุณเบิก/ยืมอยู่' : 'พิมพ์ชื่ออุปกรณ์ เช่น ปริ้นเตอร์ชั้น 3'}
+            />
+            {errors.assetText && <p className="mt-1 text-xs text-red-600">{errors.assetText.message}</p>}
+            <p className="mt-1 text-xs text-slate-400">
+              {deviceOptions.length ? 'กดที่ช่องเพื่อเลือกของที่คุณเบิก/ยืมอยู่ หรือพิมพ์ชื่ออุปกรณ์อื่นเองได้' : 'พิมพ์ชื่ออุปกรณ์ที่มีปัญหา หรือเว้นว่างถ้าไม่เกี่ยวกับอุปกรณ์'}
+            </p>
           </section>
 
           <section>
-            <span className={cn(LABEL, 'inline-flex items-center gap-1.5')}>
-              <MapPin size={15} /> สถานที่ที่ให้ทีม IT ไปหา
-            </span>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-              <div>
-                <label htmlFor="locationId" className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
-                  อาคาร / สถานที่
-                </label>
-                <Select id="locationId" {...register('locationId')}>
-                  <option value="">ไม่ระบุ</option>
-                  {locations.map((l) => (
-                    <option key={l.locationId} value={l.locationId}>
-                      {l.locationName}
-                      {l.site ? ` (${l.site})` : ''}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="locationDetail" className="mb-1 block text-xs text-slate-500 dark:text-slate-400">
-                  ชั้น / ห้อง / จุดสังเกต <span className="text-red-500">*</span>
-                </label>
-                <Input id="locationDetail" {...register('locationDetail')} placeholder="เช่น ชั้น 3 ห้องบัญชี โต๊ะริมหน้าต่าง" />
-                {errors.locationDetail && <p className="mt-1 text-xs text-red-600">{errors.locationDetail.message}</p>}
-              </div>
-            </div>
+            <label htmlFor="locationDetail" className={cn(LABEL, 'inline-flex items-center gap-1.5')}>
+              <MapPin size={15} /> สถานที่ที่ให้ทีม IT ไปหา <span className="text-red-500">*</span>
+            </label>
+            <Input id="locationDetail" {...register('locationDetail')} placeholder="เช่น อาคาร A ชั้น 3 ห้องบัญชี โต๊ะริมหน้าต่าง" />
+            {errors.locationDetail && <p className="mt-1 text-xs text-red-600">{errors.locationDetail.message}</p>}
           </section>
 
           <section className="space-y-4">

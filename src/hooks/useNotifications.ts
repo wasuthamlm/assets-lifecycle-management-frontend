@@ -6,6 +6,7 @@ import { useUiStore } from '@/stores/ui.store'
 import { notificationsService } from '@/api/services/notifications.service'
 import { ENDPOINTS } from '@/api/endpoints'
 import { playNotificationSound } from '@/lib/notificationSound'
+import { permissionSignature } from '@/hooks/useAuth'
 import type { AppNotification } from '@/api/types/notification.types'
 
 // เป็น fallback เผื่อ SSE (useNotificationsStream) หลุด/ต่อไม่ติดชั่วคราว — ปกติ badge จะอัปเดตจาก
@@ -51,6 +52,9 @@ const LIVE_CHANGE_QUERY_KEYS: Record<string, string[][]> = {
 // โดยไม่ต้องรอ poll — mount ที่ AppLayout (อยู่ตลอดช่วงที่ login อยู่ ปิดเองตอน logout/token หาย)
 export function useNotificationsStream() {
   const accessToken = useAuthStore((s) => s.accessToken)
+  // backend กรอง LiveChange ตามสิทธิ์ ณ ตอนเปิด connection (NotificationsService.streamFor) —
+  // สิทธิ์เปลี่ยนต้องต่อใหม่ ไม่งั้นตารางที่เพิ่งได้สิทธิ์ดูจะไม่อัปเดตสดจนกว่าจะ refresh หน้า
+  const permissionKey = useAuthStore((s) => permissionSignature(s.user))
   const queryClient = useQueryClient()
 
   useEffect(() => {
@@ -136,7 +140,7 @@ export function useNotificationsStream() {
 
     // EventSource reconnect เองอัตโนมัติเมื่อหลุด ไม่ต้อง handle retry เอง (catch-up อยู่ใน onopen ด้านบน)
     return () => source.close()
-  }, [accessToken, queryClient])
+  }, [accessToken, permissionKey, queryClient])
 }
 
 export function useMarkAllReadMutation() {

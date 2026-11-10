@@ -16,7 +16,8 @@ export interface EmployeeRole {
 
 export interface Employee {
   employeeId: number
-  employeeCode: string
+  /** null ได้ — พนักงานที่กรอกโปรไฟล์เองตอน login SSO ครั้งแรกโดยยังไม่มีรหัส */
+  employeeCode: string | null
   fullName: string
   departmentId: number | null
   department?: Department | null

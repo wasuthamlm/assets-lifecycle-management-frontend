@@ -140,7 +140,18 @@ export function TicketDetailPage() {
                 {ticket.description || <span className="text-slate-400">ไม่ได้ระบุรายละเอียดเพิ่ม</span>}
               </p>
             </div>
-            {ticket.asset && <RelatedAsset ticket={ticket} />}
+            {ticket.asset ? (
+              <RelatedAsset ticket={ticket} />
+            ) : (
+              ticket.assetText && (
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">อุปกรณ์ที่มีปัญหา</h2>
+                  <p className="mt-2 rounded-xl border border-slate-100 p-3 text-base text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                    {ticket.assetText} <span className="text-sm text-slate-400">(ผู้แจ้งพิมพ์เอง)</span>
+                  </p>
+                </div>
+              )
+            )}
             <TicketAttachmentsPanel ticketId={ticket.ticketId} canManage={isOwner || canManage} />
           </Card>
         </div>

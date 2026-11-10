@@ -28,7 +28,7 @@ export interface SsoExchangeDto {
 }
 
 export interface CompleteEmployeeProfileDto {
-  employeeCode: string
+  employeeCode?: string
   fullName: string
   phone?: string
   departmentId?: number
@@ -48,7 +48,7 @@ export interface CurrentUser {
   roles: string[]
   employee: {
     employeeId: number
-    employeeCode: string
+    employeeCode: string | null
     fullName: string
     position: string | null
     email: string | null
