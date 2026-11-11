@@ -23,6 +23,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   'roles-permissions': 'สิทธิ์การใช้งาน',
   users: 'ผู้ใช้งาน',
   settings: 'ตั้งค่า',
+  profile: 'บัญชีของฉัน',
 }
 
 export function Breadcrumbs() {

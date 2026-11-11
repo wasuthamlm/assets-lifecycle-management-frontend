@@ -10,6 +10,7 @@ import type {
   LoginDto,
   ResetPasswordDto,
   SsoExchangeDto,
+  UpdateMyEmployeeProfileDto,
 } from '@/api/types/auth.types'
 
 /** ใช้เทียบว่าสิทธิ์เปลี่ยนไหม — ไม่สนลำดับที่ backend ส่งมา */
@@ -91,6 +92,19 @@ export function useCompleteEmployeeProfile() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
       navigate('/assets')
+    },
+  })
+}
+
+export function useUpdateMyEmployeeProfile() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (dto: UpdateMyEmployeeProfileDto) => authService.updateMyEmployeeProfile(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+      // อาจเพิ่งสร้างแผนกใหม่ (newDepartmentName) — dropdown แผนกหน้าอื่นต้องเห็นด้วย
+      queryClient.invalidateQueries({ queryKey: ['departments'] })
     },
   })
 }

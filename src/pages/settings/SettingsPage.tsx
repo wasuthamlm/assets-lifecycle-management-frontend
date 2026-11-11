@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { ChevronRight, CornerDownRight, LogOut, Moon, Plus, Pencil, Sun, Trash2, User } from 'lucide-react'
-import { useCurrentUser } from '@/hooks/useAuth'
-import { useLogoutFlow } from '@/hooks/useLogoutFlow'
+import { ChevronRight, CornerDownRight, Plus, Pencil, Trash2 } from 'lucide-react'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { usePermission } from '@/hooks/usePermission'
 import {
@@ -33,14 +31,13 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Switch } from '@/components/ui/Switch'
 import { Spinner } from '@/components/ui/Spinner'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
-import { applyTheme, useUiStore } from '@/stores/ui.store'
 import { cn } from '@/lib/utils'
 import { formatThaiDate } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
 import type { AllowedDomain, AssetCategory, Company, Location, Vendor } from '@/api/types/master-data.types'
 import type { Department } from '@/api/types/employee.types'
 
-type Tab = 'profile' | 'companies' | 'departments' | 'locations' | 'categories' | 'vendors'
+type Tab = 'companies' | 'departments' | 'locations' | 'categories' | 'vendors'
 
 function errorMessage(error: unknown): string {
   return getErrorMessage(error, 'บันทึกไม่สำเร็จ')
@@ -897,113 +894,11 @@ function VendorManager({ vendors, isLoading }: VendorManagerProps) {
   )
 }
 
-function ProfileTab() {
-  const { data: user, isLoading } = useCurrentUser()
-  const { handleLogout, isPending, modal } = useLogoutFlow()
-  const theme = useUiStore((s) => s.theme)
-  const setTheme = useUiStore((s) => s.setTheme)
-
-  if (isLoading || !user) {
-    return (
-      <div className="flex justify-center py-20">
-        <Spinner />
-      </div>
-    )
-  }
-
-  function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light'
-    setTheme(next)
-    applyTheme(next)
-  }
-
-  return (
-    <div className="max-w-2xl space-y-6">
-      <Card>
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
-            <User size={20} />
-          </div>
-          <div>
-            <p className="font-semibold text-slate-800 dark:text-slate-100">
-              {user.employee?.fullName ?? user.username}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{user.employee?.position ?? user.username}</p>
-          </div>
-        </div>
-
-        <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-slate-400">ชื่อผู้ใช้</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{user.username}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-400">อีเมล</dt>
-            <dd className="text-slate-700 dark:text-slate-200">{user.email ?? '-'}</dd>
-          </div>
-          {user.employee?.employeeCode && (
-            <div>
-              <dt className="text-slate-400">รหัสพนักงาน</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{user.employee.employeeCode}</dd>
-            </div>
-          )}
-          {user.employee?.department && (
-            <div>
-              <dt className="text-slate-400">แผนก</dt>
-              <dd className="text-slate-700 dark:text-slate-200">{user.employee.department.departmentName}</dd>
-            </div>
-          )}
-        </dl>
-      </Card>
-
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">สิทธิ์การใช้งาน</h3>
-        {user.permissions.length === 0 ? (
-          <p className="text-sm text-slate-400">ไม่มีสิทธิ์พิเศษ</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {user.permissions.map((p) => (
-              <span
-                key={p}
-                className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-              >
-                {p}
-              </span>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">ธีมสี</h3>
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            ธีมปัจจุบัน: {theme === 'light' ? 'สว่าง' : 'มืด'}
-          </p>
-          <Button variant="secondary" onClick={toggleTheme}>
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-            สลับธีม
-          </Button>
-        </div>
-      </Card>
-
-      <Card>
-        <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">บัญชี</h3>
-        <Button variant="danger" onClick={handleLogout} disabled={isPending}>
-          <LogOut size={16} />
-          ออกจากระบบ
-        </Button>
-      </Card>
-      {modal}
-    </div>
-  )
-}
-
 export function SettingsPage() {
   usePageTitle('ตั้งค่า')
   const { hasPermission } = usePermission()
   const canManageMasterData = hasPermission('master.manage')
-  const [tab, setTab] = useState<Tab>('profile')
+  const [tab, setTab] = useState<Tab>('companies')
 
   const { data: companies = [], isLoading: companiesLoading } = useCompaniesQuery()
   const { data: departments = [], isLoading: departmentsLoading } = useDepartmentsQuery()
@@ -1011,17 +906,13 @@ export function SettingsPage() {
   const { data: categories = [], isLoading: categoriesLoading } = useAssetCategoriesQuery()
   const { data: vendors = [], isLoading: vendorsLoading } = useVendorsQuery()
 
+  // โปรไฟล์ของตัวเองย้ายไปหน้า /profile แล้ว (ทุก role เข้าได้) — หน้านี้เหลือแต่ข้อมูลกลาง เข้าได้เฉพาะ master.manage (ดู router)
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'profile', label: 'โปรไฟล์ของฉัน' },
-    ...(canManageMasterData
-      ? ([
-          { key: 'companies', label: 'บริษัท / โดเมน' },
-          { key: 'departments', label: 'แผนก' },
-          { key: 'locations', label: 'สถานที่' },
-          { key: 'categories', label: 'หมวดหมู่ทรัพย์สิน' },
-          { key: 'vendors', label: 'ผู้ขาย/ผู้ให้บริการ' },
-        ] as { key: Tab; label: string }[])
-      : []),
+    { key: 'companies', label: 'บริษัท / โดเมน' },
+    { key: 'departments', label: 'แผนก' },
+    { key: 'locations', label: 'สถานที่' },
+    { key: 'categories', label: 'หมวดหมู่ทรัพย์สิน' },
+    { key: 'vendors', label: 'ผู้ขาย/ผู้ให้บริการ' },
   ]
 
   const departmentColumns: DataTableColumn<Department>[] = [
@@ -1048,9 +939,7 @@ export function SettingsPage() {
         ))}
       </div>
 
-      {tab === 'profile' && <ProfileTab />}
-
-      {tab !== 'profile' && canManageMasterData && (
+      {canManageMasterData && (
         <>
           {tab === 'companies' && (
             <div className="space-y-4">

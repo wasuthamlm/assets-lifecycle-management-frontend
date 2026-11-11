@@ -48,6 +48,7 @@ import { MyItemsPage } from '@/pages/my-items/MyItemsPage'
 import { ApprovalsPage } from '@/pages/approvals/ApprovalsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 export const router = createBrowserRouter([
@@ -214,6 +215,8 @@ export const router = createBrowserRouter([
           },
 
           { path: '/my-items', element: <MyItemsPage /> },
+          // ทุก role เข้าได้ — แก้ข้อมูลพนักงานของตัวเอง (ดู ProfilePage)
+          { path: '/profile', element: <ProfilePage /> },
           {
             // ต้องมีทั้ง 2 สิทธิ์ — หน้านี้โหลดรายการผ่าน GET /requisitions?status=pending ซึ่ง backend
             // ต้องการ requisition.view_all ไม่ใช่แค่ requisition.approve (ดู usePendingApprovals.ts)

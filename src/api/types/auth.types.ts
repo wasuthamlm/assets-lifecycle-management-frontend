@@ -36,6 +36,16 @@ export interface CompleteEmployeeProfileDto {
   position?: string
 }
 
+/** ช่องที่ไม่ส่ง = ไม่เปลี่ยน, สตริงว่าง/null = ล้างค่า — ชื่อ-นามสกุลแก้เองไม่ได้ ต้องให้ HR แก้ */
+export interface UpdateMyEmployeeProfileDto {
+  /** เติมได้เฉพาะตอนยังไม่มีรหัส — มีแล้ว backend ตอบ 409 ให้ติดต่อ HR */
+  employeeCode?: string
+  phone?: string
+  departmentId?: number | null
+  newDepartmentName?: string
+  position?: string
+}
+
 export interface CurrentUser {
   userId: number
   username: string

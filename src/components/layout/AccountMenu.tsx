@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronDown, KeyRound, LogOut, Settings } from 'lucide-react'
+import { ChevronDown, KeyRound, LogOut, Settings, UserCircle } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLogoutFlow } from '@/hooks/useLogoutFlow'
 import { usePermission } from '@/hooks/usePermission'
@@ -49,6 +49,15 @@ export function AccountMenu() {
             {roleLabel && <p className="truncate text-xs text-slate-400">{roleLabel}</p>}
           </div>
           <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+          <Link
+            to="/profile"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm text-slate-600 transition-colors duration-150 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <UserCircle size={15} />
+            บัญชีของฉัน
+          </Link>
 
           <Link
             to="/change-password"

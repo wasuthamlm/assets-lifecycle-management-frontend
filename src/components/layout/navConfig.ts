@@ -19,6 +19,7 @@ import {
   Headset,
   LifeBuoy,
   MessageSquareWarning,
+  UserCircle,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -132,5 +133,10 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'สิทธิ์การใช้งาน', href: '/roles-permissions', icon: KeyRound, permission: 'rbac.manage' },
       { label: 'ตั้งค่า', href: '/settings', icon: Settings, permission: 'master.manage' },
     ],
+  },
+  {
+    // ไว้ล่างสุดเสมอ — ทุก role เห็น (ไม่มี permission) ดู ProfilePage
+    label: 'บัญชี',
+    items: [{ label: 'บัญชีของฉัน', href: '/profile', icon: UserCircle }],
   },
 ]

@@ -9,6 +9,7 @@ import type {
   ResetPasswordDto,
   SsoExchangeDto,
   TokenPair,
+  UpdateMyEmployeeProfileDto,
 } from '../types/auth.types'
 
 export const authService = {
@@ -38,5 +39,8 @@ export const authService = {
   },
   async completeEmployeeProfile(dto: CompleteEmployeeProfileDto): Promise<void> {
     await apiClient.post(ENDPOINTS.auth.completeEmployeeProfile, dto)
+  },
+  async updateMyEmployeeProfile(dto: UpdateMyEmployeeProfileDto): Promise<void> {
+    await apiClient.patch(ENDPOINTS.auth.completeEmployeeProfile, dto)
   },
 }
