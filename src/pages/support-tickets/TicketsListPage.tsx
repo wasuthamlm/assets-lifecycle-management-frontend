@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import { useSupportTicketsQuery } from '@/hooks/useSupportTickets'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -9,6 +10,8 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { Pagination } from '@/components/ui/Pagination'
+import { Button } from '@/components/ui/Button'
+import { TicketExportModal } from '@/components/support/TicketExportModal'
 import { TicketPriorityPill, TicketStatusPill } from '@/components/ui/StatusPill'
 import { TicketCategory, TicketSource, TicketStatus } from '@/api/types/common.types'
 import { TicketSourceBadge } from '@/components/support/TicketSourceBadge'
@@ -18,7 +21,7 @@ import { formatTicketLocation } from '@/lib/supportTicket'
 import { cn } from '@/lib/utils'
 import type { SupportTicket } from '@/api/types/support-ticket.types'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 5
 
 /** เรื่องที่ปิดงานแล้วก็คือแก้ไขแล้วเช่นกัน — การ์ด "แก้ไขแล้ว" จึงนับและกรองรวมทั้งสองสถานะ */
 const DONE_FILTER = `${TicketStatus.RESOLVED},${TicketStatus.CLOSED}`
@@ -43,12 +46,15 @@ export function TicketsListPage() {
   const [category, setCategory] = useState('')
   const [source, setSource] = useState('')
   const [page, setPage] = useState(1)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const { data, isLoading, isError, refetch } = useSupportTicketsQuery({
     search: debouncedSearch || undefined,
     status: status || undefined,
     category: (category || undefined) as TicketCategory | undefined,
     source: (source || undefined) as TicketSource | undefined,
+    // รอดำเนินการขึ้นก่อน → กำลังดำเนินการ → แก้ไขแล้ว → ปิดงาน → ยกเลิก (ใหม่สุดก่อนในแต่ละสถานะ)
+    sort: 'status',
     page,
     limit: PAGE_SIZE,
   })
@@ -153,7 +159,12 @@ export function TicketsListPage() {
           <option value={TicketSource.WEB}>แจ้งผ่านเว็บ</option>
           <option value={TicketSource.LINE}>แจ้งผ่าน LINE</option>
         </Select>
+        <Button variant="secondary" onClick={() => setExportOpen(true)} className="w-full sm:ml-auto sm:w-auto">
+          <Download size={16} /> Export CSV
+        </Button>
       </div>
+
+      <TicketExportModal open={exportOpen} onClose={() => setExportOpen(false)} currentSearch={debouncedSearch} />
 
       <Card className="p-0">
         <div className="p-4">

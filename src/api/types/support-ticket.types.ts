@@ -54,6 +54,8 @@ export interface QueryTicketDto {
   status?: string
   category?: TicketCategory
   source?: TicketSource
+  /** latest (ค่าเริ่มต้น) = ใหม่สุดก่อน, status = รอดำเนินการขึ้นก่อน แล้วไล่ตามสถานะ */
+  sort?: 'latest' | 'status'
   page?: number
   limit?: number
 }
