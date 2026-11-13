@@ -154,9 +154,9 @@ export function AssetsListPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="ค้นหาชื่อทรัพย์สิน, S/N..."
-          className="w-56"
+          className="w-full sm:w-56"
         />
-        <Select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} className="w-44">
+        <Select value={mainCategoryId} onChange={(e) => handleMainCategoryChange(e.target.value)} className="w-full sm:w-44">
           <option value="">หมวดหมู่หลัก: ทั้งหมด</option>
           {mainCategories.map((c) => (
             <option key={c.categoryId} value={c.categoryId}>
@@ -168,7 +168,7 @@ export function AssetsListPage() {
           value={subCategoryId}
           onChange={(e) => setSubCategoryId(e.target.value)}
           disabled={!mainCategoryId || subCategories.length === 0}
-          className="w-44"
+          className="w-full sm:w-44"
         >
           <option value="">หมวดหมู่ย่อย: ทั้งหมด</option>
           {subCategories.map((c) => (
@@ -177,7 +177,7 @@ export function AssetsListPage() {
             </option>
           ))}
         </Select>
-        <Select value={brand} onChange={(e) => setBrand(e.target.value)} className="w-44">
+        <Select value={brand} onChange={(e) => setBrand(e.target.value)} className="w-full sm:w-44">
           <option value="">ยี่ห้อ: ทั้งหมด</option>
           {brands.map((b) => (
             <option key={b} value={b}>

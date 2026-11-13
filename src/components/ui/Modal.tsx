@@ -83,7 +83,7 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
       className={cn(
         'fixed inset-0 z-50 flex',
         overlay === 'dim' && 'bg-slate-900/40 backdrop-blur-sm',
-        isDrawer ? 'justify-end' : 'items-center justify-center p-4',
+        isDrawer ? 'justify-end' : 'items-center justify-center p-3 sm:p-4',
         open ? 'animate-fade-in' : 'animate-fade-out',
       )}
     >
@@ -105,7 +105,7 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
           open ? (isDrawer ? 'animate-drawer-in' : 'animate-sheet-in') : isDrawer ? 'animate-drawer-out' : 'animate-sheet-out',
         )}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:px-6 sm:py-4">
           <h3 id={titleId} className="text-base font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
           <button
             onClick={onClose}
@@ -114,7 +114,7 @@ export function Modal({ open, onClose, title, children, variant = 'center', over
             <X size={18} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
       </div>
     </div>,
     document.body,

@@ -94,7 +94,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-slate-100 bg-white p-2 shadow-card-hover dark:border-slate-800 dark:bg-slate-900">
+        <div className="fixed inset-x-3 top-16 z-50 rounded-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 border border-slate-100 bg-white p-2 shadow-card-hover dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between px-2 py-1.5">
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">การแจ้งเตือน</p>
             <div className="flex items-center gap-2">

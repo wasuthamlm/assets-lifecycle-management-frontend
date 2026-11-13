@@ -215,7 +215,7 @@ function AssignEmployeeRolesModal({ employee, currentRoleIds, roles, onClose }: 
         })}
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
         <span className="text-xs text-slate-400">{hasChanges ? 'มีการเปลี่ยนแปลงที่ยังไม่บันทึก' : 'ยังไม่มีการเปลี่ยนแปลง'}</span>
         <div className="flex gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

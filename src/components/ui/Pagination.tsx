@@ -12,7 +12,7 @@ export function Pagination({ page, totalItems, pageSize, onPageChange }: Paginat
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
 
   return (
-    <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-sm text-slate-500 dark:border-slate-800/80">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-sm text-slate-500 dark:border-slate-800/80">
       <span>
         ทั้งหมด {totalItems} รายการ · หน้า {page}/{totalPages}
       </span>

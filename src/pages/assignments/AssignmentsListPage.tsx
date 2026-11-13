@@ -265,12 +265,12 @@ export function AssignmentsListPage() {
 
       {selectedAsset && (
         <Card className="p-0">
-          <div className="flex items-center justify-between p-4">
-            <div>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
               <p className="font-semibold text-slate-800 dark:text-slate-100">{selectedAsset.assetName}</p>
               <div className="mt-1">{selectedAsset.currentStatus && <AssetStatusPill status={selectedAsset.currentStatus} />}</div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="secondary" size="sm" onClick={() => navigate(`/assets/${selectedAsset.assetId}`)}>
                 ดูรายละเอียดทรัพย์สิน
               </Button>

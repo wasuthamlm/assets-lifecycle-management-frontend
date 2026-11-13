@@ -70,12 +70,12 @@ export function StockListPage() {
 
       {tab === 'items' && (
         <>
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card dark:border-slate-800/80 dark:bg-slate-900">
+          <div className="flex flex-col items-stretch gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-card sm:flex-row sm:items-center sm:justify-between dark:border-slate-800/80 dark:bg-slate-900">
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ค้นหาชื่อรายการ..."
-              className="max-w-xs"
+              className="sm:max-w-xs"
             />
             <Button onClick={() => navigate('/stock/new')}>
               <Plus size={16} /> เพิ่มรายการพัสดุ

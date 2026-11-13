@@ -29,7 +29,7 @@ export function SidebarUserFooter({ collapsed }: { collapsed: boolean }) {
 
       <button
         onClick={toggleSidebar}
-        className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white"
+        className="mt-1 hidden w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 transition-colors duration-200 hover:bg-white/5 hover:text-white lg:flex"
       >
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         {!collapsed && <span>ย่อเมนู</span>}

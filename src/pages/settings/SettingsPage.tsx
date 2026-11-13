@@ -168,7 +168,7 @@ function CompaniesPanel({ companies, isLoading }: CompaniesPanelProps) {
 
   return (
     <Card className="p-0">
-      <div className="flex items-center justify-between p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">รายชื่อบริษัท</h3>
         <Button onClick={() => setAddOpen(true)}>
           <Plus size={16} /> เพิ่มบริษัท
@@ -411,7 +411,7 @@ function CategoryRow({ category, categories, isChild, expandable, expanded, chil
     return (
       <div className={cn('space-y-2 rounded-lg border border-brand-200 bg-brand-50/40 p-2.5 dark:border-brand-500/30 dark:bg-brand-500/5', isChild && 'ml-6')}>
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ชื่อหมวดหมู่" autoFocus />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input value={assetType} onChange={(e) => setAssetType(e.target.value)} placeholder="ประเภททรัพย์สิน (ถ้ามี)" />
           <Select value={parentCategoryId} onChange={(e) => setParentCategoryId(e.target.value)}>
             <option value="">ไม่มี (หมวดหมู่หลัก)</option>
@@ -701,7 +701,7 @@ function LocationRow({ location, companies }: LocationRowProps) {
     return (
       <div className="space-y-2 rounded-lg border border-brand-200 bg-brand-50/40 p-2.5 dark:border-brand-500/30 dark:bg-brand-500/5">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="ชื่อสถานที่" autoFocus />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Input value={type} onChange={(e) => setType(e.target.value)} placeholder="ประเภท" />
           <Input value={site} onChange={(e) => setSite(e.target.value)} placeholder="ไซต์งาน" />
         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { ChevronDown, FileText } from 'lucide-react'
+import { ChevronDown, FileText, X } from 'lucide-react'
 import { NAV_TOP, NAV_CREATE_GROUP, NAV_GROUPS } from './navConfig'
 import { SidebarNavItem } from './SidebarNavItem'
 import { SidebarUserFooter } from './SidebarUserFooter'
@@ -15,8 +15,16 @@ import type { NavItem } from './navConfig'
 
 const EMPTY_ROLES: string[] = []
 
-export function Sidebar() {
-  const collapsed = useUiStore((s) => s.sidebarCollapsed)
+interface SidebarProps {
+  /** จอเล็กกว่า lg: sidebar เป็น drawer เลื่อนเข้ามาจากซ้าย */
+  mobileOpen?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
+  const storedCollapsed = useUiStore((s) => s.sidebarCollapsed)
+  // ตอนเปิดเป็น drawer บนมือถือ ให้แสดงเต็มเสมอ ไม่สนสถานะย่อเมนูที่บันทึกไว้
+  const collapsed = storedCollapsed && !mobileOpen
   const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermission()
   const roles = useAuthStore((s) => s.user?.roles ?? EMPTY_ROLES)
   const location = useLocation()
@@ -50,8 +58,10 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex h-screen shrink-0 flex-col bg-navy-900 transition-[width] duration-200',
-        collapsed ? 'w-[76px]' : 'w-64',
+        'fixed inset-y-0 left-0 z-40 flex h-dvh w-72 max-w-[85vw] shrink-0 flex-col bg-navy-900 shadow-2xl transition-[width,transform] duration-200 ease-out',
+        'lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:shadow-none',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        collapsed ? 'lg:w-[76px]' : 'lg:w-64',
       )}
     >
       <div className="flex items-center gap-3 px-4 py-4">
@@ -65,6 +75,14 @@ export function Sidebar() {
             <p className="truncate text-xs text-slate-400">IT Asset &amp; Support</p>
           </div>
         )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="ปิดเมนู"
+          className="ml-auto shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors duration-200 hover:bg-white/5 hover:text-white lg:hidden"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-2">
