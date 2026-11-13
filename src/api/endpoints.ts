@@ -70,6 +70,18 @@ export const ENDPOINTS = {
     byId: (id: number) => `/repairs/${id}`,
     status: (id: number) => `/repairs/${id}/status`,
   },
+  line: {
+    config: '/line/config',
+    link: '/line/link',
+    linkCode: '/line/link-code',
+    liff: {
+      me: '/line/liff/me',
+      myAssignments: '/line/liff/my-assignments',
+      tickets: '/line/liff/tickets',
+      myTickets: '/line/liff/tickets/mine',
+      attachments: (id: number) => `/line/liff/tickets/${id}/attachments`,
+    },
+  },
   supportTickets: {
     base: '/support-tickets',
     mine: '/support-tickets/mine',

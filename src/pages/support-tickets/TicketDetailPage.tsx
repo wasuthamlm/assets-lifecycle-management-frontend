@@ -29,6 +29,7 @@ import { ACTIVE_TICKET_STATUSES, TICKET_CATEGORY_ICON, TICKET_STATUS_TRANSITIONS
 import { formatThaiDate, formatThaiDateTime } from '@/lib/formatters'
 import { getErrorMessage } from '@/lib/errorMessage'
 import { cn } from '@/lib/utils'
+import { TicketSourceBadge } from '@/components/support/TicketSourceBadge'
 import type { SupportTicket } from '@/api/types/support-ticket.types'
 
 type ConfirmTarget = TicketStatus.CANCELLED | TicketStatus.CLOSED | null
@@ -71,6 +72,7 @@ export function TicketDetailPage() {
           <div className="min-w-0">
             <p className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
               <span className="font-medium">{ticket.ticketNo}</span>
+              <TicketSourceBadge source={ticket.source} />
               <span>·</span>
               <span className="inline-flex items-center gap-1">
                 <CategoryIcon size={14} /> {TICKET_CATEGORY_LABEL[ticket.category]}

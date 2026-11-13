@@ -15,6 +15,7 @@ import { applyTheme, useUiStore } from '@/stores/ui.store'
 import { translateRoleName } from '@/lib/roleLabels'
 import { getErrorMessage } from '@/lib/errorMessage'
 import type { CurrentUser } from '@/api/types/auth.types'
+import { LineLinkCard } from '@/components/profile/LineLinkCard'
 
 const NEW_DEPARTMENT_OPTION = '__new__'
 
@@ -219,6 +220,8 @@ export function ProfilePage() {
       </Card>
 
       {user.employee && <EmployeeProfileForm employee={user.employee} />}
+
+      {user.employee && <LineLinkCard />}
 
       <Card>
         <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">ธีมสี</h3>

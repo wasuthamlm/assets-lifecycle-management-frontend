@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/api/services/auth.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { takePostLoginRedirect } from '@/lib/postLoginRedirect'
 import type {
   ChangePasswordDto,
   CompleteEmployeeProfileDto,
@@ -50,7 +51,9 @@ export function useLogin() {
     mutationFn: (dto: LoginDto) => authService.login(dto),
     onSuccess: (tokens) => {
       setTokens(tokens.accessToken, tokens.refreshToken)
-      navigate(tokens.mustChangePassword ? '/change-password' : '/assets')
+      // มาจากหน้า LIFF "เชื่อมบัญชี LINE" → กลับไปหน้านั้น (ต้องเปลี่ยนรหัสผ่านก่อนยังคงบังคับเหมือนเดิม)
+      const redirect = takePostLoginRedirect()
+      navigate(tokens.mustChangePassword ? '/change-password' : (redirect ?? '/assets'))
     },
   })
 }
@@ -65,7 +68,9 @@ export function useSsoLogin() {
     mutationFn: (dto: SsoExchangeDto) => authService.ssoExchange(dto),
     onSuccess: (tokens) => {
       setTokens(tokens.accessToken, tokens.refreshToken)
-      navigate(tokens.mustChangePassword ? '/change-password' : '/assets')
+      // มาจากหน้า LIFF "เชื่อมบัญชี LINE" → กลับไปหน้านั้น (ต้องเปลี่ยนรหัสผ่านก่อนยังคงบังคับเหมือนเดิม)
+      const redirect = takePostLoginRedirect()
+      navigate(tokens.mustChangePassword ? '/change-password' : (redirect ?? '/assets'))
     },
   })
 }

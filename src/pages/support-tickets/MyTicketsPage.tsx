@@ -17,6 +17,7 @@ import { TicketPriorityPill, TicketStatusPill } from '@/components/ui/StatusPill
 import { TicketPriority, TicketStatus } from '@/api/types/common.types'
 import { TICKET_CATEGORY_LABEL, TICKET_STATUS_LABEL } from '@/lib/constants'
 import { TICKET_CATEGORY_ICON, formatTicketLocation } from '@/lib/supportTicket'
+import { TicketSourceBadge } from '@/components/support/TicketSourceBadge'
 import { formatThaiDateTime } from '@/lib/formatters'
 
 const PAGE_SIZE = 10
@@ -104,6 +105,7 @@ export function MyTicketsPage() {
                         <span className="font-medium text-slate-600 dark:text-slate-300">{t.ticketNo}</span>· {TICKET_CATEGORY_LABEL[t.category]}
                       </span>
                       <span className="flex items-center gap-1.5">
+                        <TicketSourceBadge source={t.source} />
                         {(t.priority === TicketPriority.HIGH || t.priority === TicketPriority.URGENT) && (
                           <TicketPriorityPill priority={t.priority} />
                         )}

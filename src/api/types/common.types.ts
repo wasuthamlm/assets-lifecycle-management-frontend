@@ -84,6 +84,12 @@ export enum TicketCategory {
   OTHER = 'other',
 }
 
+/** ช่องทางที่แจ้ง — backend ตั้งเอง (LINE = มาจากหน้า LIFF) */
+export enum TicketSource {
+  WEB = 'web',
+  LINE = 'line',
+}
+
 export enum TicketPriority {
   LOW = 'low',
   NORMAL = 'normal',

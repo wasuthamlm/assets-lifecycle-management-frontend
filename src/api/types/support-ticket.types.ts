@@ -1,4 +1,4 @@
-import type { AssignmentType, RepairStatus, TicketCategory, TicketPriority, TicketStatus } from './common.types'
+import type { AssignmentType, RepairStatus, TicketCategory, TicketPriority, TicketSource, TicketStatus } from './common.types'
 
 /** Snapshot ข้อมูลผู้แจ้ง ณ ตอนเปิด ticket — divisionName = ฝ่าย (แผนกแม่) */
 export interface TicketReporterInfo {
@@ -11,6 +11,8 @@ export interface TicketReporterInfo {
 export interface SupportTicket {
   ticketId: number
   ticketNo: string
+  /** web = แจ้งผ่านเว็บ, line = แจ้งผ่าน LINE OA */
+  source: TicketSource
   reportedBy: number
   reporterInfo: TicketReporterInfo
   category: TicketCategory
@@ -51,6 +53,7 @@ export interface QueryTicketDto {
   /** สถานะเดียว หรือหลายสถานะคั่นด้วยคอมมา เช่น "resolved,closed" */
   status?: string
   category?: TicketCategory
+  source?: TicketSource
   page?: number
   limit?: number
 }

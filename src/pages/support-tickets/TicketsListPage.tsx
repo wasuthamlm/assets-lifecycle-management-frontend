@@ -10,7 +10,8 @@ import { Select } from '@/components/ui/Select'
 import { DataTable, type DataTableColumn } from '@/components/ui/DataTable'
 import { Pagination } from '@/components/ui/Pagination'
 import { TicketPriorityPill, TicketStatusPill } from '@/components/ui/StatusPill'
-import { TicketCategory, TicketStatus } from '@/api/types/common.types'
+import { TicketCategory, TicketSource, TicketStatus } from '@/api/types/common.types'
+import { TicketSourceBadge } from '@/components/support/TicketSourceBadge'
 import { TICKET_CATEGORY_LABEL, TICKET_STATUS_LABEL } from '@/lib/constants'
 import { formatThaiDateTime } from '@/lib/formatters'
 import { formatTicketLocation } from '@/lib/supportTicket'
@@ -40,22 +41,33 @@ export function TicketsListPage() {
   const debouncedSearch = useDebouncedValue(search, 300)
   const [status, setStatus] = useState('')
   const [category, setCategory] = useState('')
+  const [source, setSource] = useState('')
   const [page, setPage] = useState(1)
 
   const { data, isLoading, isError, refetch } = useSupportTicketsQuery({
     search: debouncedSearch || undefined,
     status: status || undefined,
     category: (category || undefined) as TicketCategory | undefined,
+    source: (source || undefined) as TicketSource | undefined,
     page,
     limit: PAGE_SIZE,
   })
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, status, category])
+  }, [debouncedSearch, status, category, source])
 
   const columns: DataTableColumn<SupportTicket>[] = [
-    { key: 'no', header: 'เลขที่', render: (t) => <span className="whitespace-nowrap font-medium">{t.ticketNo}</span> },
+    {
+      key: 'no',
+      header: 'เลขที่',
+      render: (t) => (
+        <div className="flex flex-col items-start gap-1">
+          <span className="whitespace-nowrap font-medium">{t.ticketNo}</span>
+          <TicketSourceBadge source={t.source} />
+        </div>
+      ),
+    },
     {
       key: 'subject',
       header: 'เรื่องที่แจ้ง',
@@ -136,6 +148,11 @@ export function TicketsListPage() {
             </option>
           ))}
         </Select>
+        <Select value={source} onChange={(e) => setSource(e.target.value)} className="max-w-[10rem]" aria-label="ช่องทางที่แจ้ง">
+          <option value="">ทุกช่องทาง</option>
+          <option value={TicketSource.WEB}>แจ้งผ่านเว็บ</option>
+          <option value={TicketSource.LINE}>แจ้งผ่าน LINE</option>
+        </Select>
       </div>
 
       <Card className="p-0">
@@ -148,7 +165,7 @@ export function TicketsListPage() {
             isError={isError}
             onRetry={refetch}
             onRowClick={(t) => navigate(`/support-tickets/${t.ticketId}`)}
-            emptyMessage={search || status || category ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีการแจ้งปัญหา'}
+            emptyMessage={search || status || category || source ? 'ไม่พบรายการที่ค้นหา' : 'ยังไม่มีการแจ้งปัญหา'}
           />
         </div>
         {data && <Pagination page={page} totalItems={data.total} pageSize={PAGE_SIZE} onPageChange={setPage} />}

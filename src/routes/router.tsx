@@ -50,8 +50,21 @@ import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { LiffLayout } from '@/pages/liff/LiffLayout'
+import { LiffTicketCreatePage } from '@/pages/liff/LiffTicketCreatePage'
+import { LiffMyTicketsPage } from '@/pages/liff/LiffMyTicketsPage'
 
 export const router = createBrowserRouter([
+  {
+    // หน้า LIFF (เปิดจาก rich menu ใน LINE OA) — ยืนยันตัวด้วย LINE ID token เอง ไม่ผ่าน ProtectedRoute/JWT
+    path: '/liff',
+    element: <LiffLayout />,
+    children: [
+      { index: true, element: <Navigate to="/liff/support" replace /> },
+      { path: 'support', element: <LiffTicketCreatePage /> },
+      { path: 'support/mine', element: <LiffMyTicketsPage /> },
+    ],
+  },
   {
     element: <AuthLayout />,
     children: [
